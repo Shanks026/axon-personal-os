@@ -1,6 +1,7 @@
 import { z } from 'zod'
 import { GLOBAL_SLUG } from '@/lib/paths'
-import { SPACE_COLORS, SPACE_ICON_KEYS } from '@/features/spaces/constants'
+import { looksLikeEmoji } from '@/components/shared/spaceEmoji'
+import { SPACE_COLORS } from '@/features/spaces/constants'
 import { SLUG_MAX, SLUG_PATTERN } from '@/features/spaces/utils'
 
 export const spaceSchema = z.object({
@@ -14,5 +15,5 @@ export const spaceSchema = z.object({
     .refine((s) => s !== GLOBAL_SLUG, '“global” is reserved'),
   description: z.string().trim().max(280, 'Up to 280 characters'),
   color: z.enum(SPACE_COLORS),
-  icon: z.enum(SPACE_ICON_KEYS),
+  icon: z.string().trim().min(1, 'Pick an emoji').max(16).refine(looksLikeEmoji, 'Pick an emoji'),
 })

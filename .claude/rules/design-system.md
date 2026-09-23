@@ -268,4 +268,5 @@ Each of these maps to a shadcn primitive.
 - **Motion** values come only from `presets.js`, or the CSS variables that mirror it.
 - **Test both themes.** Every component must work in light and dark before it counts as done.
 - **Icon sizes:** 15px in rows, 13–14px in chips and buttons, 16px in empty-state tiles. Stroke width stays at the lucide default.
-- **Shortcut hints** always use `<Kbd shortcut="mod+k" />` from `components/shared`, never hardcoded glyphs. It renders **key symbols**: ⌘ on Mac and ⌃ on Windows/Linux, plus ⇧ ⌥ ↵ (so "⌃K", never "Ctrl K"). It spells the keys out for screen readers.
+- **Shortcut hints** always use `<Kbd shortcut="mod+k" />` from `components/shared`, never hardcoded glyphs. Modifiers render as **lucide icons** (Command, ArrowBigUp, Option, CornerDownLeft), matching the design's "⌘K". Screen readers get words.
+- **Space identity is an emoji, shown bare** (no tile or background). The space accent colour applies to UI chrome, not the emoji.

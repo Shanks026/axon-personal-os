@@ -49,7 +49,7 @@ export function SpaceCard({
       />
 
       <div className="pointer-events-none relative flex items-start gap-2.5">
-        <SpaceIcon icon={space.icon} color={space.color} size="lg" />
+        <SpaceIcon icon={space.icon} size="lg" />
         <div className="flex-1" />
         {dragHandle && (
           <button

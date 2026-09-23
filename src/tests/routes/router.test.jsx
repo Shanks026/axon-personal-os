@@ -28,7 +28,7 @@ const THMP = {
   name: 'THMP',
   slug: 'thmp',
   color: 'blue',
-  icon: 'briefcase',
+  icon: '💼',
   position: 1000,
   archived_at: null,
   created_at: '2026-09-01T00:00:00Z',

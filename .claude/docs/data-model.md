@@ -94,7 +94,7 @@ create table public.spaces (
   slug         text not null check (slug ~ '^[a-z0-9]+(-[a-z0-9]+)*$' and char_length(slug) <= 48 and slug <> 'global'),
   description  text check (char_length(description) <= 280),
   color        text not null default 'slate',
-  icon         text not null default 'folder',
+  icon         text not null default '📁' check (char_length(icon) between 1 and 16),  -- an emoji (migration 20260923180401)
   position     double precision not null default 0,
   archived_at  timestamptz,
   created_at   timestamptz not null default now(),

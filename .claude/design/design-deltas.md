@@ -63,7 +63,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
   - Cards get a grip handle on hover, a `…` menu, a dashed ghost "New space" card, and a collapsed "Archived N" row.
 - **Adopt (space dialog):**
   - The dialog is 520px. The slug preview reads `axon.app/s/<slug>` with a pencil icon.
-  - The icon picker is an **inline searchable grid** (9 columns, 18 icons), not a popover.
+  - ~~The icon picker is an inline searchable grid (9 columns, 18 icons).~~ **Changed:** spaces use **emoji only**, shown plainly with no tinted tile. The picker is an inline searchable 9-column emoji grid that also accepts any pasted emoji. Space images move to Feature 15.
   - There are 10 colour swatches. The submit button shows ⌘↵.
 - **Adopt (delete dialog):** 440px, with **six count tiles** (tasks, notes, todos, events, journal days, reports). Counts for tables that don't exist yet are omitted.
 - **Adopt (sidebar):**

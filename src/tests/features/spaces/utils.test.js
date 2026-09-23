@@ -64,7 +64,7 @@ describe('spaceSchema', () => {
     slug: 'thmp',
     description: '',
     color: 'blue',
-    icon: 'briefcase',
+    icon: '💼',
   }
 
   it('accepts a valid space', () => {
@@ -77,7 +77,8 @@ describe('spaceSchema', () => {
     ['bad slug', { slug: 'Bad Slug' }],
     ['double dash', { slug: 'a--b' }],
     ['unknown colour', { color: 'chartreuse' }],
-    ['unknown icon', { icon: 'unicorn' }],
+    ['a word instead of an emoji', { icon: 'unicorn' }],
+    ['no emoji', { icon: '' }],
   ])('rejects %s', (_label, patch) => {
     expect(spaceSchema.safeParse({ ...valid, ...patch }).success).toBe(false)
   })

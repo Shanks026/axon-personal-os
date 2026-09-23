@@ -69,7 +69,7 @@ const space = (id, name, slug, position, extra = {}) => ({
   slug,
   position,
   color: 'blue',
-  icon: 'briefcase',
+  icon: '💼',
   description: null,
   archived_at: null,
   created_at: '2026-09-01T10:00:00Z',
@@ -125,7 +125,7 @@ describe('SpacesPage', () => {
       name: 'THMP Marketplace',
       slug: 'thmp-marketplace',
       color: 'teal',
-      icon: 'rocket',
+      icon: '🚀',
       description: null,
       position: 1000,
     })

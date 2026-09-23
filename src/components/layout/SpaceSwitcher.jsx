@@ -35,9 +35,8 @@ export function SpaceSwitcher() {
               <SpaceIcon
                 global={isGlobal}
                 icon={space?.icon}
-                color={space?.color}
                 size="sm"
-                className="size-6"
+                className="size-6 text-lg"
               />
               <span className="flex-1 truncate font-semibold tracking-tight">
                 {isGlobal ? 'Global' : space?.name}
@@ -54,7 +53,7 @@ export function SpaceSwitcher() {
             </DropdownMenuItem>
             {activeSpaces.map((s) => (
               <DropdownMenuItem key={s.id} onSelect={() => switchTo(s.slug)} className="h-8">
-                <SpaceIcon icon={s.icon} color={s.color} size="sm" />
+                <SpaceIcon icon={s.icon} size="sm" />
                 <span className="flex-1 truncate">{s.name}</span>
                 {s.id === space?.id && <Check className="size-3.5" aria-label="Current" />}
               </DropdownMenuItem>

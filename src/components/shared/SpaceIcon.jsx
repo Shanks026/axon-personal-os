@@ -1,33 +1,29 @@
-import { Folder } from 'lucide-react'
-import { GLOBAL_ICON, SPACE_ICONS } from '@/components/shared/spaceIconMap'
-import { hueVar } from '@/lib/tint'
+import { DEFAULT_SPACE_EMOJI, GLOBAL_EMOJI } from '@/components/shared/spaceEmoji'
 import { cn } from '@/lib/utils'
 
+// Box size, emoji size. No tile or background: just the emoji (user request, Tricount-style).
 const SIZES = {
-  xs: { tile: 'size-4.5 rounded-sm', icon: 'size-2.75' },
-  sm: { tile: 'size-5 rounded-md', icon: 'size-3' },
-  md: { tile: 'size-8 rounded-lg', icon: 'size-4' },
-  lg: { tile: 'size-10 rounded-xl', icon: 'size-5' },
+  xs: 'size-4.5 text-sm',
+  sm: 'size-5 text-base',
+  md: 'size-8 text-2xl',
+  lg: 'size-10 text-3xl',
 }
 
 /**
- * The space's icon on a soft tile of its accent (design: switcher rows, cards, dialog).
- * Pass `global` for the Global view, which uses the neutral foreground instead of a hue.
+ * A space's emoji (switcher rows, cards, breadcrumb, dialog). `icon` holds the emoji itself.
+ * Pass `global` for the Global view (🌐). The box keeps rows aligned whatever the emoji's width.
  */
-export function SpaceIcon({ icon, color, global = false, size = 'md', className }) {
-  const Icon = global ? GLOBAL_ICON : (SPACE_ICONS[icon] ?? Folder)
-  const hue = global ? 'var(--foreground)' : hueVar(color)
-  const s = SIZES[size] ?? SIZES.md
+export function SpaceIcon({ icon, global = false, size = 'md', className }) {
   return (
     <span
       aria-hidden
-      className={cn('flex shrink-0 items-center justify-center', s.tile, className)}
-      style={{
-        color: hue,
-        backgroundColor: `color-mix(in oklab, ${hue} var(--space-soft-mix), transparent)`,
-      }}
+      className={cn(
+        'flex shrink-0 items-center justify-center leading-none select-none',
+        SIZES[size] ?? SIZES.md,
+        className,
+      )}
     >
-      <Icon className={s.icon} />
+      {global ? GLOBAL_EMOJI : icon || DEFAULT_SPACE_EMOJI}
     </span>
   )
 }

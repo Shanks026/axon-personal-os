@@ -24,7 +24,7 @@ import {
   useUpdateSpace,
 } from '@/features/spaces/api'
 import { ColorPicker } from '@/features/spaces/components/ColorPicker'
-import { IconPicker } from '@/features/spaces/components/IconPicker'
+import { EmojiPicker } from '@/features/spaces/components/EmojiPicker'
 import { DEFAULT_SPACE_COLOR, DEFAULT_SPACE_ICON } from '@/features/spaces/constants'
 import { spaceSchema } from '@/features/spaces/schemas'
 import { slugify, uniqueSlug } from '@/features/spaces/utils'
@@ -79,7 +79,7 @@ function SpaceForm({ space, onClose, onSuccess }) {
   const [slugTouched, setSlugTouched] = useState(isEdit)
   const [editingSlug, setEditingSlug] = useState(false)
 
-  const [color, icon, slug] = useWatch({ control: form.control, name: ['color', 'icon', 'slug'] })
+  const [icon, slug] = useWatch({ control: form.control, name: ['icon', 'slug'] })
 
   function handleNameChange(name, onChange) {
     onChange(name)
@@ -138,7 +138,7 @@ function SpaceForm({ space, onClose, onSuccess }) {
       <DialogHeader className="border-b px-5.5 py-4.5">
         <DialogTitle>{isEdit ? 'Edit space' : 'New space'}</DialogTitle>
         <DialogDescription className="sr-only">
-          Name, URL, colour and icon for this space.
+          Name, URL, colour and emoji for this space.
         </DialogDescription>
       </DialogHeader>
 
@@ -149,7 +149,7 @@ function SpaceForm({ space, onClose, onSuccess }) {
           render={({ field, fieldState }) => (
             <Field data-invalid={fieldState.invalid}>
               <div className="flex items-end gap-3">
-                <SpaceIcon icon={icon} color={color} size="lg" />
+                <SpaceIcon icon={icon} size="lg" />
                 <div className="flex flex-1 flex-col gap-1.5">
                   <FieldLabel htmlFor="space-name">Name</FieldLabel>
                   <Input
@@ -239,13 +239,11 @@ function SpaceForm({ space, onClose, onSuccess }) {
         </div>
 
         <div className="flex flex-col gap-2">
-          <span className="font-medium">Icon</span>
+          <span className="font-medium">Emoji</span>
           <Controller
             name="icon"
             control={form.control}
-            render={({ field }) => (
-              <IconPicker value={field.value} onChange={field.onChange} color={color} />
-            )}
+            render={({ field }) => <EmojiPicker value={field.value} onChange={field.onChange} />}
           />
         </div>
       </div>
