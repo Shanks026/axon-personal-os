@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/alert-dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { cn } from '@/lib/utils'
 
 /**
  * Confirmation for permanent actions. With `requireText`, the confirm button stays disabled
@@ -65,7 +64,7 @@ export function ConfirmDialog({
           <AlertDialogCancel disabled={pending}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             disabled={blocked || pending}
-            className={cn(destructive && 'bg-destructive text-white hover:bg-destructive/90')}
+            variant={destructive ? 'destructive' : 'default'}
             onClick={(e) => {
               e.preventDefault()
               onConfirm?.()

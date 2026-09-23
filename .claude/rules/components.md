@@ -45,6 +45,8 @@ paths:
 
 ## Destructive actions
 
+- **Every destructive or risky terminal action uses shadcn's `destructive` variant**, never custom colour classes. This covers delete, delete forever, empty trash, sign out, discard, and archive-all. Use `<Button variant="destructive">` and `<DropdownMenuItem variant="destructive">`, and `ConfirmDialog` passes it to its confirm button. (The user asked for this on 2026-09-23.)
+
 - Soft deletes (tasks, notes, todos, events, reports) need no confirm. Delete immediately and show `toast('Task moved to Trash', { action: { label: 'Undo', onClick: restore } })`.
 - Permanent deletes (emptying trash, deleting a space) use `<ConfirmDialog>` from `components/shared`, which wraps AlertDialog. Deleting a space also requires typing the space name.
 

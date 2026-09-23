@@ -69,8 +69,7 @@ export function AccountSection() {
         </SettingsRow>
         <SettingsRow label="Sign out of Axon">
           <Button
-            variant="outline"
-            className="text-destructive hover:text-destructive"
+            variant="destructive"
             onClick={() =>
               signOut().catch((err) => toast.error(err.message ?? 'Could not sign out'))
             }

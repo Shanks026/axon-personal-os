@@ -112,6 +112,10 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-23: Destructive actions use the shadcn destructive variant
+- `ConfirmDialog`'s confirm button, the Settings Sign out button, and the account menu's Sign out item use `variant="destructive"` (the user's request). The custom `bg-destructive text-white` override is removed.
+- Rule added to `components.md`: every destructive or risky action uses the variant.
+
 ### 2026-09-23: Password masking, signup confirm, dialog frame drops
 - **Bug:** password fields showed plain text. `AuthTextField` passed `type={undefined}`, and `PasswordInput` spread props *after* its own `type`, so `undefined` won.
   - `PasswordInput` is rebuilt on shadcn `InputGroup` (`InputGroupInput` plus an `InputGroupButton` eye toggle with `aria-pressed`). `type` is set after the spread, so it can't be overridden.

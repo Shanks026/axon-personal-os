@@ -62,6 +62,7 @@ export function UserMenu({ align = 'end', children }) {
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem
+          variant="destructive"
           onSelect={() =>
             signOut().catch((err) => toast.error(err.message ?? 'Could not sign out'))
           }
