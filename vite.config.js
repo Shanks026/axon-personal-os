@@ -18,6 +18,30 @@ export default defineConfig(({ mode }) => {
     resolve: {
       alias: { '@': path.resolve(root, 'src') },
     },
+    // Pages are eager (no route flashes), so split vendors instead: they change rarely and stay
+    // cached between deploys, while the app chunk carries only our code.
+    build: {
+      rolldownOptions: {
+        output: {
+          codeSplitting: {
+            groups: [
+              {
+                name: 'react',
+                test: /node_modules[\\/](react|react-dom|scheduler|react-router)[\\/]/,
+                priority: 30,
+              },
+              { name: 'supabase', test: /node_modules[\\/]@supabase[\\/]/, priority: 20 },
+              {
+                name: 'ui',
+                test: /node_modules[\\/](radix-ui|@radix-ui|@floating-ui|motion|motion-dom|motion-utils|framer-motion|lucide-react|cmdk|sonner|next-themes)[\\/]/,
+                priority: 20,
+              },
+              { name: 'vendor', test: /node_modules[\\/]/, priority: 10 },
+            ],
+          },
+        },
+      },
+    },
     test: {
       environment: 'jsdom',
       setupFiles: ['src/tests/setup.js'],

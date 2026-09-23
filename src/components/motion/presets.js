@@ -28,8 +28,14 @@ export const slideUp = {
   exit: { opacity: 0, transition: exit() },
 }
 
-/** Page transition: out 120 exit, in 200 enter with a 6px rise. Sidebar and header never animate. */
-export const pageTransition = slideUp
+/**
+ * Page enter: a quick opacity fade only. Moving the page (a y-rise) or keeping the old page for
+ * an exit made the scroll area briefly overflow, so the shell just fades the new page in.
+ */
+export const pageTransition = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: enter(durations.fast) },
+}
 
 /** List item: fade and 4px rise in, fade and height collapse out. Pair with `layout` for reorder. */
 export const listItem = {

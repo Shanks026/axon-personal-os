@@ -32,7 +32,7 @@ axon/
     ├── hooks/                    # cross-feature React hooks (useLocalStorage, useDebouncedValue ...)
     ├── components/
     │   ├── ui/                   # shadcn-generated primitives (managed by the shadcn CLI)
-    │   ├── layout/               # AppLayout, AppSidebar, SpaceSwitcher, PageHeader
+    │   ├── layout/               # AppShell (the persistent frame), AppSidebar, SpaceSwitcher, PageHeader
     │   ├── motion/               # shared motion presets + wrappers (PageTransition, AnimatedList)
     │   ├── editor/               # Tiptap RichTextEditor + extensions (shared by notes/tasks/reports)
     │   └── shared/               # reusable app components (EmptyState, ConfirmDialog, SpaceBadge, TagPicker ...)
@@ -71,7 +71,7 @@ axon/
 
 - Always use the `@/` alias for anything under `src/` — no `../../` climbing. Same-folder `./` is fine.
 - **No barrel files** (`index.js` re-exports). Import from the file that defines the thing.
-- Named exports everywhere, except page components (default export to keep `lazy()` simple).
+- Named exports everywhere, except page components (default export: one page per file).
 - Import order: react → third-party → `@/lib` → `@/context` → `@/hooks` → `@/components` → `@/features` → relative.
 
 ## Boundaries

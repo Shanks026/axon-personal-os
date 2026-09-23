@@ -1,7 +1,25 @@
 import { createBrowserRouter, Navigate, Outlet } from 'react-router'
-import { Splash } from '@/components/shared/Splash'
+import { AppShell } from '@/components/layout/AppShell'
+import AuthCallbackPage from '@/features/auth/pages/AuthCallbackPage'
+import ForgotPasswordPage from '@/features/auth/pages/ForgotPasswordPage'
+import LoginPage from '@/features/auth/pages/LoginPage'
+import ResetPasswordPage from '@/features/auth/pages/ResetPasswordPage'
+import SignupPage from '@/features/auth/pages/SignupPage'
+import CalendarPage from '@/features/calendar/pages/CalendarPage'
+import DashboardPage from '@/features/dashboard/pages/DashboardPage'
+import InboxPage from '@/features/inbox/pages/InboxPage'
+import JournalPage from '@/features/journal/pages/JournalPage'
+import NoteEditorPage from '@/features/notes/pages/NoteEditorPage'
+import NotesPage from '@/features/notes/pages/NotesPage'
+import ReportPage from '@/features/reports/pages/ReportPage'
+import ReportsPage from '@/features/reports/pages/ReportsPage'
+import SettingsPage from '@/features/settings/pages/SettingsPage'
+import SpacesPage from '@/features/spaces/pages/SpacesPage'
 import NotFoundPage from '@/features/system/pages/NotFoundPage'
 import RouteErrorPage from '@/features/system/pages/RouteErrorPage'
+import TaskDetailPage from '@/features/tasks/pages/TaskDetailPage'
+import TasksPage from '@/features/tasks/pages/TasksPage'
+import TrashPage from '@/features/trash/pages/TrashPage'
 import {
   PublicOnly,
   RequireAuth,
@@ -10,81 +28,55 @@ import {
   TodosRedirect,
 } from '@/routes/guards'
 
-/** Lazy route whose module default-exports the page component. */
-const page = (importer) => ({
-  lazy: () => importer().then((m) => ({ Component: m.default })),
-  errorElement: <RouteErrorPage />,
-})
-
 // Route tree: .claude/rules/routing.md. Build URLs with @/lib/paths, never by hand.
+// Pages are imported eagerly (like Tercero): lazy chunks made the old screen linger, or a
+// half-rendered one flash, while the next page's code loaded.
 export const routes = [
   {
     element: <Outlet />,
     errorElement: <RouteErrorPage />,
-    hydrateFallbackElement: <Splash />,
     children: [
       {
         element: <PublicOnly />,
         children: [
-          { path: 'login', ...page(() => import('@/features/auth/pages/LoginPage')) },
-          { path: 'signup', ...page(() => import('@/features/auth/pages/SignupPage')) },
-          {
-            path: 'forgot-password',
-            ...page(() => import('@/features/auth/pages/ForgotPasswordPage')),
-          },
+          { path: 'login', element: <LoginPage /> },
+          { path: 'signup', element: <SignupPage /> },
+          { path: 'forgot-password', element: <ForgotPasswordPage /> },
         ],
       },
-      {
-        path: 'reset-password',
-        ...page(() => import('@/features/auth/pages/ResetPasswordPage')),
-      },
-      { path: 'auth/callback', ...page(() => import('@/features/auth/pages/AuthCallbackPage')) },
+      { path: 'reset-password', element: <ResetPasswordPage /> },
+      { path: 'auth/callback', element: <AuthCallbackPage /> },
       {
         element: <RequireAuth />,
         children: [
-          { index: true, element: <RootRedirect /> },
-          { path: 'spaces', ...page(() => import('@/features/spaces/pages/SpacesPage')) },
           {
-            path: 'settings/:section?',
-            ...page(() => import('@/features/settings/pages/SettingsPage')),
-          },
-          {
-            path: 's/:spaceSlug',
-            element: <SpaceBoundary />,
+            // One persistent frame for every signed-in screen; the sidebar shows inside spaces.
+            element: <AppShell />,
             errorElement: <RouteErrorPage />,
             children: [
-              { index: true, element: <Navigate to="dashboard" replace /> },
+              { index: true, element: <RootRedirect /> },
+              { path: 'spaces', element: <SpacesPage /> },
+              { path: 'settings/:section?', element: <SettingsPage /> },
               {
-                path: 'dashboard',
-                ...page(() => import('@/features/dashboard/pages/DashboardPage')),
+                path: 's/:spaceSlug',
+                element: <SpaceBoundary />,
+                children: [
+                  { index: true, element: <Navigate to="dashboard" replace /> },
+                  { path: 'dashboard', element: <DashboardPage /> },
+                  { path: 'inbox', element: <InboxPage /> },
+                  { path: 'tasks', element: <TasksPage /> },
+                  { path: 'tasks/:taskId', element: <TaskDetailPage /> },
+                  { path: 'todos', element: <TodosRedirect /> },
+                  { path: 'notes', element: <NotesPage /> },
+                  { path: 'notes/:noteId', element: <NoteEditorPage /> },
+                  { path: 'journal', element: <JournalPage /> },
+                  { path: 'journal/:date', element: <JournalPage /> },
+                  { path: 'calendar', element: <CalendarPage /> },
+                  { path: 'reports', element: <ReportsPage /> },
+                  { path: 'reports/:reportId', element: <ReportPage /> },
+                  { path: 'trash', element: <TrashPage /> },
+                ],
               },
-              { path: 'inbox', ...page(() => import('@/features/inbox/pages/InboxPage')) },
-              { path: 'tasks', ...page(() => import('@/features/tasks/pages/TasksPage')) },
-              {
-                path: 'tasks/:taskId',
-                ...page(() => import('@/features/tasks/pages/TaskDetailPage')),
-              },
-              { path: 'todos', element: <TodosRedirect /> },
-              { path: 'notes', ...page(() => import('@/features/notes/pages/NotesPage')) },
-              {
-                path: 'notes/:noteId',
-                ...page(() => import('@/features/notes/pages/NoteEditorPage')),
-              },
-              { path: 'journal', ...page(() => import('@/features/journal/pages/JournalPage')) },
-              {
-                path: 'journal/:date',
-                ...page(() => import('@/features/journal/pages/JournalPage')),
-              },
-              {
-                path: 'calendar',
-                ...page(() => import('@/features/calendar/pages/CalendarPage')),
-              },
-              { path: 'reports', ...page(() => import('@/features/reports/pages/ReportsPage')) },
-              {
-                path: 'reports/:reportId',
-                ...page(() => import('@/features/reports/pages/ReportPage')),
-              },
-              { path: 'trash', ...page(() => import('@/features/trash/pages/TrashPage')) },
             ],
           },
         ],

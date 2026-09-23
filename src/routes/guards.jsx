@@ -1,23 +1,22 @@
 import { useEffect } from 'react'
 import { ArrowLeft } from 'lucide-react'
-import { Link, Navigate, Outlet, useLocation, useParams } from 'react-router'
-import { GLOBAL_SLUG, paths } from '@/lib/paths'
+import { Link, Navigate, Outlet, useLocation } from 'react-router'
+import { paths } from '@/lib/paths'
 import { useAuth } from '@/context/AuthContext'
-import { SpaceProvider } from '@/context/SpaceContext'
-import { AppLayout } from '@/components/layout/AppLayout'
+import { useSpace } from '@/context/SpaceContext'
 import { ErrorPage } from '@/components/shared/ErrorPage'
-import { ErrorState } from '@/components/shared/ErrorState'
-import { Splash } from '@/components/shared/Splash'
 import { Button } from '@/components/ui/button'
-import { useSpaces } from '@/features/spaces/api'
 import { useLastSpace, useRememberSpace } from '@/features/spaces/hooks/useLastSpace'
-import { splitSpaces } from '@/features/spaces/utils'
 
-/** Protected routes: a splash while the session resolves, then /login if there's no session. */
+// While auth resolves we render a plain background, never a splash or a redirect: a splash that
+// flashes for a few frames reads as flicker (the same choice Tercero makes).
+const BLANK = <div className="h-svh bg-background" aria-busy="true" />
+
+/** Protected routes: blank while the session resolves, then /login if there's no session. */
 export function RequireAuth() {
   const { session, loading } = useAuth()
   const location = useLocation()
-  if (loading) return <Splash />
+  if (loading) return BLANK
   if (!session) return <Navigate to={paths.login()} state={{ from: location }} replace />
   return <Outlet />
 }
@@ -29,45 +28,34 @@ export function RequireAuth() {
 export function PublicOnly() {
   const { session, loading } = useAuth()
   const location = useLocation()
-  if (loading) return <Splash />
+  if (loading) return BLANK
   if (session) return <Navigate to={location.state?.from ?? paths.spaces()} replace />
   return <Outlet />
 }
 
-/** `/`: back to the last used space (see useLastSpace), or the gallery when there are none. */
+/**
+ * `/`: back to the last used space (see useLastSpace), or the gallery when there are none.
+ * AppShell has already loaded spaces and the profile, so this resolves on the first render.
+ */
 export function RootRedirect() {
-  const { slug, ready } = useLastSpace()
-  if (!ready) return <Splash />
+  const { slug } = useLastSpace()
   return <Navigate to={slug ? paths.space(slug).dashboard() : paths.spaces()} replace />
 }
 
 /**
- * `/s/:spaceSlug`: resolves the slug against the user's spaces, remembers it as the last space,
- * provides SpaceContext and renders the app shell. Unknown or archived slugs get a friendly 404.
+ * `/s/:spaceSlug`: AppShell resolves the space and provides SpaceContext; this guard shows a
+ * friendly 404 for unknown or archived slugs and remembers valid ones as the last space.
  */
 export function SpaceBoundary() {
-  const { spaceSlug } = useParams()
-  const { data: spaces, isLoading, error, refetch } = useSpaces()
+  const { spaceSlug, space, isGlobal, spaces, activeSpaces } = useSpace()
   const remember = useRememberSpace()
-
-  const { active } = splitSpaces(spaces)
-  const isGlobal = spaceSlug === GLOBAL_SLUG
-  const space = active.find((s) => s.slug === spaceSlug)
-  const archived = spaces?.find((s) => s.slug === spaceSlug && s.archived_at)
-  const exists = isGlobal ? active.length > 0 : !!space
+  const exists = isGlobal ? activeSpaces.length > 0 : !!space
+  const archived = spaces.find((s) => s.slug === spaceSlug && s.archived_at)
 
   useEffect(() => {
     if (exists) remember(spaceSlug, space?.id)
   }, [exists, spaceSlug, space?.id, remember])
 
-  if (isLoading) return <Splash />
-  if (error) {
-    return (
-      <main className="flex min-h-svh items-center justify-center p-6">
-        <ErrorState error={error} onRetry={refetch} title="Couldn’t load your spaces" />
-      </main>
-    )
-  }
   if (!exists) {
     return (
       <ErrorPage
@@ -92,15 +80,11 @@ export function SpaceBoundary() {
     )
   }
 
-  return (
-    <SpaceProvider spaceSlug={spaceSlug} spaces={spaces}>
-      <AppLayout />
-    </SpaceProvider>
-  )
+  return <Outlet />
 }
 
 /** `/s/:spaceSlug/todos` → the Todos tab of the Tasks & Todos module (design delta G1). */
 export function TodosRedirect() {
-  const { spaceSlug } = useParams()
+  const { spaceSlug } = useSpace()
   return <Navigate to={paths.space(spaceSlug).todos()} replace />
 }

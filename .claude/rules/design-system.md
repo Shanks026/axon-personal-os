@@ -208,7 +208,7 @@ Mirror the durations and easings as CSS variables (`--dur-fast`, `--ease-standar
 
 | Interaction | Choreography | Timing | Reduced motion |
 |---|---|---|---|
-| Page transition | The outgoing page fades out. The incoming page fades from 0 to 1 and rises y 6px → 0. The sidebar and header never animate. | out 120 exit · in 200 enter | fade 120 |
+| Page transition | **Opacity only.** The incoming page fades from 0 to 1, with no exit and no y-rise (both made the scroll area overflow for a moment). The sidebar and header never animate. | in 120 enter | fade 120 |
 | List enter / exit | Items fade and move y 4px → 0, with a 20ms stagger on the first 8 only. Exit: fade and height → 0. Reorder uses `layout`. | 160 enter · layout snappy | fade 120, no stagger |
 | Todo / task complete | The box fills with ok/accent and scales 1 → 1.08 → 1, and the check stroke draws. The strike-through sweeps left to right, and the text fades to faint. After a 600ms hold, the row collapses and leaves (when the current filter hides done items). The Undo toast appears. | check 180 · strike 220 · collapse gentle | instant check, fade out 150 |
 | Kanban drag | Pickup: scale 1.02, rotate 1.5°, `shadow-lg`, grabbing cursor. The target column's border tints with the accent, and a dashed placeholder opens via `layout`. Drop: spring to the slot, shadow back to none. | lift 120 standard · drop snappy | outline only |
@@ -226,7 +226,7 @@ Variants to export: `fadeIn`, `slideUp` (y 6), `listItem` (y 4 with height exit)
 
 | Item | Spec |
 |---|---|
-| Sidebar | 240px expanded, 56px rail. Nav item height 30px. `bg-sidebar`, with a hairline right border. |
+| Sidebar | **16.5rem (264px)** expanded (the user asked for a little wider than shadcn's 16rem), and shadcn's **3rem** rail. Nav items use the shadcn defaults (32px). `bg-sidebar`, with a hairline right border. |
 | Header | 48px breadcrumb bar with page actions. A second 48px toolbar row appears only where there are filters or tabs. |
 | Page padding | 36–40px desktop, 16px mobile |
 | Grid | 12 columns, 20px gutters. Dashboard widgets split 7/5 and 6/6. |

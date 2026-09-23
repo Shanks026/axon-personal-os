@@ -213,10 +213,11 @@ describe('router (signed out)', () => {
     expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument()
   })
 
-  it('shows the splash, not /login, while the session is loading', async () => {
+  it('shows a blank screen (no splash, no /login) while the session is loading', async () => {
     auth.state = { session: null, user: null, loading: true }
     const router = renderAt('/spaces')
-    expect(await screen.findByRole('status')).toHaveTextContent('Syncing your spaces')
+    await waitFor(() => expect(document.querySelector('[aria-busy="true"]')).toBeInTheDocument())
+    expect(screen.queryByRole('heading')).not.toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/spaces')
   })
 })

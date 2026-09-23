@@ -270,3 +270,8 @@
     @apply bg-background text-sm text-foreground antialiased;
   }
 }
+
+/* Reserve the scrollbar's space so content never shifts when a page starts or stops scrolling. */
+@utility scrollbar-stable {
+  scrollbar-gutter: stable;
+}

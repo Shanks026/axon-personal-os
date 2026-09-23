@@ -249,7 +249,7 @@ function SpaceForm({ space, onClose, onSuccess }) {
         </div>
       </div>
 
-      <DialogFooter className="border-t bg-muted px-5.5 py-3.5">
+      <DialogFooter className="m-0 border-t bg-muted px-5.5 py-3.5">
         <Button type="button" variant="outline" onClick={onClose}>
           Cancel
         </Button>

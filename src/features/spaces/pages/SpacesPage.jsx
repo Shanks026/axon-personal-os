@@ -23,9 +23,12 @@ export default function SpacesPage() {
   const update = useUpdateSpace()
   const [dialog, setDialog] = useState({ open: false, space: null })
   const [deleting, setDeleting] = useState(null)
+  // Set while entering the first space: keeps the first-run screen up until the route changes,
+  // instead of flashing the populated gallery for a frame.
+  const [enteringFirst, setEnteringFirst] = useState(false)
 
   const { active, archived } = splitSpaces(spaces)
-  const isEmpty = !isLoading && !error && spaces?.length === 0
+  const isEmpty = enteringFirst || (!isLoading && !error && spaces?.length === 0)
 
   const openCreate = () => setDialog({ open: true, space: null })
 
@@ -109,7 +112,10 @@ export default function SpacesPage() {
         onOpenChange={(open) => setDialog((d) => ({ ...d, open }))}
         onSuccess={(row) => {
           // First space ever: go straight in. SpaceBoundary records it as the last space.
-          if (!spaces?.length) navigate(paths.space(row.slug).dashboard())
+          if (!spaces?.length) {
+            setEnteringFirst(true)
+            navigate(paths.space(row.slug).dashboard())
+          }
         }}
       />
       <DeleteSpaceDialog

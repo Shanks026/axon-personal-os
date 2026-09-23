@@ -111,6 +111,34 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-23: Shell rebuilt to remove flicker (the user's report after browser testing)
+- **What the user saw:**
+  1. After signup, a populated-looking screen flashed before "Create your first space".
+  2. The create-space dialog footer had lost its padding.
+  3. After creating the first space, another screen flashed before the dashboard.
+  4. A scrollbar blinked on every section change.
+  5. The sidebar was too narrow.
+- **Causes:**
+  - Lazy route chunks held the old screen, or rendered a half-ready one, during loads.
+  - The gallery showed its populated layout while it was loading.
+  - The window itself was the scroll container, and pages animated y/exit on top of it.
+  - shadcn v4's `DialogFooter` has `-mx-4 -mb-4` built in, which broke inside a `p-0` dialog.
+- **Fixes, following Tercero's AppShell:**
+  - **Pages are eager**, and vendors are split instead (`react`, `supabase`, `ui` and `vendor` chunks; the app's own chunk is 112 kB).
+  - **`components/layout/AppShell.jsx`** is one persistent frame for `/`, `/spaces`, `/settings` and `/s/*`:
+    - It resolves the space and provides SpaceContext.
+    - The sidebar slot only fills inside a space.
+    - The fixed-height content column is the only scroll container, with `scrollbar-stable` (new utility), and it scrolls to the top on navigation.
+    - It shows a blank gate until spaces and the profile load, then latches.
+  - `AppLayout.jsx` is removed, and `SpaceBoundary` is now just the 404 guard and last-space recorder.
+  - Guards render a blank background instead of `Splash`.
+  - The gallery keeps its first-run screen while entering the first space.
+  - Page transitions are opacity-only enter (no y, no exit).
+  - The `SpaceDialog` footer gets `m-0`.
+  - The sidebar is 16.5rem (tuned with the user), with a 3rem rail.
+- **Rules updated:** routing (eager pages, the AppShell contract, no splashes), design-system (page transition, sidebar width) and project-structure.
+- **Tests:** 139. jsdom needed a `scrollTo` stub.
+
 ### 2026-09-23: Feature 03 Phase 2: app shell and Global (Feature 03 complete)
 - **`/s/:spaceSlug/*` renders the shell:**
   - A 240px sidebar (56px rail, persisted, a sheet on mobile).
