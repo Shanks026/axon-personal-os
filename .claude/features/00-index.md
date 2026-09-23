@@ -16,7 +16,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 |---|---------|-----|-----------|--------|
 | **Wave 1: Core** | | | | |
 | 01 | Foundation: scaffold, tooling, app skeleton | [01-foundation.md](01-foundation.md) | none | ✅ Complete |
-| 02 | Auth, Profile and Preferences (incl. fiscal year setting) | [02-auth-and-settings.md](02-auth-and-settings.md) | 01 | 🔵 Planned |
+| 02 | Auth, Profile and Preferences (incl. fiscal year setting) | [02-auth-and-settings.md](02-auth-and-settings.md) | 01 | ✅ Complete |
 | 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | 🔵 Planned |
 | **Wave 2: Capture** | | | | |
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | 🔵 Planned |
@@ -76,8 +76,8 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 | Table / object | Feature | Applied | Notes |
 |---|---|---|---|
-| `set_updated_at()`, `pg_trgm` | 02 | ⬜ | Shared trigger function and extension |
-| `profiles` + `handle_new_user()` trigger | 02 | ⬜ | 1:1 with auth.users; `fy_start_month` default 4 |
+| `set_updated_at()`, `pg_trgm` | 02 | ✅ | Shared trigger function and extension |
+| `profiles` + `handle_new_user()` trigger | 02 | ✅ | 1:1 with auth.users; `fy_start_month` default 4. Migration `20260923164417`; `handle_new_user` execute revoked |
 | `spaces` | 03 | ⬜ | `unique(user_id, slug)`; slug `global` reserved |
 | `tasks` (+ completed_at trigger) | 04 | ⬜ | Six statuses, five priorities, fractional `position` |
 | `tags`, `task_tags` | 04 | ⬜ | Tag `space_id` NULL means available in all spaces |
@@ -110,6 +110,39 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-23: Feature 02 Phase 2: settings and fiscal year (Feature 02 complete)
+- **`/settings` has two sections, per design delta 02:**
+  - **Preferences:** the FY start month with live quarter tiles, week start (Mon/Sun), time zone with GMT offsets, and a theme picker with three preview cards.
+  - **Profile & account:** initials, name, email, change password and sign out.
+  - Changes save instantly (optimistically), with a Saving…/Saved indicator. Esc goes back.
+- **New lib files:**
+  - `lib/fiscal.js`: quarters, labels, shift, list and fiscal week numbers, with 36 tests.
+  - `lib/timezones.js`
+- **New settings files:**
+  - `settings/api.js`: `useUpdateMyProfile` and `usePreferences`, the app-wide source for FY month, week start, time zone and theme.
+  - `ProfileThemeSync`: the profile theme wins on load, and later changes are saved.
+- **New shared components:** `SegmentedControl` and `SaveIndicator`.
+- **`index.css`:** light tokens also scoped to `.light`.
+- **No database changes.** Tests: 109.
+- **Manual steps:** none. The user has set the Supabase URL config.
+
+### 2026-09-23: Feature 02 Phase 1: authentication
+- **First migration applied:** `20260923164417_create_shared_helpers_and_profiles`.
+  - Adds `pg_trgm`, `set_updated_at()`, the `profiles` table with owner RLS, and the `handle_new_user` trigger (execute revoked).
+  - Applied through the Supabase Management API, because the MCP tools weren't loaded in this session. It's recorded in the migration history the same way.
+  - Verified with a trigger test and a rolled-back RLS isolation test, and the test data was removed.
+- **Auth:**
+  - `AuthContext`: session only, a single `onAuthStateChange`, and the splash while loading.
+  - The client uses the PKCE flow.
+  - Guards: `RequireAuth` (to `/login` with `from`) and `PublicOnly` (to `from`, or `/spaces`).
+  - Pages: login, signup, forgot, reset and callback, built to the Auth design with the delta 02 items folded in.
+  - Signup goes straight to `/spaces`, since email confirmation is off.
+- **New shared auth components:** `AuthLayout`, `AuthTextField`, `PasswordInput`, `CheckInbox`, `FormAlert` and `SignOutButton`.
+- **Type scale:** switched to the Tailwind and shadcn defaults (14px body). The user found 13px too small, and `design-system.md` is updated.
+- **Dev port:** now `DEV_PORT=6420` (in the env files, `strictPort`). No 5173, 3000s or 5000s.
+- **Tests:** 63.
+- **Manual steps (user):** Supabase Auth → URL Configuration: Site URL `http://localhost:6420`, and Redirect URLs `…/auth/callback` and `…/reset-password`. The advisor flags Supabase's own `rls_auto_enable()` event-trigger function; it isn't ours and was left alone.
 
 ### 2026-09-23: Repository connected
 - Remote: `https://github.com/Shanks026/axon-personal-os.git`, branch `main`. Initial commit `0b1961d` pushed.

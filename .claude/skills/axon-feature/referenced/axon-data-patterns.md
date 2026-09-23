@@ -194,11 +194,13 @@ export function useTaskFilters() {
 | `PageHeader` + `usePageHeader` | `components/layout/` | 03 |
 | `SpaceBadge`, `SpaceIcon` | `components/shared/` | 03 |
 | `SpacePickerField` | `components/shared/` | 04 (first Global create dialog) |
+| `SegmentedControl` | `components/shared/` | 02 (week start; later view toggles) |
+| `SaveIndicator` | `components/shared/` | 02 (settings; later the editors) |
 | `TagPicker`, `TagPill`, `ManageTagsDialog` | `components/shared/` | 04 |
 | `DatePicker`, `DatePickerField` | `components/shared/` | 04 |
 | `RichTextEditor` | `components/editor/` | 06 |
 | `EntityLink` (task/note chip with hover preview) | `components/shared/` | 07 |
-| `SaveIndicator` | `components/shared/` | 07 (moved from notes) |
+
 | Mention-id collector (`collectTaskMentionIds`) | `components/editor/` | 07/09 |
 | `useNow` | `hooks/` | 08 |
 | `StatTile` | `components/shared/` | 11 (moved from dashboard) |

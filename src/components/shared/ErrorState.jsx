@@ -16,7 +16,7 @@ export function ErrorState({ error, onRetry, title = 'Something went wrong', cla
       <div className="min-w-0 flex-1">
         <p className="font-medium">{title}</p>
         {error?.message && (
-          <p className="mt-0.5 text-small break-words text-muted-foreground">{error.message}</p>
+          <p className="mt-0.5 text-xs break-words text-muted-foreground">{error.message}</p>
         )}
       </div>
       {onRetry && (

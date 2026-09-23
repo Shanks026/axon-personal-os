@@ -49,7 +49,7 @@ export function ConfirmDialog({
         {children}
         {requireText && (
           <div className="grid gap-1.5">
-            <Label htmlFor={inputId} className="text-small text-muted-foreground">
+            <Label htmlFor={inputId} className="text-xs text-muted-foreground">
               Type <span className="font-mono text-foreground">{requireText}</span> to confirm
             </Label>
             <Input

@@ -61,7 +61,10 @@ npm test           # vitest run
 ```
 VITE_SUPABASE_URL=https://ceomotoumlljqlkqboyc.supabase.co
 VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_...
+DEV_PORT=6420            # dev and preview port (strictPort). Never 5173 or the 3000/5000 ranges.
 ```
+
+The app runs at **http://localhost:6420**. Supabase Auth's Site URL and Redirect URLs point there.
 
 - Only the publishable key ever reaches the client. The service role key and personal access tokens never go in the repo.
 - The Supabase MCP server (`supabase`) is configured in local Claude config for project `ceomotoumlljqlkqboyc`.

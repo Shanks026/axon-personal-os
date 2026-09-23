@@ -19,7 +19,7 @@ export function Splash({ label = 'Syncing your spaces…' }) {
           animate="animate"
         />
       </div>
-      <p className="mt-3.5 font-mono text-small text-faint">{label}</p>
+      <p className="mt-3.5 font-mono text-xs text-faint">{label}</p>
     </div>
   )
 }

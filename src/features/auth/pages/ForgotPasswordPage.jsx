@@ -1,5 +1,10 @@
-import { PlaceholderPage } from '@/features/system/components/PlaceholderPage'
+import { AuthLayout } from '@/features/auth/components/AuthLayout'
+import { ForgotPasswordForm } from '@/features/auth/components/ForgotPasswordForm'
 
 export default function ForgotPasswordPage() {
-  return <PlaceholderPage title="Forgot password" feature="02" />
+  return (
+    <AuthLayout>
+      <ForgotPasswordForm />
+    </AuthLayout>
+  )
 }

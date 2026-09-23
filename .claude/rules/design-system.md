@@ -25,7 +25,7 @@ paths:
    - Reading surfaces cap at 680–760px (the measure is about 70 characters).
    - Data surfaces run fluid with 20px gutters.
 4. **Density like Linear:**
-   - 13px UI text and 42px rows.
+   - 14px UI text (`text-sm`, the shadcn default) and 44px rows.
    - Comfort comes from page padding (36–40px), not from padding inside rows.
 5. **Keyboard first.** Every list has a focused row, and every overlay shows its shortcut. Monospace marks anything you type, and all dates.
 
@@ -130,7 +130,7 @@ Database values stay as they are (`.claude/docs/data-model.md`). Only the labels
 | high | High | `signal-high` | warn |
 | urgent | Urgent | `triangle-alert` | destructive |
 
-- **Due date labels** are set in Geist Mono, 11.5–12px:
+- **Due date labels** are set in Geist Mono at `text-xs`:
   - Normal: muted-foreground (`Fri 26 Sep`).
   - `Today` / `Due today`: warn.
   - `Overdue · 3d` / `Overdue 20 Sep`: destructive.
@@ -145,19 +145,21 @@ Database values stay as they are (`.claude/docs/data-model.md`). Only the labels
   - `--font-mono: 'Geist Mono Variable', ui-monospace, monospace`
 - **Use tabular numbers** (`tabular-nums`) for every count, stat and date column.
 
-| Token | Size / line height | Weight | Tracking | Use |
-|---|---|---|---|---|
-| display | 36/44 | 600 | −0.03em | note and report titles |
-| h1 | 26/32 | 600 | −0.025em | page titles, greeting |
-| h2 | 19/26 | 600 | −0.015em | section headings |
-| h3 | 15/22 | 600 | −0.01em | widget and card titles |
-| body-read | 15/26 | 400 | 0 | editor, journal and report body |
-| body-ui | 13/20 | 400 | 0 | **default UI text** |
-| small | 12/16 | 400 | 0 | meta, captions |
-| mono | 12/16 | 400 | 0 (Geist Mono) | dates, shortcuts, slugs, quarter labels |
-| stat | 28/28 | 600 | −0.03em, tnum | stat tiles |
+**Use Tailwind's default type scale; there are no custom size tokens.** This was changed on 2026-09-23 at the user's request: the design's 13px UI text read too small, so we moved to the shadcn and Tailwind defaults. Sizes are fixed rather than responsive, the same as shadcn.
 
-Define each token as a Tailwind v4 `@theme` text size with its line height, letter spacing and weight. For example, `--text-ui: 13px; --text-ui--line-height: 20px`, which gives utilities such as `text-ui`, `text-read`, `text-h1` and `text-stat`. The `body` default is `text-ui`.
+| Role | Classes | Size / line height | Use |
+|---|---|---|---|
+| display | `text-4xl font-semibold tracking-tight` | 36/40 | note and report titles |
+| page title | `text-2xl font-semibold tracking-tight` | 24/32 | page titles, greeting |
+| section | `text-xl font-semibold tracking-tight` | 20/28 | section headings |
+| card title | `text-base font-semibold` | 16/24 | widget and card titles |
+| reading | `text-base leading-7` | 16/28 | editor, journal and report body |
+| **UI (default)** | `text-sm` (set on `body`) | 14/20 | rows, forms, menus, buttons (the shadcn default) |
+| meta | `text-xs` | 12/16 | captions, timestamps, hints |
+| mono | `font-mono text-xs` | 12/16 | dates, shortcuts, slugs, quarter labels |
+| stat | `text-3xl font-semibold tracking-tight tabular-nums` | 30/36 | stat tiles |
+
+Row heights in the layout table assume 14px text. If a row looks cramped, add height rather than shrinking the text.
 
 ## Spacing, radius and elevation
 
@@ -231,7 +233,7 @@ Variants to export: `fadeIn`, `slideUp` (y 6), `listItem` (y 4 with height exit)
 | Data max-width | Dashboard capped at 1080px. Tasks, board and calendar are fluid. |
 | Reading max-width | 680px for the note editor and journal; 760px for reports (two charts side by side). |
 | Right rail | 280–300px for task meta and the note side panel. It becomes a Sheet below 1024px. |
-| Row heights | task row 42 · todo row 40 · nav item 30 · group header 36 |
+| Row heights | task row 44 · todo row 40 · nav item 32 (shadcn sidebar default) · group header 36 |
 | Breakpoints | Below 1024px the right rail becomes a Sheet. Below 768px the sidebar becomes a drawer and rows go two-line. |
 | Print (reports) | No chrome, white paper, always light theme |
 
@@ -242,7 +244,7 @@ Each of these maps to a shadcn primitive.
 - **Space switcher** (DropdownMenu). A 240px panel with rows 32px high. Global comes first (`layers` icon), then the spaces. Each row has a 20px icon tile in `space-soft`, the name, a check on the current space, and a mono shortcut hint (`⌘0`–`⌘9`). A separator, then "New space…" and "Manage spaces…".
 - **Primary button** uses `bg-primary`, which is black in light and white in dark. The accent is not used for buttons.
 - **Filter bar.** An unset filter is a dashed-border chip with an icon and label, e.g. "Status". A set filter is a filled `space-soft` chip with `text-space` and an ✕ to clear it, e.g. "Priority ≥ Medium". The search field sits on the right (180px).
-- **Task row** (42px). Priority icon, status icon, title, then flexible space, then tag pills, the MR icon and the mono due label.
+- **Task row** (44px). Priority icon, status icon, title, then flexible space, then tag pills, the MR icon and the mono due label.
   - Rest: transparent.
   - Hover: `bg-muted`.
   - Keyboard-focused (J/K): `bg-accent` plus an inset 2px accent bar on the left.

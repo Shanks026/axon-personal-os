@@ -66,34 +66,6 @@
   --shadow-xs: 0 1px 2px rgba(16, 16, 24, 0.06);
   --shadow-md: 0 12px 32px rgba(16, 16, 24, 0.1);
   --shadow-lg: 0 30px 80px rgba(16, 16, 24, 0.22);
-
-  /* Type scale: text-display | text-h1 | text-h2 | text-h3 | text-read | text-ui | text-small | text-stat */
-  --text-display: 36px;
-  --text-display--line-height: 44px;
-  --text-display--letter-spacing: -0.03em;
-  --text-display--font-weight: 600;
-  --text-h1: 26px;
-  --text-h1--line-height: 32px;
-  --text-h1--letter-spacing: -0.025em;
-  --text-h1--font-weight: 600;
-  --text-h2: 19px;
-  --text-h2--line-height: 26px;
-  --text-h2--letter-spacing: -0.015em;
-  --text-h2--font-weight: 600;
-  --text-h3: 15px;
-  --text-h3--line-height: 22px;
-  --text-h3--letter-spacing: -0.01em;
-  --text-h3--font-weight: 600;
-  --text-read: 15px;
-  --text-read--line-height: 26px;
-  --text-ui: 13px;
-  --text-ui--line-height: 20px;
-  --text-small: 12px;
-  --text-small--line-height: 16px;
-  --text-stat: 28px;
-  --text-stat--line-height: 28px;
-  --text-stat--letter-spacing: -0.03em;
-  --text-stat--font-weight: 600;
 }
 
 @property --space-accent {
@@ -102,7 +74,8 @@
   initial-value: #8e8e93;
 }
 
-:root {
+:root,
+.light {
   --radius: 10px;
 
   --background: #ffffff;
@@ -294,6 +267,6 @@
     @apply font-sans;
   }
   body {
-    @apply bg-background text-ui text-foreground antialiased;
+    @apply bg-background text-sm text-foreground antialiased;
   }
 }

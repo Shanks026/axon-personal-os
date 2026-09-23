@@ -14,12 +14,12 @@ export function ErrorPage({ code, title, description, trace, actions }) {
         <p className="font-mono text-8xl leading-none font-medium tracking-tighter text-border-strong">
           {code}
         </p>
-        <h1 className="mt-5 text-h2">{title}</h1>
+        <h1 className="mt-5 text-xl font-semibold tracking-tight">{title}</h1>
         {description && (
-          <p className="mt-2 max-w-100 text-h3 font-normal text-muted-foreground">{description}</p>
+          <p className="mt-2 max-w-100 text-base text-muted-foreground">{description}</p>
         )}
         {trace && (
-          <p className="mt-4 rounded-md border bg-muted px-3 py-2 font-mono text-small text-muted-foreground">
+          <p className="mt-4 rounded-md border bg-muted px-3 py-2 font-mono text-xs text-muted-foreground">
             {trace}
           </p>
         )}

@@ -1,9 +1,24 @@
 import { render, screen } from '@testing-library/react'
 import { createMemoryRouter } from 'react-router'
-import { describe, expect, it, vi } from 'vitest'
+import { beforeEach, describe, expect, it, vi } from 'vitest'
 import App from '@/App'
 import RouteErrorPage from '@/features/system/pages/RouteErrorPage'
 import { routes } from '@/routes/router'
+
+const auth = vi.hoisted(() => ({ state: { session: null, user: null, loading: false } }))
+
+vi.mock('@/context/AuthContext', () => ({
+  AuthProvider: ({ children }) => children,
+  useAuth: () => ({ ...auth.state, signOut: async () => {} }),
+}))
+
+const signedIn = () => {
+  const user = { id: 'u1', email: 'me@example.com' }
+  auth.state = { session: { access_token: 't', user }, user, loading: false }
+}
+const signedOut = () => {
+  auth.state = { session: null, user: null, loading: false }
+}
 
 function renderAt(path, routeTree = routes) {
   const router = createMemoryRouter(routeTree, { initialEntries: [path] })
@@ -11,15 +26,11 @@ function renderAt(path, routeTree = routes) {
   return router
 }
 
-describe('router', () => {
+describe('router (signed in)', () => {
+  beforeEach(signedIn)
+
   it.each([
-    ['/login', 'Log in'],
-    ['/signup', 'Sign up'],
-    ['/forgot-password', 'Forgot password'],
-    ['/reset-password', 'Reset password'],
     ['/spaces', 'Spaces'],
-    ['/settings', 'Settings'],
-    ['/settings/preferences', 'Settings'],
     ['/s/thmp/dashboard', 'Dashboard'],
     ['/s/thmp/inbox', 'Inbox'],
     ['/s/thmp/tasks', 'Tasks & Todos'],
@@ -56,6 +67,23 @@ describe('router', () => {
     expect(router.state.location.search).toBe('?tab=todos')
   })
 
+  it.each(['/login', '/signup', '/forgot-password'])(
+    'sends a signed-in user away from %s to /spaces',
+    async (path) => {
+      const router = renderAt(path)
+      expect(await screen.findByRole('heading', { name: 'Spaces' })).toBeInTheDocument()
+      expect(router.state.location.pathname).toBe('/spaces')
+    },
+  )
+
+  it('shows the reset form for a recovery session', async () => {
+    renderAt('/reset-password')
+    expect(
+      await screen.findByRole('heading', { name: 'Choose a new password' }),
+    ).toBeInTheDocument()
+    expect(screen.getByText('For me@example.com')).toBeInTheDocument()
+  })
+
   it('renders NotFoundPage for unknown URLs', async () => {
     renderAt('/definitely/not/here')
     expect(await screen.findByRole('heading', { name: 'Nothing here' })).toBeInTheDocument()
@@ -71,5 +99,36 @@ describe('router', () => {
       await screen.findByRole('heading', { name: 'Something broke on our side' }),
     ).toBeInTheDocument()
     expect(screen.getByText(/^ref /)).toBeInTheDocument()
+  })
+})
+
+describe('router (signed out)', () => {
+  beforeEach(signedOut)
+
+  it.each(['/', '/spaces', '/settings', '/s/thmp/tasks'])(
+    'redirects %s to /login and remembers where it was going',
+    async (path) => {
+      const router = renderAt(path)
+      expect(await screen.findByRole('heading', { name: 'Welcome back' })).toBeInTheDocument()
+      expect(router.state.location.pathname).toBe('/login')
+      expect(router.state.location.state?.from?.pathname).toBe(path)
+    },
+  )
+
+  it.each([
+    ['/signup', 'Create your account'],
+    ['/forgot-password', 'Reset your password'],
+    ['/reset-password', 'This link has expired'],
+    ['/auth/callback', 'That link didn’t work'],
+  ])('%s renders without a session', async (path, title) => {
+    renderAt(path)
+    expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument()
+  })
+
+  it('shows the splash, not /login, while the session is loading', async () => {
+    auth.state = { session: null, user: null, loading: true }
+    const router = renderAt('/spaces')
+    expect(await screen.findByRole('status')).toHaveTextContent('Syncing your spaces')
+    expect(router.state.location.pathname).toBe('/spaces')
   })
 })

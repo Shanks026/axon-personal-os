@@ -1,6 +1,9 @@
 import '@testing-library/jest-dom/vitest'
-import { cleanup } from '@testing-library/react'
+import { cleanup, configure } from '@testing-library/react'
 import { afterEach } from 'vitest'
+
+// Lazy route chunks can take >1s to import when the whole suite runs in parallel.
+configure({ asyncUtilTimeout: 3000 })
 
 afterEach(() => cleanup())
 
@@ -24,3 +27,10 @@ if (!window.ResizeObserver) {
     disconnect() {}
   }
 }
+// Radix Select / Popover pointer APIs
+if (!Element.prototype.hasPointerCapture) {
+  Element.prototype.hasPointerCapture = () => false
+  Element.prototype.setPointerCapture = () => {}
+  Element.prototype.releasePointerCapture = () => {}
+}
+if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {}

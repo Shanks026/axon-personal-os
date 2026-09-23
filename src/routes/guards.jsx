@@ -1,15 +1,26 @@
-import { Navigate, Outlet, useParams } from 'react-router'
+import { Navigate, Outlet, useLocation, useParams } from 'react-router'
 import { paths } from '@/lib/paths'
+import { useAuth } from '@/context/AuthContext'
+import { Splash } from '@/components/shared/Splash'
 
-// Stubs. Feature 02 adds the session checks, and Feature 03 adds space resolution and last-space memory.
-
-/** Protected routes. Feature 02: splash while loading, redirect to /login without a session. */
+/** Protected routes: a splash while the session resolves, then /login if there's no session. */
 export function RequireAuth() {
+  const { session, loading } = useAuth()
+  const location = useLocation()
+  if (loading) return <Splash />
+  if (!session) return <Navigate to={paths.login()} state={{ from: location }} replace />
   return <Outlet />
 }
 
-/** Auth pages. Feature 02: redirect signed-in users to /. */
+/**
+ * Auth pages. A signed-in user goes where they were heading (`state.from`), else /spaces.
+ * This is also how successful login and signup navigate: the session appears and this redirects.
+ */
 export function PublicOnly() {
+  const { session, loading } = useAuth()
+  const location = useLocation()
+  if (loading) return <Splash />
+  if (session) return <Navigate to={location.state?.from ?? paths.spaces()} replace />
   return <Outlet />
 }
 

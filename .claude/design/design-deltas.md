@@ -37,7 +37,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
 
 ## Per feature
 
-### 02 Auth and Settings
+### 02 Auth and Settings (✅ folded: auth into Phase 1, settings into Phase 2)
 - **Adopt:**
   - Signup has Name, Email and Password, with **no confirm field**. The password minimum is **10**.
   - The inline login error reads "That password doesn't match this email."

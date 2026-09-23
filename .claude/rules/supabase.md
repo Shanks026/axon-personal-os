@@ -19,6 +19,15 @@ The full schema is in `.claude/docs/data-model.md`. Keep it in sync with every m
 
 Never edit a migration that has already been applied. Write a new one.
 
+**If the MCP tools aren't loaded** (for example, the server was added mid-session), use the Supabase Management API with the same access token, which is the API the MCP wraps:
+- `POST /v1/projects/{ref}/database/migrations` with `{ name, query }` (records history like `apply_migration`)
+- `POST /database/query` with `{ query }`
+- `GET /advisors/security`
+
+The token lives in the local Claude config. Never print it, pass it on a command line that gets echoed, or commit it. Name the mirror file after the server-assigned version from `supabase_migrations.schema_migrations`.
+
+**Test data:** verify triggers and RLS inside a transaction that is rolled back. If a test row does get committed, delete it straight away and say so.
+
 ## Table template
 
 ```sql
