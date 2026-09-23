@@ -260,6 +260,7 @@ Each of these maps to a shadcn primitive.
 ## Rules
 
 - **Colours** come only from tokens and utilities, never raw hex. The one exception is the accent table in `index.css`.
+- **Arbitrary values** (`w-[437px]`, `rotate-[3deg]`) are not allowed. Tailwind **attribute and state variants** are fine, because they don't introduce new values. Examples: `data-[state=open]:`, `group-data-[collapsible=icon]:`, `aria-[invalid=true]:`, `has-[>svg]:`.
 - **Space-coloured UI** uses `--space-accent` or `--space-soft`. Per-item colours (tags, spaces in Global) go through the tint helper.
 - **Motion** values come only from `presets.js`, or the CSS variables that mirror it.
 - **Test both themes.** Every component must work in light and dark before it counts as done.

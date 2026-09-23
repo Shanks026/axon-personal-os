@@ -17,7 +17,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | **Wave 1: Core** | | | | |
 | 01 | Foundation: scaffold, tooling, app skeleton | [01-foundation.md](01-foundation.md) | none | ✅ Complete |
 | 02 | Auth, Profile and Preferences (incl. fiscal year setting) | [02-auth-and-settings.md](02-auth-and-settings.md) | 01 | ✅ Complete |
-| 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | 🟡 Phase 1 ✅ · Phase 2 next |
+| 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | ✅ Complete |
 | **Wave 2: Capture** | | | | |
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | 🔵 Planned |
 | 05 | Todos: tab inside the Tasks & Todos module, plus task checklists | [05-todos.md](05-todos.md) | 04 | 🔵 Planned (restructure per delta G1 before building) |
@@ -110,6 +110,20 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-23: Feature 03 Phase 2: app shell and Global (Feature 03 complete)
+- **`/s/:spaceSlug/*` renders the shell:**
+  - A 240px sidebar (56px rail, persisted, a sheet on mobile).
+  - The space switcher (Global first; New and Manage spaces), stub Search and Quick capture buttons, and the nav with Tasks & Todos merged.
+  - A Pinned placeholder, and a footer with Trash, Settings and the user row.
+  - A 48px breadcrumb header, and page transitions.
+- **`SpaceContext`** (`useSpace`: `scopeSpaceIds`, `isGlobal`, `spaceById`) is resolved by `SpaceBoundary`. Unknown or archived slugs get friendly 404s.
+- **Last space:** remembered per device (Global too) and on the profile. `/` returns there, and Settings Back goes there.
+- **Space accent** is on `<html data-space-color>`, with the cross-fade.
+- **New shared pieces:** the layout components, `useLocalStorage`, `PageHeaderContext`, and the space hooks.
+- **Rules updated:** routing (the shell animates pages; the accent is on `<html>`), the design system (attribute variants are OK), and the oxlint `*Context.jsx` override.
+- **Tests:** 139. No database changes.
+- **Manual steps:** none. Worth a browser check: collapsing the sidebar and using the switcher.
 
 ### 2026-09-23: Feature 03 Phase 1: spaces gallery
 - **Migration `20260923171644_create_spaces`:** the `spaces` table (slug unique per user, `global` reserved), owner RLS, and the `profiles.last_space_id` FK. Verified in a rolled-back transaction, and advisors are clean.

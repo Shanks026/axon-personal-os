@@ -129,8 +129,6 @@ describe('SpacesPage', () => {
       description: null,
       position: 1000,
     })
-    // last_space_id remembered
-    expect(db.calls.some((c) => c[0] === 'update' && c[1] === 'profiles')).toBe(true)
   })
 
   it('lists Global first, then spaces in order, with archived ones collapsed', async () => {

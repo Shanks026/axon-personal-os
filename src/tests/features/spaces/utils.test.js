@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { spaceSchema } from '@/features/spaces/schemas'
-import { reorderPosition, slugify, splitSpaces, uniqueSlug } from '@/features/spaces/utils'
+import {
+  reorderPosition,
+  sectionFromPath,
+  slugify,
+  splitSpaces,
+  uniqueSlug,
+} from '@/features/spaces/utils'
 
 describe('slugify', () => {
   it('turns names into URL-safe slugs', () => {
@@ -98,5 +104,19 @@ describe('reorderPosition', () => {
     expect(reorderPosition(list, 'a', 'a')).toBeNull()
     expect(reorderPosition(list, 'a', null)).toBeNull()
     expect(reorderPosition(list, 'x', 'a')).toBeNull()
+  })
+})
+
+describe('sectionFromPath', () => {
+  it('keeps the section and drops detail segments', () => {
+    expect(sectionFromPath('/s/thmp/tasks')).toBe('tasks')
+    expect(sectionFromPath('/s/thmp/tasks/abc')).toBe('tasks')
+    expect(sectionFromPath('/s/global/journal/2026-09-23')).toBe('journal')
+  })
+
+  it('falls back to the dashboard', () => {
+    expect(sectionFromPath('/s/thmp')).toBe('dashboard')
+    expect(sectionFromPath('/spaces')).toBe('dashboard')
+    expect(sectionFromPath('/s/thmp/todos')).toBe('dashboard')
   })
 })

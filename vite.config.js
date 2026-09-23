@@ -21,6 +21,8 @@ export default defineConfig(({ mode }) => {
     test: {
       environment: 'jsdom',
       setupFiles: ['src/tests/setup.js'],
+      // userEvent typing through dialogs is slow in jsdom under the parallel suite.
+      testTimeout: 15000,
       css: false,
       // .env.local is not loaded in test mode; tests use a fake project and mock auth.
       env: {

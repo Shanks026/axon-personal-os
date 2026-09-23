@@ -57,6 +57,10 @@ Inside the app shell, use `useSpacePaths()`, which binds the current slug: `cons
 
 ## Page conventions
 
-- Each page calls `usePageHeader({ title, breadcrumbs?, actions? })` from `@/components/layout/PageHeaderContext`.
-- Wrap page content in `<PageTransition>` from `@/components/motion`. The layout's outlet is keyed by pathname so page transitions play.
+- Each page inside the shell calls `usePageHeader({ title, actions? })` from `@/components/layout/PageHeaderContext`.
+  - The breadcrumb (space › title) comes from the space context, so pages only pass their own title.
+  - Keep `actions` stable (memoise, or define the JSX once) when it holds heavy content.
+- **Pages inside the shell don't animate themselves.** `AppLayout` wraps the outlet (keyed by pathname) in the page transition.
+- Full-screen pages outside the shell (`/spaces`, `/settings`, auth) animate their own content.
+- **The space accent lives on `<html data-space-color>`,** set by `AppLayout`, so portalled menus and dialogs inherit it. Global uses `slate`.
 - Filters, view mode and dates go in search params (see `data-and-hooks.md`). Use `replace: true` when a param changes while typing.

@@ -191,7 +191,10 @@ export function useTaskFilters() {
 | `EmptyState` | `components/shared/EmptyState.jsx` | 01 |
 | `ConfirmDialog` | `components/shared/ConfirmDialog.jsx` | 01 |
 | `PageTransition`, `presets` | `components/motion/` | 01 |
-| `PageHeader` + `usePageHeader` | `components/layout/` | 03 |
+| `AppLayout`, `AppSidebar`, `SpaceSwitcher`, `PageHeader` + `usePageHeader` | `components/layout/` | 03 |
+| `useLocalStorage` + `storage` | `hooks/` | 03 |
+| `useSpace` / `useOptionalSpace` (SpaceContext) | `context/` | 03 |
+| `useSpacePaths`, `useSwitchSpace`, `useLastSpace`, `useRememberSpace` | `features/spaces/hooks/` | 03 |
 | `SpaceBadge`, `SpaceIcon`, `spaceIconMap` | `components/shared/` | 03 |
 | `UserMenu` | `components/layout/` | 03 (gallery header; sidebar in Phase 2) |
 | `SpacePickerField` | `components/shared/` | 04 (first Global create dialog) |

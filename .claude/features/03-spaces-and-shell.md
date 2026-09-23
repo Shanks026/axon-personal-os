@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/03-spaces-and-shell.md`
-**Status**: 🟡 Phase 1 ✅ · Phase 2 next
+**Status**: ✅ Complete
 **Depends on**: 02
 **Last Updated**: September 2026
 
@@ -162,7 +162,7 @@ src/components/shared/
 
 ---
 
-## Phase 2: App Shell and Global
+## Phase 2: App Shell and Global ✅ Complete
 
 ### Goal
 `/s/:spaceSlug/*` renders the app layout:
@@ -235,16 +235,53 @@ src/features/<section>/pages/*Page.jsx  # placeholders now call usePageHeader + 
 - Command palette and shortcuts (12); quick capture (13); pinned items (14)
 
 ### 2.7 Checklist: Before Marking Complete
-- [ ] `/s/<slug>/tasks` renders the layout with the Tasks placeholder showing `scopeSpaceIds` (dev-only debug line)
-- [ ] `/s/global/tasks` has `isGlobal = true`, and `scopeSpaceIds` equals all active space ids
-- [ ] An unknown or archived slug shows the not-found state with a link to `/spaces`
-- [ ] Switching space keeps the section; switching from a detail route falls back to the list
-- [ ] `/` goes to the last used space; with zero spaces it goes to `/spaces`
-- [ ] The sidebar collapses to icons, persists, and works as a sheet on mobile widths
-- [ ] Page transitions play on section change, and nothing animates on the first paint
-- [ ] `usePageHeader` sets the title and breadcrumbs on every placeholder
-- [ ] `npm run lint`, `npm test` and `npm run build` pass; `axon-rules` is clean
-- [ ] `00-index.md` status, changelog and new shared components are updated (also in `axon-data-patterns.md` §10)
+- [x] `/s/<slug>/tasks` renders the layout with the Tasks placeholder, and its dev-only line shows the scope ("Space · 1 in scope")
+- [x] `/s/global/tasks` has `isGlobal = true`, and `scopeSpaceIds` equals all active space ids. The breadcrumb reads "Global · N spaces" (router test).
+- [x] An unknown slug shows "No space here" and an archived one "<name> is archived", each with Back to spaces. Global with no spaces also gets a 404 (router tests).
+- [x] Switching space keeps the section, and from a detail route (`tasks/t1`) falls back to the list (router test, and a `sectionFromPath` unit test)
+- [x] `/` goes to the last used space: this device's slug (Global included), then the profile, then the first active space. With zero spaces it goes to `/spaces` (router tests).
+- [x] The sidebar collapses to a 56px icon rail with tooltips. Its state persists in `localStorage['axon:sidebar-open']`, and it becomes a sheet on mobile (shadcn). **A real-browser check is still needed.**
+- [x] Page transitions play on section change (AppLayout, `AnimatePresence mode="wait" initial={false}`), and nothing animates on the first paint
+- [x] `usePageHeader` sets the title on every section page, and the breadcrumb is space › title
+- [x] `npm run lint`, `npm test` (139 tests) and `npm run build` pass; `axon-rules` is clean
+- [x] `00-index.md` status, changelog and new shared components are updated (also in `axon-data-patterns.md` §10)
+
+### Implementation Notes (Phase 2)
+- **Adopted from delta 03 (sidebar) and G4:**
+  - Sidebar is 240px (56px rail).
+  - The switcher has a 24px accent tile, and its menu lists Global first, then spaces with checkmarks, then "New space…" and "Manage spaces…".
+  - A bordered **Search ⌘K** button and a **Quick capture ⌘J** button. Both are stubs that show a "arrives with Feature 12/13" toast.
+  - Nav: Dashboard, Inbox, Tasks & Todos, Notes, Journal, Calendar, Reports. The active item's icon uses the space accent.
+  - A Pinned group with an empty-state hint (Feature 14).
+  - The footer has Trash, Settings, and a user row (initials, name, theme icon) that opens `UserMenu`.
+  - A 48px header: sidebar toggle, then space › title breadcrumbs, then actions.
+- **Deviations:**
+  - The design's switcher shortcut hints (⌘0–⌘9) and the Inbox badge aren't shown yet. They arrive with Features 12 and 13.
+  - The sidebar toggle shortcut is still shadcn's ⌘B. Feature 12 remaps it to ⌘\\.
+- **Last space** (`features/spaces/hooks/useLastSpace.js`):
+  - `SpaceBoundary` records every space you enter, in `localStorage['axon:lastSpaceSlug']` and, for real spaces, in `profiles.last_space_id`.
+  - **Resolution order changed from the plan:** this device's slug comes first, because it's the most recent and can be Global. The profile comes second (cross-device), then the first active space.
+  - The gallery no longer writes the last space itself.
+  - Settings' Back is now "Back to <last space>".
+- **Accent:** `AppLayout` sets `data-space-color` on `<html>` rather than on the shell div, so portalled dropdowns and dialogs pick it up. The `@property` cross-fade applies. Global uses `slate`.
+- **Transitions:** `AppLayout` animates the outlet with `useOutlet()` inside `AnimatePresence mode="wait"`, so pages don't wrap themselves. `routing.md` is updated.
+- **Page header:** `PageHeaderContext` is split into a stable setter context and a state context, so `usePageHeader` never re-renders the page.
+- **New files:**
+  - `context/SpaceContext.jsx` (`SpaceProvider`, `useSpace`, `useOptionalSpace`)
+  - `hooks/useLocalStorage.js` (with guarded `storage` helpers)
+  - `components/layout/`: `AppLayout`, `AppSidebar`, `SpaceSwitcher`, `PageHeader`, `PageHeaderContext`, `navItems`
+  - `features/spaces/hooks/`: `useLastSpace`, `useSpacePaths`, `useSwitchSpace`
+  - `sectionFromPath` in spaces utils
+  - `PlaceholderPage`, now shell-aware
+- **Rules updated:**
+  - `routing.md`: pages don't animate themselves, and the accent is on `<html>`.
+  - `design-system.md`: attribute variants are allowed.
+  - oxlint: the `*Context.jsx` override.
+- **Tests:**
+  - Router: last space, gallery fallback, shell rendering, switching, and the 404s.
+  - The query cache is cleared between tests, because the app's `queryClient` is a singleton.
+  - `testTimeout` is 15s, because typing into dialogs under the parallel suite is slow.
+- **Bundle:** now that pages are lazy chunks, the >500 kB warning is gone. The entry chunk is 439 kB (136 kB gzipped). No manual chunking needed yet.
 
 **Stop here. Show the result and wait for approval.**
 

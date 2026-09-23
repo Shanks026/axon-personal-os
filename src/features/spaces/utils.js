@@ -52,3 +52,11 @@ export function reorderPosition(spaces, activeId, overId) {
   next.splice(to, 0, moved)
   return positionBetween(next[to - 1]?.position ?? null, next[to + 1]?.position ?? null)
 }
+
+const SECTIONS = ['dashboard', 'inbox', 'tasks', 'notes', 'journal', 'calendar', 'reports', 'trash']
+
+/** The section segment of an app-shell path ("/s/thmp/tasks/123" → "tasks"); defaults to dashboard. */
+export function sectionFromPath(pathname) {
+  const segment = pathname.split('/')[3]
+  return SECTIONS.includes(segment) ? segment : 'dashboard'
+}

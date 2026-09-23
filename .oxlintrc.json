@@ -48,7 +48,7 @@
       }
     },
     {
-      "files": ["src/context/**"],
+      "files": ["src/context/**", "src/**/*Context.jsx"],
       "rules": {
         "react/only-export-components": "off"
       }

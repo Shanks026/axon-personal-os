@@ -6,7 +6,7 @@ import { GLOBAL_SLUG, paths } from '@/lib/paths'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { useSetLastSpace, useSpaces, useUpdateSpace } from '@/features/spaces/api'
+import { useSpaces, useUpdateSpace } from '@/features/spaces/api'
 import { ArchivedSpaces } from '@/features/spaces/components/ArchivedSpaces'
 import { DeleteSpaceDialog } from '@/features/spaces/components/DeleteSpaceDialog'
 import { GalleryHeader } from '@/features/spaces/components/GalleryHeader'
@@ -21,7 +21,6 @@ export default function SpacesPage() {
   const navigate = useNavigate()
   const { data: spaces, isLoading, error, refetch } = useSpaces()
   const update = useUpdateSpace()
-  const setLastSpace = useSetLastSpace()
   const [dialog, setDialog] = useState({ open: false, space: null })
   const [deleting, setDeleting] = useState(null)
 
@@ -50,7 +49,6 @@ export default function SpacesPage() {
 
   const cardProps = (space) => ({
     to: paths.space(space.slug).dashboard(),
-    onOpen: () => setLastSpace(space.id),
     onEdit: () => setDialog({ open: true, space }),
     onArchive: () => toggleArchive(space),
     onDelete: () => setDeleting(space),
@@ -110,11 +108,8 @@ export default function SpacesPage() {
         space={dialog.space}
         onOpenChange={(open) => setDialog((d) => ({ ...d, open }))}
         onSuccess={(row) => {
-          // First space ever: go straight in (Phase 2 shell).
-          if (!spaces?.length) {
-            setLastSpace(row.id)
-            navigate(paths.space(row.slug).dashboard())
-          }
+          // First space ever: go straight in. SpaceBoundary records it as the last space.
+          if (!spaces?.length) navigate(paths.space(row.slug).dashboard())
         }}
       />
       <DeleteSpaceDialog
