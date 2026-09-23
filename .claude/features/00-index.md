@@ -19,7 +19,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 02 | Auth, Profile and Preferences (incl. fiscal year setting) | [02-auth-and-settings.md](02-auth-and-settings.md) | 01 | ✅ Complete |
 | 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | ✅ Complete |
 | **Wave 2: Capture** | | | | |
-| 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | 🔵 Planned |
+| 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | 🟡 Phase 1 ✅ · Phase 2 next |
 | 05 | Todos: tab inside the Tasks & Todos module, plus task checklists | [05-todos.md](05-todos.md) | 04 | 🔵 Planned (restructure per delta G1 before building) |
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | 🔵 Planned |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🔵 Planned |
@@ -80,7 +80,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `set_updated_at()`, `pg_trgm` | 02 | ✅ | Shared trigger function and extension |
 | `profiles` + `handle_new_user()` trigger | 02 | ✅ | 1:1 with auth.users; `fy_start_month` default 4. Migration `20260923164417`; `handle_new_user` execute revoked |
 | `spaces` | 03 | ✅ | `unique(user_id, slug)`; slug `global` reserved. Migration `20260923171644`, plus the `profiles.last_space_id` FK. `icon` is an emoji (`20260923180401`) |
-| `tasks` (+ completed_at trigger) | 04 | ⬜ | Six statuses, five priorities, fractional `position` |
+| `tasks` (+ completed_at trigger) | 04 | ✅ | Six statuses, five priorities, fractional `position`. Migration `20260923181804` |
 | `tags`, `task_tags` | 04 | ⬜ | Tag `space_id` NULL means available in all spaces |
 | `todos` (+ cascade triggers) | 05 | ⬜ | `task_id` set means a checklist item |
 | `notes`, `note_tags` | 06 | ⬜ | Tiptap JSON plus `content_text`; generated `excerpt` (280 characters) for list cards |
@@ -111,6 +111,21 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-23: Feature 04 Phase 1: Tasks & Todos page (grid and list)
+- **Migration `20260923181804_create_tasks`:**
+  - The `tasks` table, with statuses, priorities, dates, link, position, soft delete and a tsvector column.
+  - The `completed_at` trigger and owner RLS.
+  - Verified in a rolled-back transaction.
+- **`/s/:slug/tasks`, built to design 04a–04f with the G1–G3 fold:**
+  - Header title plus a count; tabs (All, Tasks, In progress, Completed) with live counts.
+  - Toolbar: search plus Status, Priority and Due filters, and a Grid/List switch.
+  - A card grid (the default) and a status-grouped list.
+  - The Linear-style `TaskDialog`: space chip, title, description, property chips, Create more.
+  - Optimistic status and priority changes, Trash with Undo, and an "N overdue · Review" header alert.
+- **New shared components:** `TintPill`, `DotPill`, `DueLabel`, `PropertyChip`, `HeaderAlert`, `DatePicker` and `SpaceChipPicker`.
+- **Tests:** 165.
+- **Manual (optional):** Supabase flagged **leaked password protection** as off. You can enable it under Auth → Providers → Email.
 
 ### 2026-09-23: Destructive actions use the shadcn destructive variant
 - `ConfirmDialog`'s confirm button, the Settings Sign out button, and the account menu's Sign out item use `variant="destructive"` (the user's request). The custom `bg-destructive text-white` override is removed.

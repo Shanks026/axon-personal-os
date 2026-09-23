@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/04-tasks.md`
-**Status**: 🔵 Planned
+**Status**: 🟡 Phase 1 ✅ · Phase 2 next
 **Depends on**: 03
 **Last Updated**: September 2026
 
@@ -31,7 +31,32 @@ Phase 3: Tags
 
 ---
 
-## Phase 1: Core List
+## Phase 1: Core (grid and list) ✅ Complete
+
+### Design fold (deltas G1–G3 and 04/05, folded on 2026-09-23). This overrides the spec below where they differ.
+- **Page = "Tasks & Todos"** (G1).
+  - The header shows the title with a weight-300 count, and a subtitle (the space description, or "Everything across …" in Global).
+  - Header actions: **New task**. **New todo** arrives with Feature 05.
+  - `HeaderAlert` in the page header: "N overdue · Review" applies `due=overdue`.
+- **Tabs** (`?tab=`): **All · Tasks · In progress · Completed**, each with a count. The **Todos** tab arrives with 05.
+  - All: every task.
+  - In progress: `in_progress` and `in_review`.
+  - Completed: `done`.
+  - Tabs and the status filter apply on the client over one scoped query, so all the counts stay live.
+- **Toolbar:** a 340px search on the left. On the right: Status, Priority and Due filter buttons (Tags in Phase 3), then a **view `SegmentedControl`**: Grid (default), List, and Board (Phase 2).
+- **Grid view (default)** (G2): 3-column `TaskCard`s.
+  - Top row: a filled status pill (click to change), an outlined priority pill, an MR link chip, and a `⋮` menu.
+  - Then the title (16px/600), a 2-line description preview, and a dashed-top footer with the space (emoji and name) plus a mono due label in its tone.
+  - Clicking the card opens the edit dialog (the detail page comes in 07).
+- **List view:** the original grouped `TaskRow` spec below, with the "Done" label now "Completed" (G3).
+- **TaskDialog** (delta 04, a Linear-style 640px panel):
+  - A space chip plus "› New task".
+  - A large borderless title and an **"Add description…"** textarea. The text saves as `description_text`, and as a Tiptap doc with one paragraph per line in `description`.
+  - **Property chips:** Status, Priority, Start, Due and Link (Tags in Phase 3).
+  - Footer: a **Create more** switch (keeps the dialog open and clears the title), plus Create task with ⌘↵.
+  - The space chip is always shown and editable. It defaults to the current space.
+- **Status and priority visuals** follow `design-system.md`: filled tint pills for status and outlined dot pills for priority. Label changes: "Done" becomes "Completed" and "No priority" becomes "None".
+- **New shared components** (G7): `StatusPill`, `PriorityPill`, `PropertyChip`, `HeaderAlert`, `DueLabel`, `DatePicker`, and `SpaceChipPicker` (replacing the `SpacePickerField` plan).
 
 ### Goal
 At `/s/:slug/tasks` the user sees their tasks grouped by status in collapsible groups with counts. They can create and edit a task (title, status, priority, start and due dates, external link, and a space when in Global), change status from the row in one click, filter by status, priority, due window and a title search (all in the URL, so filtered views are shareable and survive reloads), and delete a task with an Undo toast. In Global every row shows its space badge.
@@ -211,20 +236,45 @@ src/components/shared/
 - Pin and unpin UI (14); recurring tasks (16); bulk actions and multi-select (backlog)
 
 ### 1.7 Checklist: Before Marking Complete
-- [ ] `create_tasks` is applied and mirrored; the `completed_at` and date-order checks are verified; advisors are clean
-- [ ] Tasks group by status in the defined order; groups collapse with counts; collapsed state persists
-- [ ] Create and edit work in a space and in Global (Global requires a space and rows show `SpaceBadge`)
-- [ ] `TaskDialog` prefills from `initialValues`, calls `onSuccess(row)`, and works when mounted outside `TasksPage` (verified with a temporary mount or a component test)
-- [ ] `restoreTask` / `useRestoreTask` are exported
-- [ ] Status and priority changes from the row are instant (optimistic) and roll back with an error toast when offline
-- [ ] Every filter and the search live in the URL; reload restores them; Clear resets
-- [ ] Due filters return correct rows for overdue, today, this week (per the week-start preference) and none
-- [ ] Delete shows the Undo toast and Undo restores the row
-- [ ] Loading, error, empty and filtered-empty states render as specified
-- [ ] Tests: `groupTasksByStatus`, `weekEndISO` (both week starts), `taskSchema` date refine
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` DB registry, status and changelog (new shared `DatePicker`, `DatePickerField`, `SpacePickerField`) are updated; `axon-data-patterns.md` §10 lists them
+- [x] `create_tasks` is applied (`20260923181804`) and mirrored. Verified in a rolled-back transaction:
+  - Setting done stamps `completed_at`, and reopening clears it.
+  - Start after due is rejected.
+  - A task can't be put in another user's space (composite FK).
+  - RLS isolates users.
+  - Advisors show nothing new from the migration.
+- [x] **Grid (default):** cards with a status pill, priority pill, MR chip, menu, description preview, and a space and due footer.
+- [x] **List:** status groups in order, which collapse with counts; the collapsed state persists.
+- [x] Tabs All / Tasks / In progress / Completed have live counts, and the tab is in the URL (tests)
+- [x] Create and edit work through the Linear-style dialog. The space chip is always editable. Create more keeps the dialog open (test).
+- [x] `TaskDialog` accepts `initialValues` and `onSuccess(row)`, and depends only on SpaceContext, so it mounts standalone (verified by construction; a `GlobalDialogs` mount comes in Feature 12)
+- [x] `restoreTask` / `useRestoreTask` are exported
+- [x] Status and priority changes from cards and rows are optimistic, and roll back with an error toast (test for the save)
+- [x] Filters (status, priority, due, search, tab, view) live in the URL; reload restores them; Clear resets. The view is also remembered per device (test).
+- [x] Due filters run on the server for overdue, today, this week (per the week-start preference) and none. Closed tasks are windowed to 30 days except on the Completed tab.
+- [x] Delete shows the Undo toast, and Undo restores the task (test)
+- [x] Loading (card or row skeletons), error, first-run empty and filtered-empty states render
+- [x] Tests: `groupTasksByStatus`, `weekEndISO` (both week starts), `filterTasks` / `tabCounts`, `textToDoc`, `linkHost`, `taskSchema`, plus 8 page tests
+- [x] `npm run lint`, `npm test` (165 tests) and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` DB registry, status and changelog are updated; `axon-data-patterns.md` §10 lists the new shared components
+
+### Implementation Notes (Phase 1)
+- **The design fold above replaced the list-first plan.** The grid is the default, the list is the dense option, and the board is still Phase 2. The Todos tab and New todo arrive with 05.
+- **Filtering is split** between server and client:
+  - The server handles priority, due window, search and the closed-task window.
+  - The client handles the tab and status filter, over the same result. This keeps every tab count live without extra queries, which is fine at personal scale.
+  - `allClosed` turns off the 30-day window on the Completed tab, or when a closed status is filtered.
+- **The description** is a plain textarea (`field-sizing-content`). It saves as `description_text`, plus a one-paragraph-per-line Tiptap doc in `description`, ready for the rich editor in 07.
+- **Shared components added** to `components/shared`:
+  - `TintPill` / `DotPill`: the status and priority recipes.
+  - `DueLabel`: tones plus "Completed 18 Sep".
+  - `PropertyChip`, `HeaderAlert`, `DatePicker` (quick chips plus the shadcn Calendar, with week start from preferences) and `SpaceChipPicker`.
+  - `SpacePickerField` / `DatePickerField` weren't needed: the chips replace them.
+- **Tasks feature pieces:**
+  - `TaskPills` (status/priority pills and icons), `TaskMenus` (StatusMenu, PriorityMenu, TaskActionsMenu), `TaskCard`, `TaskRow`, `TaskViews` (TaskGrid, TaskList), `TaskTabs` (a sliding underline), `TaskToolbar` and `TasksSkeleton`.
+  - The hooks `useTaskFilters` and `useTaskActions` (optimistic set and delete with Undo).
+- **The header alert** "N overdue · Review" appears when any task is overdue and applies `due=overdue`.
+- **Advisor note:** Supabase now reports `auth_leaked_password_protection`, an Auth setting. The user can enable it under Auth → Providers → Email → Leaked password protection (Pro plan feature).
 
 **Stop here. Show the result and wait for approval.**
 

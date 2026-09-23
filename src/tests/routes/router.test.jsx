@@ -74,9 +74,10 @@ describe('router (signed in)', () => {
     ['/s/thmp/reports', 'Reports'],
     ['/s/thmp/reports/r1', 'Report'],
     ['/s/thmp/trash', 'Trash'],
-  ])('%s renders its placeholder', async (path, title) => {
+  ])('%s renders its page', async (path, title) => {
     renderAt(path)
-    expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument()
+    // Level 1 is the shell breadcrumb title; some pages also repeat it as a large heading.
+    expect(await screen.findByRole('heading', { level: 1, name: title })).toBeInTheDocument()
   })
 
   it('redirects / to the first space when nothing is remembered', async () => {
@@ -150,7 +151,9 @@ describe('router (signed in)', () => {
 
   it('redirects todos to the Todos tab of Tasks & Todos', async () => {
     const router = renderAt('/s/thmp/todos')
-    expect(await screen.findByRole('heading', { name: 'Tasks & Todos' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { level: 1, name: 'Tasks & Todos' }),
+    ).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/s/thmp/tasks')
     expect(router.state.location.search).toBe('?tab=todos')
   })

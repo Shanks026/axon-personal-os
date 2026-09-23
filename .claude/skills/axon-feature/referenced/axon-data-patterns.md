@@ -197,11 +197,10 @@ export function useTaskFilters() {
 | `useSpacePaths`, `useSwitchSpace`, `useLastSpace`, `useRememberSpace` | `features/spaces/hooks/` | 03 |
 | `SpaceBadge`, `SpaceIcon`, `spaceIconMap` | `components/shared/` | 03 |
 | `UserMenu` | `components/layout/` | 03 (gallery header; sidebar in Phase 2) |
-| `SpacePickerField` | `components/shared/` | 04 (first Global create dialog) |
 | `SegmentedControl` | `components/shared/` | 02 (week start; later view toggles) |
 | `SaveIndicator` | `components/shared/` | 02 (settings; later the editors) |
-| `TagPicker`, `TagPill`, `ManageTagsDialog` | `components/shared/` | 04 |
-| `DatePicker`, `DatePickerField` | `components/shared/` | 04 |
+| `TintPill`, `DotPill`, `DueLabel`, `PropertyChip`, `HeaderAlert`, `DatePicker`, `SpaceChipPicker` | `components/shared/` | 04 Phase 1 |
+| `TagPicker`, `TagPill`, `ManageTagsDialog` | `components/shared/` | 04 Phase 3 |
 | `RichTextEditor` | `components/editor/` | 06 |
 | `EntityLink` (task/note chip with hover preview) | `components/shared/` | 07 |
 

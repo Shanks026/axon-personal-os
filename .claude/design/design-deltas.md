@@ -72,7 +72,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
   - Then Pinned, then a footer with Trash, Settings, and a user row (initials, name, theme icon).
 - **Gallery layout:** max-width 1040, 3 columns, gap 16, cards min-height 176.
 
-### 04 / 05 Tasks and Todos (restructured by G1 and G2)
+### 04 / 05 Tasks and Todos (restructured by G1 and G2) (✅ 04 items folded into 04 Phase 1; board items at Phase 2; todo items at 05)
 - **Adopt:**
   - The header has **New todo** (secondary) and **New task** (primary), and a count in weight 300.
   - The toolbar has a 340px search on the left. On the right: Status, Priority, Tags and Due dropdowns, plus the view segmented control.
