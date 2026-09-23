@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/01-foundation.md`
-**Status**: ✅ Complete (initial commit waiting on approval)
+**Status**: ✅ Complete
 **Depends on**: none
 **Last Updated**: September 2026
 
@@ -28,7 +28,7 @@ Phase 2: App skeleton
 
 ---
 
-## Phase 1: Scaffold and Tooling ✅ Complete (initial commit waiting on approval)
+## Phase 1: Scaffold and Tooling ✅ Complete
 
 ### Goal
 `npm run dev` serves a blank Axon page styled by Tailwind v4, with shadcn initialised. `npm run lint`, `npm test` and `npm run build` all pass. The repo is under git, and secrets are git-ignored.
@@ -80,7 +80,7 @@ None. This is the first feature.
 - [x] `@/` imports resolve in Vite and Vitest
 - [x] `npm run lint`, `npm test` (a trivial smoke test) and `npm run build` pass
 - [x] `.env.local` is git-ignored and `.env.example` is committed
-- [ ] `git status` is clean after an initial commit (made with the user's approval). **Waiting on the user's approval to commit.**
+- [x] `git status` is clean after the initial commit (`0b1961d`, pushed to github.com/Shanks026/axon-personal-os `main`)
 - [x] The folder skeleton matches `project-structure.md`
 - [x] `00-index.md` status and changelog are updated
 
@@ -104,7 +104,7 @@ None. This is the first feature.
 - **Rules updated:** `components.md` (the Field form pattern), `project-structure.md` (the shadcn hook exception), and `CLAUDE.md` (lint and version notes).
 - **Vitest config** lives in `vite.config.js` (`test` block). There's no separate `vitest.config.js`.
 
-**Phase 1 is done except the commit. Waiting for approval.**
+**Phase 1 is done.**
 
 ---
 

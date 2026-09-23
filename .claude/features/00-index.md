@@ -15,7 +15,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | # | Feature | Doc | Depends on | Status |
 |---|---------|-----|-----------|--------|
 | **Wave 1: Core** | | | | |
-| 01 | Foundation: scaffold, tooling, app skeleton | [01-foundation.md](01-foundation.md) | none | ✅ Complete (initial commit waiting on approval) |
+| 01 | Foundation: scaffold, tooling, app skeleton | [01-foundation.md](01-foundation.md) | none | ✅ Complete |
 | 02 | Auth, Profile and Preferences (incl. fiscal year setting) | [02-auth-and-settings.md](02-auth-and-settings.md) | 01 | 🔵 Planned |
 | 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | 🔵 Planned |
 | **Wave 2: Capture** | | | | |
@@ -100,6 +100,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | Item | Introduced | Notes |
 |---|---|---|
 | Supabase MCP (`supabase`) | 2026-09-23 | Local Claude config, project `ceomotoumlljqlkqboyc` |
+| Git remote | 2026-09-23 | github.com/Shanks026/axon-personal-os (`main`) |
 | Storage buckets | none yet | First one comes in Feature 15 |
 | Edge Functions | none yet | First ones come in Features 17 and 18 |
 | `private` schema (not exposed to the API) and `pg_cron` | planned for 14 | Holds `purge_all_trash()`; execute revoked from every role except its owner |
@@ -109,6 +110,11 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-23: Repository connected
+- Remote: `https://github.com/Shanks026/axon-personal-os.git`, branch `main`. Initial commit `0b1961d` pushed.
+- Removed the `tercero-feature/` reference folder, as the user asked.
+- Added `.gitattributes` to keep line endings LF.
 
 ### 2026-09-23: Feature 01 Phase 2: app skeleton (Feature 01 complete)
 - **Providers** (`App.jsx`): ThemeProvider (next-themes, key `axon-theme`, no-flash script in `index.html`) → QueryClientProvider → MotionConfig (reduced motion follows the user) → TooltipProvider → RouterProvider + Toaster, plus devtools in dev only.
