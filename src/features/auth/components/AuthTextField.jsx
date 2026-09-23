@@ -28,7 +28,7 @@ export function AuthTextField({
           </div>
           <Comp
             id={id}
-            type={type === 'password' ? undefined : type}
+            {...(type === 'password' ? {} : { type })}
             autoComplete={autoComplete}
             placeholder={placeholder}
             autoFocus={autoFocus}

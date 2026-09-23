@@ -30,10 +30,17 @@ describe('auth schemas', () => {
     expect(loginSchema.safeParse({ email: 'nope', password: '' }).success).toBe(false)
   })
 
-  it('requires 10+ character passwords on signup', () => {
+  it('requires 10+ character passwords and a matching confirmation on signup', () => {
     const base = { fullName: 'Aditya', email: 'a@b.co' }
-    expect(signupSchema.safeParse({ ...base, password: 'short' }).success).toBe(false)
-    expect(signupSchema.safeParse({ ...base, password: 'longenough1' }).success).toBe(true)
+    expect(signupSchema.safeParse({ ...base, password: 'short', confirm: 'short' }).success).toBe(
+      false,
+    )
+    expect(
+      signupSchema.safeParse({ ...base, password: 'longenough1', confirm: 'longenough1' }).success,
+    ).toBe(true)
+    const mismatch = signupSchema.safeParse({ ...base, password: 'longenough1', confirm: 'other' })
+    expect(mismatch.success).toBe(false)
+    expect(mismatch.error.issues[0].path).toEqual(['confirm'])
   })
 
   it('requires matching passwords on reset', () => {
@@ -97,6 +104,7 @@ describe('SignupForm', () => {
     await user.type(screen.getByLabelText('Name'), 'Aditya Rao')
     await user.type(screen.getByLabelText('Email'), 'a@b.co')
     await user.type(screen.getByLabelText('Password'), 'longenough1')
+    await user.type(screen.getByLabelText('Confirm password'), 'longenough1')
     await user.click(screen.getByRole('button', { name: 'Create account' }))
 
     await vi.waitFor(() => expect(sb.auth.signUp).toHaveBeenCalled())
@@ -104,7 +112,32 @@ describe('SignupForm', () => {
     expect(arg.email).toBe('a@b.co')
     expect(arg.options.data.full_name).toBe('Aditya Rao')
     expect(arg.options.data.timezone).toBeTruthy()
+    expect(arg).not.toHaveProperty('confirm')
     expect(onNeedsConfirmation).not.toHaveBeenCalled()
+  })
+
+  it('blocks signup when the passwords differ', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<SignupForm />)
+    await user.type(screen.getByLabelText('Name'), 'A')
+    await user.type(screen.getByLabelText('Email'), 'a@b.co')
+    await user.type(screen.getByLabelText('Password'), 'longenough1')
+    await user.type(screen.getByLabelText('Confirm password'), 'longenough2')
+    await user.click(screen.getByRole('button', { name: 'Create account' }))
+    expect(await screen.findByText('Passwords don’t match.')).toBeInTheDocument()
+    expect(sb.auth.signUp).not.toHaveBeenCalled()
+  })
+
+  it('masks password fields until the eye toggle is pressed', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(<SignupForm />)
+    const input = screen.getByLabelText('Password')
+    expect(input).toHaveAttribute('type', 'password')
+    expect(screen.getByLabelText('Confirm password')).toHaveAttribute('type', 'password')
+    await user.click(screen.getAllByRole('button', { name: 'Show password' })[0])
+    expect(input).toHaveAttribute('type', 'text')
+    await user.click(screen.getByRole('button', { name: 'Hide password' }))
+    expect(input).toHaveAttribute('type', 'password')
   })
 
   it('falls back to the check-email state when no session comes back', async () => {
@@ -115,6 +148,7 @@ describe('SignupForm', () => {
     await user.type(screen.getByLabelText('Name'), 'A')
     await user.type(screen.getByLabelText('Email'), 'a@b.co')
     await user.type(screen.getByLabelText('Password'), 'longenough1')
+    await user.type(screen.getByLabelText('Confirm password'), 'longenough1')
     await user.click(screen.getByRole('button', { name: 'Create account' }))
     await vi.waitFor(() => expect(onNeedsConfirmation).toHaveBeenCalledWith('a@b.co'))
   })

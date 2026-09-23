@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Search } from 'lucide-react'
 import { looksLikeEmoji, SPACE_EMOJIS } from '@/components/shared/spaceEmoji'
 import { cn } from '@/lib/utils'
@@ -9,6 +9,13 @@ import { cn } from '@/lib/utils'
  */
 export function EmojiPicker({ value, onChange }) {
   const [query, setQuery] = useState('')
+  // Colour emoji are expensive glyphs. Mount the grid one frame after the dialog starts
+  // opening, so the open animation's first frames only paint the panel.
+  const [gridReady, setGridReady] = useState(false)
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setGridReady(true))
+    return () => cancelAnimationFrame(id)
+  }, [])
   const q = query.trim().toLowerCase()
   const pasted = looksLikeEmoji(query) ? query.trim() : null
   const matches = pasted
@@ -32,28 +39,29 @@ export function EmojiPicker({ value, onChange }) {
       <div
         role="radiogroup"
         aria-label="Emoji"
-        className="grid max-h-40 grid-cols-9 gap-1 overflow-y-auto"
+        className="grid h-40 grid-cols-9 content-start gap-1 overflow-y-auto"
       >
-        {matches.map(([emoji, words]) => {
-          const selected = emoji === value
-          return (
-            <button
-              key={emoji}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              aria-label={words.split(' ')[0]}
-              title={words}
-              onClick={() => onChange(emoji)}
-              className={cn(
-                'flex h-9 items-center justify-center rounded-md text-lg leading-none transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                selected ? 'bg-accent ring-1 ring-foreground/40' : 'hover:bg-accent',
-              )}
-            >
-              {emoji}
-            </button>
-          )
-        })}
+        {gridReady &&
+          matches.map(([emoji, words]) => {
+            const selected = emoji === value
+            return (
+              <button
+                key={emoji}
+                type="button"
+                role="radio"
+                aria-checked={selected}
+                aria-label={words.split(' ')[0]}
+                title={words}
+                onClick={() => onChange(emoji)}
+                className={cn(
+                  'flex h-9 items-center justify-center rounded-md text-lg leading-none transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                  selected ? 'bg-accent ring-1 ring-foreground/40' : 'hover:bg-accent',
+                )}
+              >
+                {emoji}
+              </button>
+            )
+          })}
         {matches.length === 0 && (
           <p className="col-span-9 py-4 text-center text-xs text-muted-foreground">
             No emoji match “{query}”. Paste one to use it.

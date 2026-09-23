@@ -10,17 +10,20 @@ export const loginSchema = z.object({
   password: z.string().min(1, 'Enter your password'),
 })
 
-export const signupSchema = z.object({
-  fullName: z.string().trim().min(1, 'Enter your name').max(120),
-  email,
-  password,
-})
+const confirmMatches = (v) => v.password === v.confirm
+const mismatch = { path: ['confirm'], message: 'Passwords don’t match.' }
+
+export const signupSchema = z
+  .object({
+    fullName: z.string().trim().min(1, 'Enter your name').max(120),
+    email,
+    password,
+    confirm: z.string().min(1, 'Confirm your password'),
+  })
+  .refine(confirmMatches, mismatch)
 
 export const emailSchema = z.object({ email })
 
 export const newPasswordSchema = z
-  .object({ password, confirm: z.string() })
-  .refine((v) => v.password === v.confirm, {
-    path: ['confirm'],
-    message: 'Passwords don’t match.',
-  })
+  .object({ password, confirm: z.string().min(1, 'Confirm your password') })
+  .refine(confirmMatches, mismatch)

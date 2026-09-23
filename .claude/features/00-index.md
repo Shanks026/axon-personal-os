@@ -112,6 +112,17 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-23: Password masking, signup confirm, dialog frame drops
+- **Bug:** password fields showed plain text. `AuthTextField` passed `type={undefined}`, and `PasswordInput` spread props *after* its own `type`, so `undefined` won.
+  - `PasswordInput` is rebuilt on shadcn `InputGroup` (`InputGroupInput` plus an `InputGroupButton` eye toggle with `aria-pressed`). `type` is set after the spread, so it can't be overridden.
+- **Signup** now has a **Confirm password** field (the user's request, overriding delta 02's "no confirm"). It uses the shared zod refine with reset (`Passwords don't match.`), and `confirm` is never sent to Supabase.
+- **Dialog frame drops:**
+  - The dialog, alert-dialog and sheet overlays had full-screen `backdrop-blur-xs`, now replaced by `bg-overlay`.
+  - Dialog panels are `will-change-transform`, so the zoom doesn't re-rasterise colour emoji.
+  - `EmojiPicker` mounts its grid one frame after opening, inside a fixed `h-40` box.
+- **shadcn ui files edited:** `dialog.jsx`, `alert-dialog.jsx`, `sheet.jsx` (overlay, will-change).
+- **Tests:** 145, including masking, mismatch and no-confirm-in-payload.
+
 ### 2026-09-23: Spaces use emoji; header divider and shortcut hints fixed
 - **Migration `20260923180401_spaces_icon_to_emoji`:**
   - `spaces.icon` now stores an emoji. The existing lucide keys were mapped to emoji (THMP: 💼).

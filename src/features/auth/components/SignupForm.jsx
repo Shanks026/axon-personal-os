@@ -16,10 +16,10 @@ export function SignupForm({ onNeedsConfirmation }) {
   const signUp = useSignUp()
   const form = useForm({
     resolver: zodResolver(signupSchema),
-    defaultValues: { fullName: '', email: '', password: '' },
+    defaultValues: { fullName: '', email: '', password: '', confirm: '' },
   })
 
-  const onSubmit = form.handleSubmit((values) =>
+  const onSubmit = form.handleSubmit(({ confirm: _confirm, ...values }) =>
     signUp.mutate(values, {
       onSuccess: (data) => {
         if (!data.session) onNeedsConfirmation?.(values.email)
@@ -61,6 +61,13 @@ export function SignupForm({ onNeedsConfirmation }) {
           type="password"
           autoComplete="new-password"
           placeholder={`At least ${PASSWORD_MIN} characters`}
+        />
+        <AuthTextField
+          control={form.control}
+          name="confirm"
+          label="Confirm password"
+          type="password"
+          autoComplete="new-password"
         />
         <FormAlert>{form.formState.errors.root?.message}</FormAlert>
         <Button type="submit" size="lg" className="mt-1.5 h-9.5" disabled={signUp.isPending}>

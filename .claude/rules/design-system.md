@@ -270,3 +270,5 @@ Each of these maps to a shadcn primitive.
 - **Icon sizes:** 15px in rows, 13–14px in chips and buttons, 16px in empty-state tiles. Stroke width stays at the lucide default.
 - **Shortcut hints** always use `<Kbd shortcut="mod+k" />` from `components/shared`, never hardcoded glyphs. Modifiers render as **lucide icons** (Command, ArrowBigUp, Option, CornerDownLeft), matching the design's "⌘K". Screen readers get words.
 - **Space identity is an emoji, shown bare** (no tile or background). The space accent colour applies to UI chrome, not the emoji.
+- **No `backdrop-blur` on full-screen overlays** (dialog, alert-dialog and sheet use `bg-overlay`). Re-blurring the whole page on every animation frame caused visible frame drops. Blur is only allowed on small surfaces.
+- **Animated panels that scale** (dialogs) carry `will-change-transform`, so their content is painted once. Scaling text, especially colour emoji, otherwise re-rasterises every frame. Expensive grids (like emoji) mount one frame after opening, in a fixed-height box.
