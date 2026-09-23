@@ -198,7 +198,7 @@
   --space-soft-mix: 14%;
 }
 
-/* Space scope: AppLayout sets data-space-color on the shell root. Global leaves it unset (slate). */
+/* Space scope: AppShell sets data-space-color on <html>. Outside a space and in Global it is slate. */
 [data-space-color] {
   transition: --space-accent var(--dur-slow) var(--ease-standard);
 }
