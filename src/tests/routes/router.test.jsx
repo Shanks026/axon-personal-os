@@ -7,6 +7,12 @@ import { routes } from '@/routes/router'
 
 const auth = vi.hoisted(() => ({ state: { session: null, user: null, loading: false } }))
 
+// No spaces yet: the gallery shows its first-run state.
+vi.mock('@/lib/supabase', () => {
+  const query = { select: () => query, order: () => Promise.resolve({ data: [], error: null }) }
+  return { supabase: { from: () => query } }
+})
+
 vi.mock('@/context/AuthContext', () => ({
   AuthProvider: ({ children }) => children,
   useAuth: () => ({ ...auth.state, signOut: async () => {} }),
@@ -30,7 +36,7 @@ describe('router (signed in)', () => {
   beforeEach(signedIn)
 
   it.each([
-    ['/spaces', 'Spaces'],
+    ['/spaces', 'Create your first space'],
     ['/s/thmp/dashboard', 'Dashboard'],
     ['/s/thmp/inbox', 'Inbox'],
     ['/s/thmp/tasks', 'Tasks & Todos'],
@@ -50,7 +56,9 @@ describe('router (signed in)', () => {
 
   it('redirects / to /spaces', async () => {
     const router = renderAt('/')
-    expect(await screen.findByRole('heading', { name: 'Spaces' })).toBeInTheDocument()
+    expect(
+      await screen.findByRole('heading', { name: 'Create your first space' }),
+    ).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/spaces')
   })
 
@@ -71,7 +79,9 @@ describe('router (signed in)', () => {
     'sends a signed-in user away from %s to /spaces',
     async (path) => {
       const router = renderAt(path)
-      expect(await screen.findByRole('heading', { name: 'Spaces' })).toBeInTheDocument()
+      expect(
+        await screen.findByRole('heading', { name: 'Create your first space' }),
+      ).toBeInTheDocument()
       expect(router.state.location.pathname).toBe('/spaces')
     },
   )

@@ -56,7 +56,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
   - The copy says "confirmation link", because we use a password flow, not a magic link. The design's "sign-in link… 15 minutes" copy isn't used.
   - The callback and expired-link states use the same layout.
 
-### 03 Spaces and shell
+### 03 Spaces and shell (gallery and dialogs ✅ folded into Phase 1, except counts, which come with 04 and 06; sidebar items fold at Phase 2)
 - **Adopt:**
   - Card counts (open tasks, notes) are in scope **from Phase 1**. They're a count query per table, and they show zeros until the tables exist.
   - The Global card comes first, showing aggregate counts.

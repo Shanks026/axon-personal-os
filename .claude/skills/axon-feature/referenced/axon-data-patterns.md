@@ -192,7 +192,8 @@ export function useTaskFilters() {
 | `ConfirmDialog` | `components/shared/ConfirmDialog.jsx` | 01 |
 | `PageTransition`, `presets` | `components/motion/` | 01 |
 | `PageHeader` + `usePageHeader` | `components/layout/` | 03 |
-| `SpaceBadge`, `SpaceIcon` | `components/shared/` | 03 |
+| `SpaceBadge`, `SpaceIcon`, `spaceIconMap` | `components/shared/` | 03 |
+| `UserMenu` | `components/layout/` | 03 (gallery header; sidebar in Phase 2) |
 | `SpacePickerField` | `components/shared/` | 04 (first Global create dialog) |
 | `SegmentedControl` | `components/shared/` | 02 (week start; later view toggles) |
 | `SaveIndicator` | `components/shared/` | 02 (settings; later the editors) |

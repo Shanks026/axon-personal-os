@@ -17,7 +17,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | **Wave 1: Core** | | | | |
 | 01 | Foundation: scaffold, tooling, app skeleton | [01-foundation.md](01-foundation.md) | none | ✅ Complete |
 | 02 | Auth, Profile and Preferences (incl. fiscal year setting) | [02-auth-and-settings.md](02-auth-and-settings.md) | 01 | ✅ Complete |
-| 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | 🔵 Planned |
+| 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | 🟡 Phase 1 ✅ · Phase 2 next |
 | **Wave 2: Capture** | | | | |
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | 🔵 Planned |
 | 05 | Todos: tab inside the Tasks & Todos module, plus task checklists | [05-todos.md](05-todos.md) | 04 | 🔵 Planned (restructure per delta G1 before building) |
@@ -78,7 +78,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 |---|---|---|---|
 | `set_updated_at()`, `pg_trgm` | 02 | ✅ | Shared trigger function and extension |
 | `profiles` + `handle_new_user()` trigger | 02 | ✅ | 1:1 with auth.users; `fy_start_month` default 4. Migration `20260923164417`; `handle_new_user` execute revoked |
-| `spaces` | 03 | ⬜ | `unique(user_id, slug)`; slug `global` reserved |
+| `spaces` | 03 | ✅ | `unique(user_id, slug)`; slug `global` reserved. Migration `20260923171644`, plus the `profiles.last_space_id` FK |
 | `tasks` (+ completed_at trigger) | 04 | ⬜ | Six statuses, five priorities, fractional `position` |
 | `tags`, `task_tags` | 04 | ⬜ | Tag `space_id` NULL means available in all spaces |
 | `todos` (+ cascade triggers) | 05 | ⬜ | `task_id` set means a checklist item |
@@ -110,6 +110,18 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-23: Feature 03 Phase 1: spaces gallery
+- **Migration `20260923171644_create_spaces`:** the `spaces` table (slug unique per user, `global` reserved), owner RLS, and the `profiles.last_space_id` FK. Verified in a rolled-back transaction, and advisors are clean.
+- **`/spaces` gallery, built to design 02a to 02d:**
+  - The first-run hero; the Global card first; sortable space cards (grip, `…` menu); a ghost card; and a collapsed Archived section.
+  - The create/edit dialog: auto-generated slug, 10 colours, and a searchable icon grid.
+  - Archive with Undo, and a typed-name permanent delete.
+  - The first space ever opens straight away.
+- **New shared components:** `SpaceIcon`, `SpaceBadge`, `spaceIconMap` and `UserMenu`.
+- **Deviation:** the card counts and the delete-dialog count tiles wait for Features 04 and 06, because those tables don't exist yet.
+- **Tests:** 131.
+- **Manual steps:** none.
 
 ### 2026-09-23: Feature 02 Phase 2: settings and fiscal year (Feature 02 complete)
 - **`/settings` has two sections, per design delta 02:**

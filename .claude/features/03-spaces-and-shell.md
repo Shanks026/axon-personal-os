@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/03-spaces-and-shell.md`
-**Status**: 🔵 Planned
+**Status**: 🟡 Phase 1 ✅ · Phase 2 next
 **Depends on**: 02
 **Last Updated**: September 2026
 
@@ -35,7 +35,7 @@ Phase 2: App shell and Global
 
 ---
 
-## Phase 1: Spaces Gallery
+## Phase 1: Spaces Gallery ✅ Complete
 
 ### Goal
 At `/spaces` the user sees their spaces as animated cards, or an inviting empty state with "Create your first space". They can:
@@ -115,16 +115,48 @@ src/components/shared/
 - Item counts on cards (added as each feature lands, using a lightweight count query)
 
 ### 1.7 Checklist: Before Marking Complete
-- [ ] The migration is applied and mirrored; advisors are clean; the constraint checks above are verified
-- [ ] The empty state shows for a new user; creating a space animates the card in
-- [ ] The slug auto-generates, is editable and validated; a duplicate slug shows an inline error
-- [ ] Reordering persists after reload
-- [ ] Archive and unarchive move cards between sections
-- [ ] Delete requires typing the exact name; after deletion the card animates out
-- [ ] Clicking a card navigates to `/s/<slug>`
-- [ ] `slugify` and `uniqueSlug` tests pass
-- [ ] `npm run lint`, `npm test` and `npm run build` pass; `axon-rules` is clean
-- [ ] `00-index.md` DB registry, status and changelog are updated
+- [x] The migration is applied (`20260923171644`) and mirrored; the only advisor findings are Supabase's own `rls_auto_enable`. Constraint checks were verified in a rolled-back transaction:
+  - `global`, a duplicate slug for the same user, and a malformed slug are rejected.
+  - The same slug for another user is allowed.
+  - Deleting a space sets `last_space_id` to null.
+  - RLS hides and blocks other users' spaces, and `user_id` defaults to `auth.uid()`.
+- [x] The empty state shows for a new user. Creating a space animates the card in; the first space ever also navigates into it (test).
+- [x] The slug is auto-generated from the name (avoiding clashes with `-2`), and can be edited through the chip and pencil and validated. A duplicate slug typed by hand shows an inline error (test).
+- [x] Reordering: dragging by the grip saves a fractional `position`, applied optimistically. `reorderPosition` is tested. **A reload check in a real browser is still needed.**
+- [x] Archive and unarchive move cards between sections, with an Undo toast (test)
+- [x] Delete requires typing the exact name (case-sensitive), then the card animates out (test)
+- [x] Clicking a card navigates to `/s/<slug>/dashboard` and records `last_space_id` (test)
+- [x] `slugify`, `uniqueSlug`, `splitSpaces`, `reorderPosition` and schema tests pass
+- [x] `npm run lint`, `npm test` (131 tests) and `npm run build` pass; `axon-rules` is clean
+- [x] `00-index.md` DB registry, status and changelog are updated
+
+### Implementation Notes (Phase 1)
+- **Adopted from delta 03 (gallery):**
+  - Layout: max-width 1040, 3 columns, gap 16, 176px cards with a 14px radius. "Your spaces" and "Drag to reorder" at the top.
+  - The Global card comes first, muted, showing "N spaces". A dashed "New space" ghost card and a collapsed "Archived N" row follow.
+  - Cards show the grip handle only on hover or focus, and have a `…` menu with Edit, Archive/Unarchive and Delete.
+  - The 520px dialog: an icon tile beside the name, the `axon.app/s/` slug chip with a pencil, 10 colour swatches, an inline searchable 9-column icon grid (35 curated icons), and ⌘↵ to submit.
+  - The empty state has three tilted ghost tiles on the gentle spring.
+- **Deviation: card counts.** The counts ("5 open tasks · 4 notes") and the delete dialog's six count tiles are **not shown yet**, because the tables they count don't exist. Cards show "Since 23 Sep" (or "Archived …") in that slot instead. Features 04 and 06 add a counts query and fill the slot and the tiles.
+- **Behaviour:**
+  - Creating the **first** space navigates straight into it. Later creations stay on the gallery.
+  - Opening any card records `profiles.last_space_id` (fire-and-forget).
+  - Archiving shows an Undo toast.
+  - Delete is a hard delete and invalidates every query.
+- **Accessibility:** each card is a full-size overlay `Link` ("Open THMP"). The grip and the menu sit above it with `pointer-events-auto`, so nothing interactive is nested inside the link. dnd-kit keyboard sorting is enabled.
+- **Structure:**
+  - `SpaceDialog` renders its form inside `DialogContent`, which unmounts on close, so each open is fresh with no reset effect.
+  - `useWatch` is used instead of `form.watch`, which is compatible with the React Compiler.
+  - `reorderPosition` is a pure util, so the grid only wires up dnd-kit.
+- **Shared components added:**
+  - `components/shared/SpaceIcon.jsx`: an accent tile, sizes xs/sm/md/lg, with a `global` variant.
+  - `components/shared/SpaceBadge.jsx`
+  - `components/shared/spaceIconMap.js`: the curated lucide map plus `GLOBAL_ICON`.
+  - `components/layout/UserMenu.jsx`: name and email, a theme submenu, Settings, and Sign out. The sidebar reuses it in Phase 2.
+- **Removed:** the temporary `SignOutButton` on `/spaces`; the `UserMenu` replaces it. The component itself is kept for reuse.
+- **Tests:**
+  - `src/tests/features/spaces/utils.test.js` and `SpacesPage.test.jsx`, which uses an in-memory fluent Supabase mock.
+  - `router.test.jsx` now mocks Supabase to return an empty space list.
 
 **Stop here. Show the result and wait for approval.**
 
