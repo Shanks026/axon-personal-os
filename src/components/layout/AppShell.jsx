@@ -72,20 +72,23 @@ export function AppShell() {
       <PageHeaderProvider>
         <SidebarProvider open={open} onOpenChange={setOpen} style={SIDEBAR_WIDTHS}>
           {inSpace && <AppSidebar />}
-          <div
-            ref={scrollRef}
-            className="relative flex h-svh min-w-0 flex-1 scrollbar-stable flex-col overflow-x-hidden overflow-y-auto"
-          >
+          <div className="flex h-svh min-w-0 flex-1 flex-col">
+            {/* Outside the scroll area, so its border spans the full width (no gutter gap). */}
             {inSpace && <PageHeader />}
-            <motion.main
-              key={pathname}
-              variants={pageTransition}
-              initial="initial"
-              animate="animate"
-              className="flex min-h-0 flex-1 flex-col"
+            <div
+              ref={scrollRef}
+              className="relative flex min-h-0 flex-1 scrollbar-stable flex-col overflow-x-hidden overflow-y-auto"
             >
-              <Outlet />
-            </motion.main>
+              <motion.main
+                key={pathname}
+                variants={pageTransition}
+                initial="initial"
+                animate="animate"
+                className="flex flex-1 flex-col"
+              >
+                <Outlet />
+              </motion.main>
+            </div>
           </div>
         </SidebarProvider>
       </PageHeaderProvider>

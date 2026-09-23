@@ -7,6 +7,7 @@ import { useAuth } from '@/context/AuthContext'
 import { NAV_ITEMS } from '@/components/layout/navItems'
 import { SpaceSwitcher } from '@/components/layout/SpaceSwitcher'
 import { UserMenu } from '@/components/layout/UserMenu'
+import { Kbd } from '@/components/shared/Kbd'
 import { useTheme } from '@/components/theme/useTheme'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -54,7 +55,7 @@ export function AppSidebar() {
             >
               <Search />
               <span className="flex-1">Search</span>
-              <kbd className="font-mono text-xs text-faint">⌘K</kbd>
+              <Kbd shortcut="mod+k" />
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
@@ -65,7 +66,7 @@ export function AppSidebar() {
             >
               <SquarePen />
               <span className="flex-1">Quick capture</span>
-              <kbd className="font-mono text-xs text-faint">⌘J</kbd>
+              <Kbd shortcut="mod+j" />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>

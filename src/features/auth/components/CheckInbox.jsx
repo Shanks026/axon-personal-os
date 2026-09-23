@@ -24,7 +24,7 @@ export function CheckInbox({ email, message, onResend, resendPending, footer }) 
         variants={scaleIn}
         initial="initial"
         animate="animate"
-        className="relative flex size-16 items-center justify-center rounded-2xl border bg-card shadow-md"
+        className="relative flex size-16 items-center justify-center rounded-2xl border bg-card shadow-sm"
       >
         <Mail className="size-6.5" strokeWidth={1.5} aria-hidden />
         <span className="absolute -top-1.5 -right-1.5 flex size-5.5 items-center justify-center rounded-full border-2 border-background bg-ok text-white">

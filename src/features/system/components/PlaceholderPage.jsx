@@ -15,7 +15,7 @@ export function PlaceholderPage({ title, feature }) {
   const detail = Object.entries(params).filter(([k]) => k !== 'spaceSlug' && k !== '*')
 
   return (
-    <div className="mx-auto w-full max-w-270 px-4 py-10 md:px-10">
+    <div className="mx-auto w-full max-w-xl px-4 py-16 md:px-10">
       <EmptyState
         icon={Construction}
         title={`${title} isn’t built yet`}

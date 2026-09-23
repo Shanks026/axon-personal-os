@@ -4,6 +4,7 @@ import { Pencil } from 'lucide-react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { positionAfterLast } from '@/lib/position'
+import { Kbd } from '@/components/shared/Kbd'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import { Button } from '@/components/ui/button'
 import {
@@ -255,7 +256,7 @@ function SpaceForm({ space, onClose, onSuccess }) {
         </Button>
         <Button type="submit" disabled={pending}>
           {isEdit ? 'Save changes' : 'Create space'}
-          <kbd className="font-mono text-xs opacity-60">⌘↵</kbd>
+          <Kbd shortcut="mod+enter" className="text-current opacity-60" />
         </Button>
       </DialogFooter>
     </form>

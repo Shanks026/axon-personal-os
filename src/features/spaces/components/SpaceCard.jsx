@@ -15,7 +15,7 @@ import {
 const CARD =
   'group relative flex min-h-44 flex-col rounded-2xl border bg-card p-5 transition duration-(--dur-fast) ease-(--ease-standard)'
 const HOVER =
-  'hover:-translate-y-0.5 hover:border-border-strong hover:shadow-md focus-within:border-border-strong'
+  'hover:-translate-y-px hover:border-border-strong hover:shadow-xs focus-within:border-border-strong'
 
 /**
  * One space in the gallery (design 02a). The whole card links into the space; the grip and the
@@ -38,7 +38,7 @@ export function SpaceCard({
         CARD,
         !dragging && HOVER,
         archived && 'bg-muted',
-        dragging && 'z-20 scale-102 rotate-1 border-border-strong shadow-lg',
+        dragging && 'z-20 scale-101 rotate-1 border-border-strong shadow-md',
       )}
     >
       <Link
@@ -141,7 +141,7 @@ export function NewSpaceCard({ onClick }) {
     <button
       type="button"
       onClick={onClick}
-      className="flex min-h-44 flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border-strong text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+      className="flex min-h-44 w-full flex-col items-center justify-center gap-2 rounded-2xl border border-dashed border-border-strong text-muted-foreground transition-colors hover:border-foreground/40 hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
     >
       <Plus className="size-4.5" aria-hidden />
       New space

@@ -13,9 +13,9 @@ export function PageHeader() {
   const { space, isGlobal, spaceSlug, activeSpaces } = useSpace()
 
   return (
-    <header className="sticky top-0 z-10 flex h-12 shrink-0 items-center gap-2 border-b bg-background/85 px-3 backdrop-blur md:px-4">
+    <header className="flex h-12 shrink-0 items-center gap-2 border-b bg-background px-3 md:px-4">
       <SidebarTrigger className="text-muted-foreground" />
-      <Separator orientation="vertical" className="mr-1 h-4!" />
+      <Separator orientation="vertical" className="mx-1 h-4 self-center" />
       <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-1.5">
         <Link
           to={paths.space(spaceSlug).dashboard()}

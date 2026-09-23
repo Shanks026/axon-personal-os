@@ -183,9 +183,12 @@ Row heights in the layout table assume 14px text. If a row looks cramped, add he
 | Token | Value | Use |
 |---|---|---|
 | none | none | rows and cards at rest (border only) |
-| `--shadow-xs` | `0 1px 2px rgba(16,16,24,.06)` | segmented thumb, inputs |
-| `--shadow-md` | `0 12px 32px rgba(16,16,24,.10)` | popovers, hover lift, toasts |
-| `--shadow-lg` | `0 30px 80px rgba(16,16,24,.22)` | dialogs, palette, dragged card |
+| `--shadow-xs` | `0 1px 1px rgba(16,16,24,.03)` | segmented thumb, inputs, card hover |
+| `--shadow-sm` | `0 1px 2px rgba(16,16,24,.04)` | small raised tiles |
+| `--shadow-md` | `0 2px 6px rgba(16,16,24,.05)` | popovers, toasts, dragged card |
+| `--shadow-lg` | `0 6px 18px rgba(16,16,24,.07)` | dialogs, palette |
+
+**Shadows stay very subtle everywhere** (the user asked for this on 2026-09-23; the design's shadows were heavier). Borders do the separating. Never add shadows heavier than `--shadow-lg`, or ad-hoc `shadow-[…]` values.
 
 - **Borders** are always 1px hairlines (`border-border`). Inputs and dashed outlines use `border-border-strong`.
 
@@ -211,14 +214,14 @@ Mirror the durations and easings as CSS variables (`--dur-fast`, `--ease-standar
 | Page transition | **Opacity only.** The incoming page fades from 0 to 1, with no exit and no y-rise (both made the scroll area overflow for a moment). The sidebar and header never animate. | in 120 enter | fade 120 |
 | List enter / exit | Items fade and move y 4px → 0, with a 20ms stagger on the first 8 only. Exit: fade and height → 0. Reorder uses `layout`. | 160 enter · layout snappy | fade 120, no stagger |
 | Todo / task complete | The box fills with ok/accent and scales 1 → 1.08 → 1, and the check stroke draws. The strike-through sweeps left to right, and the text fades to faint. After a 600ms hold, the row collapses and leaves (when the current filter hides done items). The Undo toast appears. | check 180 · strike 220 · collapse gentle | instant check, fade out 150 |
-| Kanban drag | Pickup: scale 1.02, rotate 1.5°, `shadow-lg`, grabbing cursor. The target column's border tints with the accent, and a dashed placeholder opens via `layout`. Drop: spring to the slot, shadow back to none. | lift 120 standard · drop snappy | outline only |
+| Kanban drag | Pickup: scale 1.01, rotate 1°, `shadow-md`, grabbing cursor. The target column's border tints with the accent, and a dashed placeholder opens via `layout`. Drop: spring to the slot, shadow back to none. | lift 120 standard · drop snappy | outline only |
 | Dialog | The overlay fades in. The panel goes opacity 0 → 1, scale .96 → 1, y 8 → 0. Exit: opacity and scale .98. | in snappy · out 120 exit | fade 120 |
 | Sheet / drawer | Slides in from its edge while the overlay fades. The mobile drawer follows the finger, then springs. | gentle · out 200 exit | fade 120 |
 | Command palette | Pops and never slides: opacity 0 → 1, scale .98 → 1. The backdrop blurs from 0 to 2px. The result list animates its height via `layout`. | 120 enter | fade 80 |
 | Sidebar collapse | Labels fade out first (80ms), then the width springs from 240 to 56. Expanding reverses this: width first, then labels fade in. | labels 80 · width snappy | instant width |
 | Space switch | `--space-accent` crossfades everywhere at once (CSS `@property`). The content runs the normal page transition. | 320 standard | instant |
 | Skeleton | A muted block with a hover-tone gradient sweeping left to right. Content replaces it with a 120ms fade. Skeletons match row heights exactly, so nothing jumps. | 1400 linear ∞ | static block |
-| Hover lift | Cards: y −2px, `shadow-md`, `border-strong`. Rows: background change only. | 120 standard | background only |
+| Hover lift | Cards: y −1px, `shadow-xs`, `border-strong`. Rows: background change only. | 120 standard | background only |
 
 Variants to export: `fadeIn`, `slideUp` (y 6), `listItem` (y 4 with height exit), `scaleIn` (dialog), `popIn` (palette), `pageTransition`, `staggerItem(0.02, { max: 8 })`. For `staggerItem`, pass each item's index as `custom={i}`; only the first 8 items are delayed.
 
@@ -241,7 +244,7 @@ Variants to export: `fadeIn`, `slideUp` (y 6), `listItem` (y 4 with height exit)
 
 Each of these maps to a shadcn primitive.
 
-- **Space switcher** (DropdownMenu). A 240px panel with rows 32px high. Global comes first (`layers` icon), then the spaces. Each row has a 20px icon tile in `space-soft`, the name, a check on the current space, and a mono shortcut hint (`⌘0`–`⌘9`). A separator, then "New space…" and "Manage spaces…".
+- **Space switcher** (DropdownMenu). A 240px panel with rows 32px high. Global comes first (`layers` icon), then the spaces. Each row has a 20px icon tile in `space-soft`, the name, a check on the current space, and a shortcut hint rendered with `<Kbd>` (Feature 12). A separator, then "New space…" and "Manage spaces…".
 - **Primary button** uses `bg-primary`, which is black in light and white in dark. The accent is not used for buttons.
 - **Filter bar.** An unset filter is a dashed-border chip with an icon and label, e.g. "Status". A set filter is a filled `space-soft` chip with `text-space` and an ✕ to clear it, e.g. "Priority ≥ Medium". The search field sits on the right (180px).
 - **Task row** (44px). Priority icon, status icon, title, then flexible space, then tag pills, the MR icon and the mono due label.
@@ -265,3 +268,4 @@ Each of these maps to a shadcn primitive.
 - **Motion** values come only from `presets.js`, or the CSS variables that mirror it.
 - **Test both themes.** Every component must work in light and dark before it counts as done.
 - **Icon sizes:** 15px in rows, 13–14px in chips and buttons, 16px in empty-state tiles. Stroke width stays at the lucide default.
+- **Shortcut hints** always use `<Kbd shortcut="mod+k" />` from `components/shared`, never hardcoded glyphs. It renders **key symbols**: ⌘ on Mac and ⌃ on Windows/Linux, plus ⇧ ⌥ ↵ (so "⌃K", never "Ctrl K"). It spells the keys out for screen readers.

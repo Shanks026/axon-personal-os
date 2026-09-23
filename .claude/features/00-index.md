@@ -111,6 +111,16 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-23: UI polish from browser review
+- **Header:**
+  - The vertical divider is centred. shadcn's vertical `Separator` uses `self-stretch`, which overrode the header's centring, so it now has `self-center`.
+  - The header moved out of the scroll area, so its bottom border reaches the right edge instead of stopping at the scrollbar gutter.
+- **Gallery:** the "New space" ghost card fills its grid column (`w-full`; buttons don't stretch like divs).
+- **Shadows are subtle app-wide** (the user's request). All shadow tokens were reduced (xs to 2xl); card hover is now y −1px, `shadow-xs` and a stronger border. The design rule is updated.
+- **Shortcut hints** use key symbols through the new `components/shared/Kbd.jsx` and `lib/platform.js`: ⌘ on Mac and ⌃ on Windows (the user's request: symbols, not "Ctrl"). Screen readers get words.
+- **Placeholder pages:** narrowed to a centred 576px column.
+- **Not a bug:** the beach-picture bubble over the sidebar footer comes from a browser extension, not Axon.
+
 ### 2026-09-23: Shell rebuilt to remove flicker (the user's report after browser testing)
 - **What the user saw:**
   1. After signup, a populated-looking screen flashed before "Create your first space".
