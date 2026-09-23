@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden">
+  <dc-import name="Sidebar" active="notes" space="thmp" dark="{{ dark }}" hint-size="240px,100%"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:48px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:8px">
+      <l-i n="panel-left" s="16" style="color:var(--mfg)"></l-i>
+      <div style="width:1px;height:16px;background:var(--border);margin:0 6px"></div>
+      <span style="color:var(--mfg)">THMP</span><l-i n="chevron-right" s="14" style="color:var(--faint)"></l-i><span style="font-weight:500">Notes</span>
+      <div style="flex:1"></div>
+      <div style="height:28px;padding:0 10px;border-radius:7px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:6px;font-weight:500;white-space:nowrap"><l-i n="plus" s="14"></l-i>New note</div>
+    </header>
+    <div style="height:48px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:8px">
+      <div style="display:flex;padding:2px;border-radius:8px;background:var(--muted);gap:2px">
+        <div style="height:24px;width:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.08)"><l-i n="layout-grid" s="14"></l-i></div>
+        <div style="height:24px;width:30px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--mfg)"><l-i n="list" s="14"></l-i></div>
+      </div>
+      <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+      <sc-for list="{{ tagFilters }}" as="f" hint-placeholder-count="5">
+        <div style="height:26px;padding:0 10px;border-radius:13px;border:1px solid {{ f.bd }};background:{{ f.bg }};display:flex;align-items:center;gap:6px;color:{{ f.fg }};white-space:nowrap"><span style="width:6px;height:6px;border-radius:3px;background:{{ f.c }}"></span>{{ f.n }}</div>
+      </sc-for>
+      <div style="flex:1"></div>
+      <div style="width:220px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--faint)"><l-i n="search" s="14"></l-i>Search notes…</div>
+    </div>
+    <div style="flex:1;overflow:hidden;padding:28px 32px">
+      <div style="display:flex;align-items:center;gap:8px;color:var(--mfg);font-weight:500;margin-bottom:12px"><l-i n="pin" s="13"></l-i>Pinned</div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+        <sc-for list="{{ pinned }}" as="n" hint-placeholder-count="1">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-height:148px;box-sizing:border-box">
+            <div style="font-size:14px;font-weight:600;letter-spacing:-0.01em">{{ n.t }}</div>
+            <div style="color:var(--mfg);line-height:1.55;max-height:3.1em;overflow:hidden">{{ n.p }}</div>
+            <div style="flex:1"></div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <sc-for list="{{ n.tags }}" as="tg" hint-placeholder-count="1"><span style="height:20px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:500;display:flex;align-items:center;white-space:nowrap;background:color-mix(in oklab, {{ tg.c }} 14%, transparent);color:color-mix(in oklab, {{ tg.c }} 72%, var(--fg))">{{ tg.n }}</span></sc-for>
+              <div style="flex:1"></div>
+              <sc-if value="{{ n.links }}"><span style="display:flex;align-items:center;gap:4px;color:var(--mfg);font-size:11.5px"><l-i n="square-check-big" s="12"></l-i>{{ n.links }}</span></sc-if>
+              <span style="font-family:Geist Mono,monospace;font-size:11px;color:var(--faint);white-space:nowrap">{{ n.when }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+      <div style="color:var(--mfg);font-weight:500;margin:28px 0 12px">All notes</div>
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+        <sc-for list="{{ notes }}" as="n" hint-placeholder-count="5">
+          <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:16px 18px;display:flex;flex-direction:column;gap:8px;min-height:148px;box-sizing:border-box">
+            <div style="font-size:14px;font-weight:600;letter-spacing:-0.01em">{{ n.t }}</div>
+            <div style="color:var(--mfg);line-height:1.55;max-height:3.1em;overflow:hidden">{{ n.p }}</div>
+            <div style="flex:1"></div>
+            <div style="display:flex;align-items:center;gap:6px">
+              <sc-for list="{{ n.tags }}" as="tg" hint-placeholder-count="1"><span style="height:20px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:500;display:flex;align-items:center;white-space:nowrap;background:color-mix(in oklab, {{ tg.c }} 14%, transparent);color:color-mix(in oklab, {{ tg.c }} 72%, var(--fg))">{{ tg.n }}</span></sc-for>
+              <div style="flex:1"></div>
+              <sc-if value="{{ n.links }}"><span style="display:flex;align-items:center;gap:4px;color:var(--mfg);font-size:11.5px"><l-i n="square-check-big" s="12"></l-i>{{ n.links }}</span></sc-if>
+              <span style="font-family:Geist Mono,monospace;font-size:11px;color:var(--faint);white-space:nowrap">{{ n.when }}</span>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const T = { sprint: '#007aff', 'buyer-portal': '#007aff', rca: '#ff2d55', react: '#30b0c7', '1:1': '#5856d6', meeting: '#af52de', 'vendor-portal': '#30b0c7' };
+    const n = (t, p, tags, when, links) => ({ t, p, when, links: links ? String(links) : '', tags: tags.map(x => ({ n: x, c: T[x] })) });
+    return {
+      dark,
+      tagFilters: [['All', ''], ['sprint', 'sprint'], ['rca', 'rca'], ['react', 'react'], ['1:1', '1:1']].map(([nm, k], i) => ({ n: nm, c: k ? T[k] : 'var(--fg)', bg: i === 0 ? 'var(--hover)' : 'transparent', bd: i === 0 ? 'var(--border2)' : 'var(--border)', fg: i === 0 ? 'var(--fg)' : 'var(--mfg)' })),
+      pinned: [n('Sprint 42 planning', 'Committed: RFQ pagination fix and the vendor product form migration. Stretch goal is storefront image lazy-loading if the admin API lands.', ['sprint'], '2h ago', 2)],
+      notes: [
+        n('Buyer portal: pagination bug RCA', 'usePagination kept its own page state and never observed the filter object, so changing filters left users on an out-of-range page.', ['rca', 'buyer-portal'], 'Yesterday', 1),
+        n('React Query caching patterns', 'Prefer query keys that mirror the URL. staleTime per resource, not global. Invalidate on mutation success, optimistic only for toggles.', ['react'], '3d ago', 0),
+        n('Q2 1:1 with manager: feedback', 'Strong quarter on buyer portal quality. Ask: own the vendor form migration end-to-end, and write more of the design docs.', ['1:1'], '6d ago', 0),
+        n('Vendor form: zod schema notes', 'Split the product schema per step. Keep server errors mapped via setError on field paths returned by the API.', ['vendor-portal'], '8d ago', 1),
+        n('Sprint 41 retro', 'Went well: fewer review cycles. Improve: API contracts arriving late, especially admin roles.', ['sprint', 'meeting'], '2w ago', 0)
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

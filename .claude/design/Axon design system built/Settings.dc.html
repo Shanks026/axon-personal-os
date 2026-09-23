@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden">
+  <aside style="width:240px;flex-shrink:0;border-right:1px solid var(--border);background:var(--sidebar);padding:14px 8px;box-sizing:border-box;display:flex;flex-direction:column;gap:2px">
+    <div style="height:32px;display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--mfg);margin-bottom:14px"><l-i n="arrow-left" s="14"></l-i>Back to THMP<span style="flex:1"></span><span style="font-family:Geist Mono,monospace;font-size:11px;color:var(--faint)">Esc</span></div>
+    <div style="padding:0 10px 6px;font-size:11px;font-weight:500;color:var(--faint)">Settings</div>
+    <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
+      <div style="height:30px;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:7px;background:{{ n.bg }};color:{{ n.fg }};font-weight:{{ n.fw }}"><l-i n="{{ n.icon }}" s="15"></l-i>{{ n.l }}</div>
+    </sc-for>
+  </aside>
+  <main style="flex:1;min-width:0;overflow:hidden;padding:56px 40px">
+    <div style="max-width:640px;margin:0 auto">
+      <sc-if value="{{ isPrefs }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:24px;font-weight:600;letter-spacing:-0.02em">Preferences</div>
+        <div style="color:var(--mfg);margin-top:6px">Dates, quarters and how Axon looks.</div>
+        <div style="margin-top:28px;border:1px solid var(--border);border-radius:12px;background:var(--card)">
+          <div style="padding:18px 20px;display:flex;gap:24px;align-items:flex-start;border-bottom:1px solid var(--border)">
+            <div style="flex:1"><div style="font-weight:500">Fiscal year starts in</div><div style="color:var(--mfg);margin-top:3px;line-height:1.5">Quarters and reports follow this.</div></div>
+            <div style="width:200px;height:32px;border-radius:8px;border:1px solid var(--border2);display:flex;align-items:center;padding:0 10px;gap:8px"><span style="flex:1">April</span><l-i n="chevrons-up-down" s="14" style="color:var(--faint)"></l-i></div>
+          </div>
+          <div style="padding:14px 20px 18px;border-bottom:1px solid var(--border);background:var(--muted)">
+            <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px">
+              <sc-for list="{{ quarters }}" as="q" hint-placeholder-count="4">
+                <div style="border-radius:8px;padding:8px 10px;background:{{ q.bg }};border:1px solid {{ q.bd }}"><div style="font-weight:600;color:{{ q.fg }}">{{ q.q }}</div><div style="font-family:Geist Mono,monospace;font-size:11.5px;color:var(--mfg);margin-top:2px">{{ q.m }}</div></div>
+              </sc-for>
+            </div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:12px;color:var(--mfg)"><span style="width:6px;height:6px;border-radius:3px;background:var(--accent)"></span>Today is in <span style="color:var(--fg);font-weight:500">Q2 FY 2026–27</span></div>
+          </div>
+          <div style="padding:18px 20px;display:flex;gap:24px;align-items:center;border-bottom:1px solid var(--border)">
+            <div style="flex:1;font-weight:500">Week starts on</div>
+            <div style="display:flex;padding:2px;border-radius:8px;background:var(--muted);gap:2px"><div style="height:26px;padding:0 12px;border-radius:6px;display:flex;align-items:center;background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.08)">Monday</div><div style="height:26px;padding:0 12px;border-radius:6px;display:flex;align-items:center;color:var(--mfg)">Sunday</div></div>
+          </div>
+          <div style="padding:18px 20px;display:flex;gap:24px;align-items:center;border-bottom:1px solid var(--border)">
+            <div style="flex:1;font-weight:500">Time zone</div>
+            <div style="width:240px;height:32px;border-radius:8px;border:1px solid var(--border2);display:flex;align-items:center;padding:0 10px;gap:8px"><span style="flex:1">Asia/Kolkata</span><span style="font-family:Geist Mono,monospace;font-size:11.5px;color:var(--faint)">GMT+5:30</span></div>
+          </div>
+          <div style="padding:18px 20px">
+            <div style="font-weight:500">Theme</div>
+            <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px">
+              <sc-for list="{{ themes }}" as="t" hint-placeholder-count="3">
+                <div style="display:flex;flex-direction:column;gap:8px">
+                  <div style="height:72px;border-radius:9px;border:{{ t.bd }};overflow:hidden;display:flex;background:{{ t.bg }}"><div style="width:30%;background:{{ t.side }};border-right:1px solid {{ t.line }}"></div><div style="flex:1;padding:10px;display:flex;flex-direction:column;gap:6px"><div style="width:60%;height:6px;border-radius:3px;background:{{ t.ink }}"></div><div style="width:85%;height:5px;border-radius:3px;background:{{ t.line }}"></div><div style="width:70%;height:5px;border-radius:3px;background:{{ t.line }}"></div></div></div>
+                  <div style="display:flex;align-items:center;gap:6px;color:{{ t.fg }}"><l-i n="{{ t.icon }}" s="13"></l-i>{{ t.l }}</div>
+                </div>
+              </sc-for>
+            </div>
+          </div>
+        </div>
+      </sc-if>
+      <sc-if value="{{ isAccount }}" hint-placeholder-val="{{ false }}">
+        <div style="font-size:24px;font-weight:600;letter-spacing:-0.02em">Profile & account</div>
+        <div style="margin-top:28px;border:1px solid var(--border);border-radius:12px;background:var(--card)">
+          <div style="padding:18px 20px;display:flex;gap:16px;align-items:center;border-bottom:1px solid var(--border)">
+            <div style="width:48px;height:48px;border-radius:24px;background:var(--muted);border:1px solid var(--border);font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center">AR</div>
+            <div style="flex:1"><div style="font-weight:500">Initials avatar</div><div style="color:var(--mfg);margin-top:3px">Generated from your name.</div></div>
+          </div>
+          <div style="padding:18px 20px;display:flex;gap:24px;align-items:center;border-bottom:1px solid var(--border)"><div style="flex:1;font-weight:500">Name</div><div style="width:260px;height:32px;border-radius:8px;border:1px solid var(--border2);display:flex;align-items:center;padding:0 10px">Aditya Rao</div></div>
+          <div style="padding:18px 20px;display:flex;gap:24px;align-items:center;border-bottom:1px solid var(--border)"><div style="flex:1;font-weight:500">Email</div><div style="width:260px;height:32px;display:flex;align-items:center;justify-content:flex-end;color:var(--mfg)">aditya.rao@hey.com</div></div>
+          <div style="padding:18px 20px;display:flex;gap:24px;align-items:center;border-bottom:1px solid var(--border)"><div style="flex:1"><div style="font-weight:500">Password</div><div style="color:var(--mfg);margin-top:3px">Last changed 4 months ago</div></div><div style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center">Change password</div></div>
+          <div style="padding:18px 20px;display:flex;gap:24px;align-items:center"><div style="flex:1;font-weight:500">Sign out of Axon</div><div style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;gap:6px;color:var(--destr)"><l-i n="log-out" s="14"></l-i>Sign out</div></div>
+        </div>
+      </sc-if>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;section&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;preferences&quot;,&quot;account&quot;],&quot;default&quot;:&quot;preferences&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const sec = this.props.section || 'preferences';
+    const nav = [['profile', 'Profile', 'user-round'], ['preferences', 'Preferences', 'sliders-horizontal'], ['account', 'Account', 'key-round']].map(([k, l, icon]) => {
+      const on = k === sec || (sec === 'account' && k === 'profile');
+      return { l, icon, bg: on ? 'var(--hover)' : 'transparent', fg: on ? 'var(--fg)' : 'var(--mfg)', fw: on ? 500 : 400 };
+    });
+    const quarters = [['Q1', 'Apr–Jun'], ['Q2', 'Jul–Sep'], ['Q3', 'Oct–Dec'], ['Q4', 'Jan–Mar']].map(([q, m], i) => ({ q, m, bg: i === 1 ? 'var(--card)' : 'transparent', bd: i === 1 ? 'var(--accent)' : 'transparent', fg: i === 1 ? 'var(--accent)' : 'var(--fg)' }));
+    const sel = dark ? 1 : 0;
+    const themes = [
+      ['Light', 'sun', '#ffffff', '#f4f4f6', '#e4e4e8', '#18181b'],
+      ['Dark', 'moon', '#131315', '#18181b', '#2a2a2e', '#ececef'],
+      ['System', 'monitor', 'linear-gradient(90deg,#ffffff 50%,#131315 50%)', 'transparent', '#8e8e98', '#8e8e98']
+    ].map(([l, icon, bg, side, line, ink], i) => ({ l, icon, bg, side, line, ink, bd: i === sel ? '2px solid var(--accent)' : '1px solid var(--border)', fg: i === sel ? 'var(--fg)' : 'var(--mfg)' }));
+    return { dark, nav, quarters, themes, isPrefs: sec === 'preferences', isAccount: sec === 'account' };
+  }
+}
+</script>
+</body>
+</html>

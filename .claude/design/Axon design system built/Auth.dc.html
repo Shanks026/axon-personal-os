@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden">
+  <div style="width:46%;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);padding:44px 56px;box-sizing:border-box;display:flex;flex-direction:column">
+    <div style="display:flex;align-items:center;gap:10px"><div style="width:26px;height:26px;border-radius:8px;background:var(--fg);display:flex;align-items:center;justify-content:center"><div style="width:10px;height:10px;border-radius:5px;border:2px solid var(--bg)"></div></div><span style="font-size:17px;font-weight:600;letter-spacing:-0.02em">Axon</span></div>
+    <div style="flex:1"></div>
+    <div style="font-size:40px;font-weight:600;letter-spacing:-0.035em;line-height:1.1;max-width:440px;text-wrap:pretty">Log the work.<br>The quarter writes itself.</div>
+    <div style="color:var(--mfg);font-size:15px;line-height:1.6;margin-top:16px;max-width:400px">Tasks, notes, a daily log and your calendar — organised by space, rolled up into a clean report every fiscal quarter.</div>
+    <div style="display:flex;gap:8px;margin-top:36px">
+      <sc-for list="{{ spaces }}" as="s" hint-placeholder-count="3"><div style="height:28px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:7px;color:var(--mfg)"><span style="width:7px;height:7px;border-radius:4px;background:{{ s.c }}"></span>{{ s.n }}</div></sc-for>
+    </div>
+    <div style="flex:1"></div>
+    <div style="font-family:Geist Mono,monospace;font-size:11.5px;color:var(--faint)">Private by default · single user</div>
+  </div>
+  <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:40px">
+    <div style="width:360px">
+      <sc-if value="{{ isForm }}" hint-placeholder-val="{{ true }}">
+        <div style="font-size:24px;font-weight:600;letter-spacing:-0.02em">{{ title }}</div>
+        <div style="color:var(--mfg);margin-top:6px;line-height:1.5">{{ sub }}</div>
+        <div style="display:flex;flex-direction:column;gap:14px;margin-top:28px">
+          <sc-for list="{{ fields }}" as="f" hint-placeholder-count="2">
+            <div style="display:flex;flex-direction:column;gap:6px">
+              <div style="display:flex;align-items:center"><span style="font-weight:500;flex:1">{{ f.l }}</span><sc-if value="{{ f.aside }}"><span style="color:var(--mfg);font-size:12px">{{ f.aside }}</span></sc-if></div>
+              <div style="height:38px;border-radius:9px;border:1px solid {{ f.bd }};background:var(--card);display:flex;align-items:center;padding:0 12px;gap:8px;box-shadow:{{ f.ring }}"><span style="flex:1;color:{{ f.vc }};font-size:14px">{{ f.v }}</span><sc-if value="{{ f.eye }}"><l-i n="eye-off" s="15" style="color:var(--faint)"></l-i></sc-if></div>
+              <sc-if value="{{ f.err }}"><div style="display:flex;align-items:center;gap:6px;color:var(--destr);font-size:12px"><l-i n="circle-alert" s="13"></l-i>{{ f.err }}</div></sc-if>
+            </div>
+          </sc-for>
+          <div style="height:38px;border-radius:9px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;justify-content:center;font-weight:500;font-size:14px;margin-top:6px">{{ cta }}</div>
+        </div>
+        <div style="text-align:center;color:var(--mfg);margin-top:20px">{{ foot }} <span style="color:var(--fg);font-weight:500">{{ footLink }}</span></div>
+      </sc-if>
+      <sc-if value="{{ isCheck }}" hint-placeholder-val="{{ false }}">
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center">
+          <div style="width:64px;height:64px;border-radius:18px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;position:relative;color:var(--fg);box-shadow:0 8px 24px rgba(0,0,0,.06)"><l-i n="mail" s="26" w="1.5"></l-i><div style="position:absolute;right:-6px;top:-6px;width:22px;height:22px;border-radius:11px;background:var(--ok);color:#fff;display:flex;align-items:center;justify-content:center;border:2px solid var(--bg)"><l-i n="check" s="12" w="3"></l-i></div></div>
+          <div style="font-size:22px;font-weight:600;letter-spacing:-0.02em;margin-top:22px">Check your inbox</div>
+          <div style="color:var(--mfg);margin-top:8px;line-height:1.55">We sent a sign-in link to <span style="color:var(--fg);font-weight:500">aditya.rao@hey.com</span>. It expires in 15 minutes.</div>
+          <div style="height:36px;padding:0 14px;border-radius:9px;border:1px solid var(--border);display:flex;align-items:center;gap:8px;margin-top:24px"><l-i n="external-link" s="14"></l-i>Open mail app</div>
+          <div style="color:var(--faint);margin-top:16px;font-size:12px">Didn't get it? <span style="color:var(--mfg)">Resend in 0:42</span></div>
+        </div>
+      </sc-if>
+    </div>
+  </div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;login&quot;,&quot;signup&quot;,&quot;check&quot;,&quot;forgot&quot;,&quot;reset&quot;],&quot;default&quot;:&quot;login&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const sc = this.props.screen || 'login';
+    const f = (l, v, o) => Object.assign({ l, v, aside: '', eye: false, err: '', bd: 'var(--border2)', ring: 'none', vc: 'var(--fg)' }, o || {});
+    const errF = { bd: 'var(--destr)', ring: '0 0 0 3px color-mix(in oklab, var(--destr) 16%, transparent)' };
+    const focus = { bd: 'var(--fg)', ring: '0 0 0 3px color-mix(in oklab, var(--fg) 10%, transparent)' };
+    const S = {
+      login: { title: 'Welcome back', sub: 'Sign in to your second brain.', cta: 'Sign in', foot: 'New to Axon?', footLink: 'Create an account', fields: [f('Email', 'aditya.rao@hey.com'), f('Password', '••••••••', Object.assign({ aside: 'Forgot?', eye: true, err: 'That password doesn’t match this email.' }, errF))] },
+      signup: { title: 'Create your account', sub: 'One person, all your work. Takes a minute.', cta: 'Create account', foot: 'Already have one?', footLink: 'Sign in', fields: [f('Name', 'Aditya Rao'), f('Email', 'aditya.rao@hey.com', focus), f('Password', 'At least 10 characters', { eye: true, vc: 'var(--faint)' })] },
+      forgot: { title: 'Reset your password', sub: 'We’ll email you a link to choose a new one.', cta: 'Send reset link', foot: 'Remembered it?', footLink: 'Back to sign in', fields: [f('Email', 'aditya.rao@hey.com', focus)] },
+      reset: { title: 'Choose a new password', sub: 'For aditya.rao@hey.com', cta: 'Update password', foot: '', footLink: '', fields: [f('New password', '••••••••••••', { eye: true }), f('Confirm password', '••••••••••', Object.assign({ eye: true, err: 'Passwords don’t match.' }, errF))] }
+    };
+    const cur = S[sc] || S.login;
+    return Object.assign({ dark, isForm: sc !== 'check', isCheck: sc === 'check', spaces: [{ n: 'THMP', c: dark ? '#6b95f0' : '#3b6fe0' }, { n: 'Personal', c: dark ? '#4fc28a' : '#2f9e6a' }, { n: 'Side projects', c: dark ? '#a08af2' : '#7c5ce0' }] }, cur);
+  }
+}
+</script>
+</body>
+</html>

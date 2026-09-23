@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden;position:relative">
+  <dc-import name="Sidebar" active="trash" space="thmp" dark="{{ dark }}" hint-size="240px,100%"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:48px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:8px">
+      <l-i n="panel-left" s="16" style="color:var(--mfg)"></l-i>
+      <div style="width:1px;height:16px;background:var(--border);margin:0 6px"></div>
+      <span style="color:var(--mfg)">THMP</span><l-i n="chevron-right" s="14" style="color:var(--faint)"></l-i><span style="font-weight:500">Trash</span>
+      <div style="flex:1"></div>
+      <div style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--border);color:var(--destr);display:flex;align-items:center;gap:6px;font-weight:500;white-space:nowrap"><l-i n="trash-2" s="14"></l-i>Empty trash</div>
+    </header>
+    <div style="flex:1;overflow:hidden;padding:36px 40px">
+      <div style="max-width:860px;margin:0 auto">
+        <div style="font-size:26px;font-weight:600;letter-spacing:-0.025em">Trash</div>
+        <div style="display:flex;align-items:center;gap:8px;color:var(--mfg);margin-top:6px"><l-i n="clock" s="13"></l-i>Items are deleted forever 30 days after they're moved here.</div>
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+          <div style="margin-top:28px">
+            <div style="display:flex;align-items:center;gap:8px;padding:0 4px 8px;border-bottom:1px solid var(--border)"><l-i n="{{ g.icon }}" s="14" style="color:var(--mfg)"></l-i><span style="font-weight:600">{{ g.l }}</span><span style="font-family:Geist Mono,monospace;font-size:12px;color:var(--faint)">{{ g.count }}</span></div>
+            <sc-for list="{{ g.items }}" as="i" hint-placeholder-count="2">
+              <div style="height:44px;display:flex;align-items:center;gap:12px;padding:0 4px;border-bottom:1px solid var(--border)">
+                <span style="flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:var(--mfg)">{{ i.t }}</span>
+                <span style="font-family:Geist Mono,monospace;font-size:11.5px;color:var(--faint);white-space:nowrap">{{ i.when }}</span>
+                <span style="font-family:Geist Mono,monospace;font-size:11.5px;color:{{ i.lc }};white-space:nowrap;width:74px;text-align:right">{{ i.left }}</span>
+                <div style="height:26px;padding:0 9px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;gap:5px;white-space:nowrap"><l-i n="undo-2" s="13"></l-i>Restore</div>
+                <div style="width:26px;height:26px;border-radius:6px;display:flex;align-items:center;justify-content:center;color:var(--faint)"><l-i n="x" s="14"></l-i></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+  <sc-if value="{{ confirm }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;background:var(--overlay);display:flex;align-items:center;justify-content:center">
+      <div style="width:420px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.2);padding:22px">
+        <div style="width:36px;height:36px;border-radius:10px;background:color-mix(in oklab, var(--destr) 12%, transparent);color:var(--destr);display:flex;align-items:center;justify-content:center"><l-i n="trash-2" s="17"></l-i></div>
+        <div style="font-size:16px;font-weight:600;margin-top:14px">Empty trash?</div>
+        <div style="color:var(--mfg);line-height:1.55;margin-top:6px">7 items will be deleted forever: 3 tasks, 2 notes, 1 todo and 1 event. This can't be undone.</div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:22px">
+          <div style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center">Cancel</div>
+          <div style="height:32px;padding:0 12px;border-radius:8px;background:var(--destr);color:#fff;display:flex;align-items:center;font-weight:500">Delete 7 items</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;confirm&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const i = (t, when, days) => ({ t, when: 'Deleted ' + when, left: days + 'd left', lc: days <= 3 ? 'var(--destr)' : 'var(--faint)' });
+    return {
+      dark, confirm: this.props.confirm === true || this.props.confirm === 'true',
+      groups: [
+        { l: 'Tasks', icon: 'square-check-big', count: '3', items: [i('Buyer portal: legacy CSV export button', '2h ago', 30), i('Storefront: prefetch PDP on hover (spike)', '9 Sep', 16), i('Admin portal: dark mode for audit log', '28 Aug', 3)] },
+        { l: 'Notes', icon: 'file-text', count: '2', items: [i('Scratch — zod refine vs superRefine', 'Yesterday', 29), i('Sprint 39 planning (duplicate)', '1 Sep', 8)] },
+        { l: 'Todos & events', icon: 'list-todo', count: '2', items: [i('Todo · Order new laptop stand', '20 Sep', 27), i('Event · Frontend guild (cancelled)', '15 Sep', 22)] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden;position:relative">
+  <dc-import name="Sidebar" active="{{ active }}" space="{{ space }}" dark="{{ dark }}" hint-size="240px,100%"></dc-import>
+  <main style="flex:1;padding:84px 80px;display:flex;flex-direction:column;gap:14px">
+    <div style="width:280px;height:22px;border-radius:6px;background:var(--muted)"></div>
+    <div style="width:180px;height:12px;border-radius:6px;background:var(--muted)"></div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:20px"><div style="height:220px;border-radius:12px;border:1px solid var(--border)"></div><div style="height:220px;border-radius:12px;border:1px solid var(--border)"></div><div style="height:220px;border-radius:12px;border:1px solid var(--border)"></div></div>
+  </main>
+  <div style="position:absolute;inset:0;background:var(--overlay);backdrop-filter:{{ blur }}"></div>
+
+  <sc-if value="{{ isCmd }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:50%;top:120px;transform:translateX(-50%);width:640px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.25);overflow:hidden">
+      <div style="height:54px;display:flex;align-items:center;gap:12px;padding:0 18px;border-bottom:1px solid var(--border)"><l-i n="search" s="17" style="color:var(--mfg)"></l-i><span style="font-size:15px;flex:1">pagina<span style="display:inline-block;width:1.5px;height:17px;background:var(--fg);vertical-align:middle;margin-left:1px"></span></span><span style="height:22px;padding:0 8px;border-radius:6px;background:var(--muted);color:var(--mfg);font-size:11.5px;display:flex;align-items:center;gap:5px"><l-i n="layers" s="12"></l-i>All spaces</span></div>
+      <div style="padding:6px">
+        <sc-for list="{{ cmdGroups }}" as="g" hint-placeholder-count="3">
+          <div>
+            <div style="padding:10px 12px 4px;font-size:11px;font-weight:500;color:var(--faint)">{{ g.l }}</div>
+            <sc-for list="{{ g.items }}" as="i" hint-placeholder-count="2">
+              <div style="height:38px;display:flex;align-items:center;gap:12px;padding:0 12px;border-radius:8px;background:{{ i.bg }}">
+                <l-i n="{{ i.icon }}" s="15" style="color:{{ i.ic }}"></l-i>
+                <span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ i.pre }}<span style="background:{{ i.hl }};color:var(--fg);border-radius:3px;font-weight:500">{{ i.match }}</span>{{ i.post }}</span>
+                <sc-if value="{{ i.sub }}"><span style="color:var(--faint);font-size:12px;white-space:nowrap">{{ i.sub }}</span></sc-if>
+                <div style="flex:1"></div>
+                <sc-if value="{{ i.space }}"><span style="height:20px;padding:0 7px;border-radius:5px;background:var(--muted);font-size:11px;color:var(--mfg);display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:6px;height:6px;border-radius:3px;background:{{ i.sc }}"></span>{{ i.space }}</span></sc-if>
+                <sc-if value="{{ i.k }}"><span style="font-family:Geist Mono,monospace;font-size:11px;color:var(--faint)">{{ i.k }}</span></sc-if>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+      <div style="height:38px;border-top:1px solid var(--border);display:flex;align-items:center;gap:16px;padding:0 16px;color:var(--faint);font-size:11.5px;background:var(--muted)">
+        <span style="display:flex;align-items:center;gap:5px"><span style="font-family:Geist Mono,monospace;border:1px solid var(--border2);border-radius:4px;padding:0 4px">↑↓</span>Navigate</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="font-family:Geist Mono,monospace;border:1px solid var(--border2);border-radius:4px;padding:0 4px">↵</span>Open</span>
+        <span style="display:flex;align-items:center;gap:5px"><span style="font-family:Geist Mono,monospace;border:1px solid var(--border2);border-radius:4px;padding:0 4px">Tab</span>Filter by type</span>
+        <div style="flex:1"></div>
+        <span style="display:flex;align-items:center;gap:5px"><span style="font-family:Geist Mono,monospace;border:1px solid var(--border2);border-radius:4px;padding:0 4px">Esc</span>Close</span>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isCapture }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:50%;top:160px;transform:translateX(-50%);width:560px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.25);overflow:hidden">
+      <div style="padding:18px 20px 8px;font-size:15px;line-height:1.6;min-height:96px">Storefront category page jumps when images load — reserve aspect ratio before lazy-load lands<span style="display:inline-block;width:1.5px;height:17px;background:var(--fg);vertical-align:middle;margin-left:1px"></span></div>
+      <div style="display:flex;align-items:center;gap:6px;padding:10px 14px 12px">
+        <sc-for list="{{ types }}" as="t" hint-placeholder-count="4"><div style="height:28px;padding:0 10px;border-radius:14px;border:1px solid {{ t.bd }};background:{{ t.bg }};color:{{ t.fg }};display:flex;align-items:center;gap:6px;white-space:nowrap"><l-i n="{{ t.icon }}" s="13"></l-i>{{ t.l }}</div></sc-for>
+        <div style="flex:1"></div>
+        <div style="height:28px;padding:0 10px;border-radius:7px;display:flex;align-items:center;gap:6px;color:var(--mfg)"><span style="width:7px;height:7px;border-radius:4px;background:var(--accent)"></span>THMP<l-i n="chevrons-up-down" s="12"></l-i></div>
+      </div>
+      <div style="height:48px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 14px;background:var(--muted)">
+        <span style="color:var(--faint);font-size:11.5px;display:flex;align-items:center;gap:5px"><span style="font-family:Geist Mono,monospace;border:1px solid var(--border2);border-radius:4px;padding:0 4px">⇥</span>change type</span>
+        <div style="flex:1"></div>
+        <div style="height:30px;padding:0 12px;border-radius:8px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:8px;font-weight:500">Save to Inbox<span style="font-family:Geist Mono,monospace;font-size:11px;opacity:.6">⌘↵</span></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isKeys }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:50%;top:90px;transform:translateX(-50%);width:760px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.25);overflow:hidden">
+      <div style="padding:18px 22px;display:flex;align-items:center;border-bottom:1px solid var(--border)"><span style="font-size:15px;font-weight:600;flex:1">Keyboard shortcuts</span><span style="font-family:Geist Mono,monospace;font-size:11px;color:var(--faint);border:1px solid var(--border);border-radius:4px;padding:0 5px">?</span></div>
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:4px 40px;padding:18px 22px 22px">
+        <sc-for list="{{ keys }}" as="g" hint-placeholder-count="4">
+          <div style="margin-bottom:14px">
+            <div style="font-size:11px;font-weight:500;color:var(--faint);margin-bottom:6px">{{ g.l }}</div>
+            <sc-for list="{{ g.items }}" as="k" hint-placeholder-count="4">
+              <div style="height:30px;display:flex;align-items:center;border-bottom:1px solid var(--border)"><span style="flex:1">{{ k.l }}</span><div style="display:flex;gap:3px"><sc-for list="{{ k.keys }}" as="c" hint-placeholder-count="1"><span style="min-width:20px;height:20px;padding:0 5px;box-sizing:border-box;border-radius:5px;border:1px solid var(--border2);border-bottom-width:2px;font-family:Geist Mono,monospace;font-size:11px;display:flex;align-items:center;justify-content:center;color:var(--mfg)">{{ c }}</span></sc-for></div></div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isTask }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:50%;top:110px;transform:translateX(-50%);width:640px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.25);overflow:visible">
+      <div style="padding:14px 20px 0;display:flex;align-items:center;gap:8px;color:var(--mfg);font-size:12px">
+        <div style="height:24px;padding:0 8px;border-radius:6px;border:1px solid var(--border2);display:flex;align-items:center;gap:6px;color:var(--fg);background:var(--muted)"><span style="width:7px;height:7px;border-radius:4px;background:#3b6fe0"></span>THMP<l-i n="chevron-down" s="12"></l-i></div>
+        <l-i n="chevron-right" s="12" style="color:var(--faint)"></l-i>New task<div style="flex:1"></div><l-i n="x" s="15" style="color:var(--faint)"></l-i>
+      </div>
+      <div style="padding:14px 20px 4px;font-size:20px;font-weight:600;letter-spacing:-0.02em">Storefront: reserve image aspect ratio<span style="display:inline-block;width:1.5px;height:20px;background:var(--fg);vertical-align:middle;margin-left:1px"></span></div>
+      <div style="padding:4px 20px 16px;color:var(--faint);font-size:14px">Add description…</div>
+      <div style="display:flex;flex-wrap:wrap;gap:6px;padding:0 20px 16px">
+        <sc-for list="{{ taskProps }}" as="p" hint-placeholder-count="6"><div style="height:28px;padding:0 10px;border-radius:7px;border:1px solid {{ p.bd }};background:{{ p.bg }};display:flex;align-items:center;gap:6px;color:{{ p.fg }};white-space:nowrap"><l-i n="{{ p.icon }}" s="13" style="color:{{ p.ic }}"></l-i>{{ p.l }}</div></sc-for>
+      </div>
+      <div style="position:absolute;left:326px;top:178px;width:240px;background:var(--card);border:1px solid var(--border);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.16);padding:6px;z-index:2">
+        <div style="height:30px;display:flex;align-items:center;gap:8px;padding:0 8px;color:var(--fg);border-bottom:1px solid var(--border);margin-bottom:4px">perf<span style="width:1.5px;height:14px;background:var(--fg)"></span></div>
+        <div style="height:30px;display:flex;align-items:center;gap:8px;padding:0 8px;border-radius:6px;background:var(--hover)"><div style="width:14px;height:14px;border-radius:4px;background:var(--accent);color:var(--pfg);display:flex;align-items:center;justify-content:center"><l-i n="check" s="10" w="3"></l-i></div><span style="width:6px;height:6px;border-radius:3px;background:#ff9500"></span>performance</div>
+        <div style="height:30px;display:flex;align-items:center;gap:8px;padding:0 8px;color:var(--mfg)"><l-i n="plus" s="13"></l-i>Create “perf”</div>
+      </div>
+      <div style="height:52px;border-top:1px solid var(--border);display:flex;align-items:center;gap:10px;padding:0 16px">
+        <div style="display:flex;align-items:center;gap:8px;color:var(--mfg)"><div style="width:26px;height:15px;border-radius:8px;background:var(--border2);position:relative"><div style="position:absolute;left:2px;top:2px;width:11px;height:11px;border-radius:6px;background:var(--card)"></div></div>Create more</div>
+        <div style="flex:1"></div>
+        <div style="height:32px;padding:0 12px;border-radius:8px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:8px;font-weight:500">Create task<span style="font-family:Geist Mono,monospace;font-size:11px;opacity:.6">⌘↵</span></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isGen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:50%;top:110px;transform:translateX(-50%);width:560px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.25);overflow:hidden">
+      <div style="padding:18px 22px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)"><span style="font-size:15px;font-weight:600;flex:1">Generate report</span><span style="font-family:Geist Mono,monospace;font-size:11.5px;color:var(--faint)">Step 2 of 2</span></div>
+      <div style="padding:20px 22px;display:flex;flex-direction:column;gap:18px">
+        <div style="display:flex;flex-direction:column;gap:8px"><span style="font-weight:500">Scope</span>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px">
+            <div style="border:2px solid var(--accent);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px"><l-i n="briefcase" s="15" style="color:var(--accent)"></l-i><span style="flex:1;font-weight:500">THMP</span><l-i n="circle-check" s="15" style="color:var(--accent)"></l-i></div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:11px 13px;display:flex;align-items:center;gap:10px;color:var(--mfg)"><l-i n="layers" s="15"></l-i><span style="flex:1">Global</span></div>
+          </div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:8px"><span style="font-weight:500">Period</span>
+          <div style="display:flex;padding:2px;border-radius:8px;background:var(--muted);gap:2px;align-self:flex-start"><div style="height:26px;padding:0 12px;border-radius:6px;display:flex;align-items:center;background:var(--card);box-shadow:0 1px 2px rgba(0,0,0,.08)">Quarter</div><div style="height:26px;padding:0 12px;border-radius:6px;display:flex;align-items:center;color:var(--mfg)">Month</div><div style="height:26px;padding:0 12px;border-radius:6px;display:flex;align-items:center;color:var(--mfg)">Custom</div></div>
+          <div style="height:36px;border-radius:8px;border:1px solid var(--border2);display:flex;align-items:center;padding:0 10px;gap:8px"><span style="flex:1;font-weight:500">Q2 FY 2026–27</span><span style="font-family:Geist Mono,monospace;font-size:12px;color:var(--mfg)">1 Jul – 30 Sep 2026</span><l-i n="chevrons-up-down" s="14" style="color:var(--faint)"></l-i></div>
+          <span style="color:var(--mfg);font-size:12px">Current quarter · 7 days left, numbers will change until 30 Sep.</span>
+        </div>
+        <div style="border-radius:10px;background:var(--muted);padding:14px;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
+          <sc-for list="{{ genStats }}" as="s" hint-placeholder-count="4"><div><div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.02em">{{ s.v }}</div><div style="color:var(--mfg);font-size:12px">{{ s.l }}</div></div></sc-for>
+        </div>
+      </div>
+      <div style="padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px">
+        <div style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center">Back</div>
+        <div style="height:32px;padding:0 12px;border-radius:8px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:6px;font-weight:500"><l-i n="sparkles" s="14"></l-i>Create draft</div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isEvent }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;left:50%;top:100px;transform:translateX(-50%);width:520px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 30px 80px rgba(0,0,0,.25);overflow:hidden">
+      <div style="padding:18px 22px 6px;font-size:19px;font-weight:600;letter-spacing:-0.02em">Sprint review</div>
+      <div style="padding:10px 22px 18px;display:flex;flex-direction:column;gap:2px">
+        <sc-for list="{{ eventRows }}" as="r" hint-placeholder-count="5"><div style="min-height:38px;display:flex;align-items:center;gap:12px"><l-i n="{{ r.icon }}" s="15" style="color:var(--mfg)"></l-i><span style="flex:1;color:{{ r.fg }};font-family:{{ r.ff }}">{{ r.v }}</span><sc-if value="{{ r.extra }}"><span style="color:var(--mfg);font-size:12px">{{ r.extra }}</span></sc-if></div></sc-for>
+      </div>
+      <div style="padding:14px 22px;border-top:1px solid var(--border);display:flex;align-items:center;gap:8px">
+        <div style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;gap:6px"><l-i n="file-plus" s="14"></l-i>Create meeting note</div>
+        <div style="flex:1"></div>
+        <div style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center">Cancel</div>
+        <div style="height:32px;padding:0 12px;border-radius:8px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;font-weight:500">Save</div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;which&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;cmd&quot;,&quot;capture&quot;,&quot;keys&quot;,&quot;task&quot;,&quot;generate&quot;,&quot;event&quot;],&quot;default&quot;:&quot;cmd&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const w = this.props.which || 'cmd';
+    const B = dark ? '#6b95f0' : '#3b6fe0', V = dark ? '#a08af2' : '#7c5ce0';
+    const it = (icon, pre, o) => Object.assign({ icon, pre, match: '', post: '', sub: '', space: '', sc: '', k: '', ic: 'var(--mfg)', bg: 'transparent', hl: 'transparent' }, o || {});
+    const hl = 'var(--accent-soft)';
+    const cmdGroups = [
+      { l: 'Tasks', items: [it('circle-ellipsis', 'Buyer portal: fix RFQ table ', { match: 'pagina', post: 'tion reset on filter change', space: 'THMP', sc: B, ic: 'var(--review)', bg: 'var(--hover)', hl }), it('circle-check', 'Blog: ', { match: 'pagina', post: 'tion for Axon changelog', space: 'Side projects', sc: V, ic: 'var(--ok)', hl })] },
+      { l: 'Notes', items: [it('file-text', 'Buyer portal: ', { match: 'pagina', post: 'tion bug RCA', sub: 'edited yesterday', space: 'THMP', sc: B, hl })] },
+      { l: 'Actions', items: [it('plus', 'New task', { k: 'C' }), it('square-pen', 'Quick capture', { k: '⌘J' }), it('sun-moon', 'Toggle theme', { k: '⌘⇧L' })] },
+      { l: 'Navigate', items: [it('square-check-big', 'Go to Tasks', { k: 'G T' }), it('chart-no-axes-column', 'Go to Reports', { k: 'G R' })] },
+      { l: 'Switch space', items: [it('layers', 'Global', { k: '⌘0' }), it('leaf', 'Personal', { k: '⌘2' })] }
+    ];
+    const types = [['inbox', 'Inbox'], ['square-check-big', 'Task'], ['list-todo', 'Todo'], ['file-text', 'Note']].map(([icon, l], i) => ({ icon, l, bd: i === 0 ? 'var(--fg)' : 'var(--border)', bg: i === 0 ? 'var(--hover)' : 'transparent', fg: i === 0 ? 'var(--fg)' : 'var(--mfg)' }));
+    const kk = (l, keys) => ({ l, keys });
+    const keys = [
+      { l: 'General', items: [kk('Command palette', ['⌘', 'K']), kk('Quick capture', ['⌘', 'J']), kk('Toggle sidebar', ['⌘', '\\']), kk('Toggle theme', ['⌘', '⇧', 'L']), kk('Shortcuts', ['?'])] },
+      { l: 'Navigate', items: [kk('Dashboard', ['G', 'D']), kk('Inbox', ['G', 'I']), kk('Tasks', ['G', 'T']), kk('Notes', ['G', 'N']), kk('Journal (today)', ['G', 'J'])] },
+      { l: 'Create', items: [kk('New task', ['C']), kk('New todo', ['⇧', 'C']), kk('New note', ['N']), kk('New event', ['E'])] },
+      { l: 'Lists & triage', items: [kk('Move down / up', ['J', 'K']), kk('Open', ['↵']), kk('Set status', ['S']), kk('Set priority', ['P']), kk('Move to Trash', ['⌫'])] }
+    ];
+    const tp = (icon, l, ic, o) => Object.assign({ icon, l, ic: ic || 'var(--mfg)', bd: 'var(--border)', bg: 'transparent', fg: 'var(--fg)' }, o || {});
+    const taskProps = [tp('circle', 'Todo'), tp('signal-medium', 'Medium'), tp('calendar', 'Start'), tp('calendar-clock', 'Fri 26 Sep', 'var(--mfg)'), tp('tag', 'performance', '#ff9500', { bd: 'var(--fg)', bg: 'var(--hover)' }), tp('link-2', 'Link')];
+    const mono = 'Geist Mono, monospace';
+    const er = (icon, v, o) => Object.assign({ icon, v, fg: 'var(--fg)', ff: 'inherit', extra: '' }, o || {});
+    return {
+      dark, isCmd: w === 'cmd', isCapture: w === 'capture', isKeys: w === 'keys', isTask: w === 'task', isGen: w === 'generate', isEvent: w === 'event',
+      active: w === 'generate' ? 'reports' : w === 'event' ? 'calendar' : w === 'task' ? 'tasks' : 'dashboard', space: 'thmp',
+      blur: w === 'cmd' ? 'blur(2px)' : 'none',
+      cmdGroups, types, keys, taskProps,
+      genStats: [['42', 'completed'], ['51', 'created'], ['6', 'in progress'], ['2', 'overdue']].map(([v, l]) => ({ v, l })),
+      eventRows: [er('clock', 'Thu 25 Sep · 15:00 – 16:00', { ff: mono, extra: 'All day ○' }), er('video', 'meet.google.com/thm-sprint-rev'), er('align-left', 'Demo RFQ pagination and KYC upload.', { fg: 'var(--mfg)' }), er('square-check-big', 'Link a task…', { fg: 'var(--faint)' }), er('briefcase', 'THMP')]
+    };
+  }
+}
+</script>
+</body>
+</html>

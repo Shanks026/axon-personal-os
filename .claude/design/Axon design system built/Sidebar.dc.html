@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<sc-if value="{{ expanded }}" hint-placeholder-val="{{ true }}">
+<aside style="width:240px;height:100%;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;padding:10px 8px;box-sizing:border-box;font-family:Geist,system-ui,sans-serif;color:var(--fg)">
+  <div style="display:flex;align-items:center;gap:10px;height:40px;padding:0 8px;border-radius:8px;cursor:pointer">
+    <div style="width:24px;height:24px;border-radius:6px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center"><l-i n="{{ spaceIcon }}" s="14"></l-i></div>
+    <div style="font-size:13px;font-weight:600;flex:1;letter-spacing:-0.01em">{{ spaceName }}</div>
+    <l-i n="chevrons-up-down" s="14" style="color:var(--faint)"></l-i>
+  </div>
+  <div style="display:flex;flex-direction:column;gap:2px;margin-top:8px">
+    <div style="display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;border-radius:7px;border:1px solid var(--border);background:var(--card);color:var(--mfg);font-size:13px">
+      <l-i n="search" s="14"></l-i><span style="flex:1">Search</span><span style="font-family:Geist Mono,monospace;white-space:nowrap;font-size:11px;color:var(--faint)">⌘K</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;height:32px;padding:0 10px;border-radius:7px;color:var(--mfg);font-size:13px;margin-top:4px">
+      <l-i n="square-pen" s="14"></l-i><span style="flex:1">Quick capture</span><span style="font-family:Geist Mono,monospace;white-space:nowrap;font-size:11px;color:var(--faint)">⌘J</span>
+    </div>
+  </div>
+  <nav style="display:flex;flex-direction:column;gap:1px;margin-top:14px">
+    <sc-for list="{{ nav }}" as="item" hint-placeholder-count="8">
+      <div style="display:flex;align-items:center;gap:10px;height:30px;padding:0 10px;border-radius:7px;font-size:13px;background:{{ item.bg }};color:{{ item.fg }};font-weight:{{ item.fw }}">
+        <l-i n="{{ item.icon }}" s="15" style="color:{{ item.ic }}"></l-i>
+        <span style="flex:1">{{ item.label }}</span>
+        <sc-if value="{{ item.badge }}"><span style="font-family:Geist Mono,monospace;white-space:nowrap;font-size:11px;color:var(--mfg);background:var(--muted);border-radius:5px;padding:1px 6px;font-variant-numeric:tabular-nums">{{ item.badge }}</span></sc-if>
+      </div>
+    </sc-for>
+  </nav>
+  <div style="margin-top:22px;padding:0 10px 6px;font-size:11px;font-weight:500;color:var(--faint);letter-spacing:0.02em">Pinned</div>
+  <div style="display:flex;flex-direction:column;gap:1px">
+    <sc-for list="{{ pinned }}" as="p" hint-placeholder-count="3">
+      <div style="display:flex;align-items:center;gap:10px;height:28px;padding:0 10px;border-radius:7px;font-size:13px;color:var(--mfg)">
+        <l-i n="{{ p.icon }}" s="14" style="color:var(--faint)"></l-i>
+        <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ p.label }}</span>
+      </div>
+    </sc-for>
+  </div>
+  <div style="flex:1"></div>
+  <div style="display:flex;flex-direction:column;gap:1px;border-top:1px solid var(--border);padding-top:8px">
+    <div style="display:flex;align-items:center;gap:10px;height:30px;padding:0 10px;border-radius:7px;font-size:13px;background:{{ trashBg }};color:{{ trashFg }}"><l-i n="trash-2" s="15"></l-i>Trash</div>
+    <div style="display:flex;align-items:center;gap:10px;height:30px;padding:0 10px;border-radius:7px;font-size:13px;color:var(--mfg)"><l-i n="settings" s="15"></l-i>Settings</div>
+    <div style="display:flex;align-items:center;gap:10px;height:40px;padding:0 8px;border-radius:7px;margin-top:4px">
+      <div style="width:24px;height:24px;border-radius:12px;background:var(--muted);border:1px solid var(--border);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;color:var(--fg)">AR</div>
+      <div style="flex:1;font-size:13px;font-weight:500">Aditya Rao</div>
+      <l-i n="{{ themeIcon }}" s="14" style="color:var(--faint)"></l-i>
+    </div>
+  </div>
+</aside>
+</sc-if>
+<sc-if value="{{ collapsed }}" hint-placeholder-val="{{ false }}">
+<aside style="width:56px;height:100%;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;padding:10px 0;gap:2px;box-sizing:border-box;color:var(--fg)">
+  <div style="width:32px;height:32px;border-radius:8px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center;margin-bottom:8px"><l-i n="{{ spaceIcon }}" s="16"></l-i></div>
+  <div style="width:36px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--mfg)"><l-i n="search" s="16"></l-i></div>
+  <div style="width:36px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--mfg);margin-bottom:10px"><l-i n="square-pen" s="16"></l-i></div>
+  <sc-for list="{{ nav }}" as="item" hint-placeholder-count="8">
+    <div style="width:36px;height:32px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:{{ item.bg }};color:{{ item.ic }}"><l-i n="{{ item.icon }}" s="16"></l-i></div>
+  </sc-for>
+  <div style="flex:1"></div>
+  <div style="width:36px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--mfg)"><l-i n="trash-2" s="16"></l-i></div>
+  <div style="width:36px;height:32px;display:flex;align-items:center;justify-content:center;color:var(--mfg)"><l-i n="settings" s="16"></l-i></div>
+  <div style="width:26px;height:26px;border-radius:13px;background:var(--muted);border:1px solid var(--border);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;margin-top:6px;font-family:Geist,sans-serif">AR</div>
+</aside>
+</sc-if>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:240,&quot;height&quot;:900},&quot;active&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dashboard&quot;,&quot;inbox&quot;,&quot;tasks&quot;,&quot;todos&quot;,&quot;notes&quot;,&quot;journal&quot;,&quot;calendar&quot;,&quot;reports&quot;,&quot;trash&quot;],&quot;default&quot;:&quot;dashboard&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;space&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;thmp&quot;,&quot;personal&quot;,&quot;side&quot;,&quot;global&quot;],&quot;default&quot;:&quot;thmp&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;collapsed&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const spaces = { thmp: ['THMP', 'briefcase'], personal: ['Personal', 'leaf'], side: ['Side projects', 'rocket'], global: ['Global', 'layers'] };
+    const [spaceName, spaceIcon] = spaces[this.props.space || 'thmp'];
+    const active = this.props.active === 'todos' ? 'tasks' : (this.props.active || 'dashboard');
+    const items = [['dashboard', 'Dashboard', 'layout-dashboard'], ['inbox', 'Inbox', 'inbox', '4'], ['tasks', 'Tasks & Todos', 'square-check-big'], ['notes', 'Notes', 'file-text'], ['journal', 'Journal', 'notebook-pen'], ['calendar', 'Calendar', 'calendar'], ['reports', 'Reports', 'chart-no-axes-column']];
+    const nav = items.map(([k, label, icon, badge]) => {
+      const on = k === active;
+      return { label, icon, badge: badge || '', bg: on ? 'var(--hover)' : 'transparent', fg: on ? 'var(--fg)' : 'var(--mfg)', fw: on ? 500 : 400, ic: on ? 'var(--accent)' : 'var(--mfg)' };
+    });
+    const collapsed = this.props.collapsed === true || this.props.collapsed === 'true';
+    return {
+      spaceName, spaceIcon, nav, expanded: !collapsed, collapsed,
+      trashBg: active === 'trash' ? 'var(--hover)' : 'transparent', trashFg: active === 'trash' ? 'var(--fg)' : 'var(--mfg)',
+      themeIcon: this.props.dark ? 'moon' : 'sun',
+      pinned: [{ icon: 'circle-ellipsis', label: 'RFQ pagination reset' }, { icon: 'file-text', label: 'Sprint 42 planning' }, { icon: 'chart-no-axes-column', label: 'Q2 FY 2026–27' }]
+    };
+  }
+}
+</script>
+</body>
+</html>

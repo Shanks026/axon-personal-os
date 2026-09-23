@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden">
+  <dc-import name="Sidebar" active="dashboard" space="{{ spaceKey }}" dark="{{ dark }}" hint-size="240px,100%"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:48px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:8px">
+      <l-i n="panel-left" s="16" style="color:var(--mfg)"></l-i>
+      <div style="width:1px;height:16px;background:var(--border);margin:0 6px"></div>
+      <span style="color:var(--mfg)">{{ spaceName }}</span><l-i n="chevron-right" s="14" style="color:var(--faint)"></l-i><span style="font-weight:500">Dashboard</span>
+      <div style="flex:1"></div>
+      <div style="height:28px;padding:0 10px;border-radius:7px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:6px;font-weight:500"><l-i n="plus" s="14"></l-i>New task</div>
+    </header>
+    <div style="flex:1;overflow:hidden;padding:36px 40px">
+      <div style="max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:20px">
+        <div style="display:flex;align-items:flex-end;gap:16px;margin-bottom:8px">
+          <div style="flex:1">
+            <div style="font-size:26px;font-weight:600;letter-spacing:-0.025em">Good afternoon, Aditya</div>
+            <div style="display:flex;gap:10px;margin-top:8px;font-family:Geist Mono,monospace;white-space:nowrap;font-size:12px;color:var(--mfg)"><span>Tue 23 Sep 2026</span><span style="color:var(--faint)">·</span><span style="color:var(--fg)">Q2 FY 2026–27</span><span style="color:var(--faint)">·</span><span>Day 85 of 92</span></div>
+          </div>
+          <div style="width:180px;height:4px;border-radius:2px;background:var(--muted);overflow:hidden;margin-bottom:6px"><div style="width:92%;height:100%;background:var(--accent)"></div></div>
+        </div>
+        <sc-if value="{{ isGlobal }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px">
+            <sc-for list="{{ breakdown }}" as="b" hint-placeholder-count="3">
+              <div style="background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:12px">
+                <div style="width:30px;height:30px;border-radius:8px;background:{{ b.soft }};color:{{ b.color }};display:flex;align-items:center;justify-content:center"><l-i n="{{ b.icon }}" s="15"></l-i></div>
+                <div style="flex:1"><div style="font-weight:500">{{ b.name }}</div><div style="color:var(--mfg);font-size:12px;margin-top:2px">{{ b.meta }}</div></div>
+                <div style="font-size:20px;font-weight:600;font-variant-numeric:tabular-nums;letter-spacing:-0.02em">{{ b.done }}</div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+        <div style="display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:20px">
+          <section style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:6px 0 10px">
+            <div style="display:flex;align-items:center;gap:8px;padding:12px 18px 8px"><l-i n="sun" s="15" style="color:var(--accent)"></l-i><span style="font-weight:600">Today</span><span style="color:var(--faint);font-family:Geist Mono,monospace;white-space:nowrap;font-size:12px">4</span></div>
+            <div style="padding:6px 18px 4px;font-size:11px;font-weight:500;color:var(--faint)">Tasks</div>
+            <sc-for list="{{ today }}" as="t" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:10px;height:36px;padding:0 18px">
+                <l-i n="{{ t.icon }}" s="15" style="color:{{ t.sc }}"></l-i>
+                <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span>
+                <sc-if value="{{ t.showSpace }}"><span style="font-size:11px;color:var(--mfg);display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:3px;background:{{ t.spaceColor }}"></span>{{ t.space }}</span></sc-if>
+                <span style="font-family:Geist Mono,monospace;white-space:nowrap;font-size:11.5px;color:{{ t.dc }}">{{ t.due }}</span>
+              </div>
+            </sc-for>
+            <div style="padding:12px 18px 4px;font-size:11px;font-weight:500;color:var(--faint)">Todos</div>
+            <sc-for list="{{ todos }}" as="d" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 18px">
+                <div style="width:15px;height:15px;border-radius:5px;border:1.5px solid {{ d.bc }};background:{{ d.bg }};color:var(--pfg);display:flex;align-items:center;justify-content:center;box-sizing:border-box"><sc-if value="{{ d.done }}"><l-i n="check" s="11" w="3"></l-i></sc-if></div>
+                <span style="flex:1;color:{{ d.fg }};text-decoration:{{ d.td }}">{{ d.title }}</span>
+                <sc-if value="{{ d.showSpace }}"><span style="font-size:11px;color:var(--mfg);display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:3px;background:{{ d.spaceColor }}"></span>{{ d.space }}</span></sc-if>
+              </div>
+            </sc-for>
+          </section>
+          <div style="display:flex;flex-direction:column;gap:20px">
+            <section style="border:1px dashed var(--border2);border-radius:12px;padding:16px 18px;display:flex;align-items:center;gap:14px">
+              <div style="width:32px;height:32px;border-radius:8px;background:var(--muted);display:flex;align-items:center;justify-content:center;color:var(--mfg)"><l-i n="notebook-pen" s="16"></l-i></div>
+              <div style="flex:1"><div style="font-weight:500">Write today's log</div><div style="color:var(--mfg);font-size:12px;margin-top:2px">Yesterday · Today · Blockers · Notes</div></div>
+              <span style="font-family:Geist Mono,monospace;white-space:nowrap;font-size:11px;color:var(--faint);border:1px solid var(--border);border-radius:5px;padding:2px 6px">G J</span>
+            </section>
+            <section style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:6px 0 10px;flex:1">
+              <div style="display:flex;align-items:center;gap:8px;padding:12px 18px 8px"><l-i n="calendar" s="15" style="color:var(--mfg)"></l-i><span style="font-weight:600">Upcoming</span><span style="color:var(--faint);font-size:12px">Next 7 days</span></div>
+              <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:12px;height:36px;padding:0 18px">
+                  <span style="width:62px;font-family:Geist Mono,monospace;white-space:nowrap;font-size:11.5px;color:var(--mfg)">{{ u.when }}</span>
+                  <span style="width:3px;height:18px;border-radius:2px;background:{{ u.bar }}"></span>
+                  <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.title }}</span>
+                  <span style="font-family:Geist Mono,monospace;white-space:nowrap;font-size:11px;color:var(--faint)">{{ u.time }}</span>
+                </div>
+              </sc-for>
+            </section>
+          </div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:20px">
+          <section style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:6px 0 10px">
+            <div style="display:flex;align-items:center;gap:8px;padding:12px 18px 8px"><l-i n="circle-dot" s="15" style="color:var(--warn)"></l-i><span style="font-weight:600">In progress</span><span style="color:var(--faint);font-family:Geist Mono,monospace;white-space:nowrap;font-size:12px">2</span></div>
+            <sc-for list="{{ inprog }}" as="t" hint-placeholder-count="2">
+              <div style="display:flex;align-items:center;gap:10px;height:36px;padding:0 18px">
+                <l-i n="{{ t.icon }}" s="15" style="color:{{ t.sc }}"></l-i>
+                <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.title }}</span>
+                <span style="font-size:11px;color:var(--mfg);border:1px solid var(--border);border-radius:5px;padding:1px 6px;white-space:nowrap">{{ t.tag }}</span>
+              </div>
+            </sc-for>
+          </section>
+          <section style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:6px 0 10px">
+            <div style="display:flex;align-items:center;gap:8px;padding:12px 18px 8px"><l-i n="file-text" s="15" style="color:var(--mfg)"></l-i><span style="font-weight:600">Recent notes</span></div>
+            <sc-for list="{{ notes }}" as="n" hint-placeholder-count="4">
+              <div style="display:flex;align-items:center;gap:10px;height:34px;padding:0 18px">
+                <l-i n="file-text" s="14" style="color:var(--faint)"></l-i>
+                <span style="flex:1;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ n.title }}</span>
+                <span style="font-family:Geist Mono,monospace;white-space:nowrap;font-size:11px;color:var(--faint)">{{ n.when }}</span>
+              </div>
+            </sc-for>
+          </section>
+        </div>
+        <section style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:18px 20px">
+          <div style="display:flex;align-items:flex-start;gap:24px">
+            <div style="flex:1"><div style="font-weight:600">Quarter progress</div><div style="color:var(--mfg);font-size:12px;margin-top:3px">Tasks completed per week · Jul–Sep</div></div>
+            <div style="text-align:right"><div style="font-size:28px;font-weight:600;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;line-height:1">42</div><div style="font-size:12px;color:var(--ok);margin-top:6px;font-family:Geist Mono,monospace">+4 vs Q1</div></div>
+          </div>
+          <div style="display:flex;align-items:flex-end;gap:10px;height:110px;margin-top:14px;border-bottom:1px solid var(--border)">
+            <sc-for list="{{ weeks }}" as="w" hint-placeholder-count="13">
+              <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px">
+                <span style="font-size:10px;color:var(--faint);font-family:Geist Mono,monospace">{{ w.v }}</span>
+                <div style="width:100%;max-width:24px;height:{{ w.h }};border-radius:4px 4px 0 0;background:{{ w.c }}"></div>
+              </div>
+            </sc-for>
+          </div>
+          <div style="display:flex;gap:10px;margin-top:6px">
+            <sc-for list="{{ weeks }}" as="w" hint-placeholder-count="13"><span style="flex:1;text-align:center;font-family:Geist Mono,monospace;white-space:nowrap;font-size:10px;color:var(--faint)">{{ w.l }}</span></sc-for>
+          </div>
+        </section>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1040},&quot;global&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const g = this.props.global === true || this.props.global === 'true';
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const S = { todo: ['circle', 'var(--mfg)'], progress: ['circle-dot', 'var(--warn)'], review: ['circle-ellipsis', 'var(--review)'], blocked: ['circle-alert', 'var(--destr)'], done: ['circle-check', 'var(--ok)'] };
+    const sp = { THMP: dark ? '#6b95f0' : '#3b6fe0', Personal: dark ? '#4fc28a' : '#2f9e6a', 'Side projects': dark ? '#a08af2' : '#7c5ce0' };
+    const task = (st, title, due, dc, space = 'THMP', tag) => ({ icon: S[st][0], sc: S[st][1], title, due, dc, tag, space, spaceColor: sp[space], showSpace: g });
+    const today = [task('blocked', 'Admin portal: role-based menu visibility', 'Overdue · 3d', 'var(--destr)'), task('review', 'Buyer portal: fix RFQ table pagination reset on filter change', 'Today', 'var(--warn)')];
+    const td = (title, done, space = 'THMP') => ({ title, done, space, spaceColor: sp[space], showSpace: g, bc: done ? 'var(--accent)' : 'var(--border2)', bg: done ? 'var(--accent)' : 'transparent', fg: done ? 'var(--faint)' : 'var(--fg)', td: done ? 'line-through' : 'none' });
+    const todos = [td('Reply to PM about Q3 release scope', false), td('Rebase MR !1428 on develop', true)];
+    if (g) todos.push(td('Book dentist appointment', false, 'Personal'));
+    const upcoming = [
+      { when: 'Today', title: 'Daily standup', time: '10:00', bar: sp.THMP },
+      ...(g ? [{ when: 'Today', title: 'Gym', time: '19:00', bar: sp.Personal }] : []),
+      { when: 'Thu 25', title: 'Sprint review', time: '15:00', bar: sp.THMP },
+      { when: 'Fri 26', title: 'Due · Storefront: lazy-load category images', time: 'all day', bar: 'var(--border2)' },
+      ...(g ? [] : [{ when: 'Mon 29', title: 'Daily standup', time: '10:00', bar: sp.THMP }])
+    ];
+    const vals = [2, 3, 4, 3, 5, 2, 4, 3, 4, 5, 3, 3, 1];
+    const weeks = vals.map((v, i) => ({ v, h: (v / 5 * 80) + 'px', l: 'W' + (i + 1), c: i === 12 ? 'var(--accent-soft)' : 'var(--accent)' }));
+    const soft = c => c + (dark ? '24' : '1a');
+    return {
+      dark, isGlobal: g, spaceKey: g ? 'global' : 'thmp', spaceName: g ? 'Global' : 'THMP',
+      today, todos, upcoming, weeks,
+      inprog: [task('progress', 'Vendor portal: migrate product form to react-hook-form + zod', '', '', 'THMP', 'refactor'), task('review', 'Buyer portal: fix RFQ table pagination reset', '', '', 'THMP', 'buyer-portal')],
+      notes: [{ title: 'Sprint 42 planning', when: '2h' }, { title: 'Buyer portal: pagination bug RCA', when: '1d' }, { title: 'React Query caching patterns', when: '3d' }, { title: 'Q2 1:1 with manager: feedback', when: '6d' }],
+      breakdown: [
+        { name: 'THMP', icon: 'briefcase', color: sp.THMP, soft: soft(sp.THMP), meta: '5 open · 4 notes', done: '31' },
+        { name: 'Personal', icon: 'leaf', color: sp.Personal, soft: soft(sp.Personal), meta: '3 open · 2 notes', done: '6' },
+        { name: 'Side projects', icon: 'rocket', color: sp['Side projects'], soft: soft(sp['Side projects']), meta: '4 open · 5 notes', done: '5' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

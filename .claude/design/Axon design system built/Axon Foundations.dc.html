@@ -1,0 +1,387 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<meta name="design_doc_mode" content="canvas">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+<style>body{margin:0;background:#e9e9ec}a{color:#007aff;text-decoration:none}a:hover{color:#2a55b8}</style>
+</helmet>
+<div style="width:max-content;padding:80px;display:flex;flex-direction:column;gap:64px;font-family:Geist,system-ui,sans-serif;color:#1d1d1f;font-size:14px;--bg:#ffffff;--card:#ffffff;--muted:#f5f5f5;--hover:#efefef;--border:#e7e7e7;--border2:#d4d4d4;--fg:#1d1d1f;--mfg:#6e6e73;--faint:#aeaeb2;--primary:#1d1d1f;--pfg:#ffffff;--destr:#ff3b30;--ok:#34c759;--warn:#ff9500;--review:#af52de;--sidebar:#f7f7f6;--overlay:rgba(0,0,0,.22);--accent:#007aff;--accent-soft:#007aff17">
+  <div style="display:flex;flex-direction:column;gap:12px;max-width:1400px">
+    <div style="font-size:44px;font-weight:600;letter-spacing:-0.03em">Axon — Foundations</div>
+    <div style="font-size:16px;color:#6c6c76">Tokens, motion, components and layout rationale. Screens: <a href="Axon 0 Auth and Spaces.dc.html">Auth & Spaces</a> · <a href="Axon 1 Home and Tasks.dc.html">Home & Tasks</a> · <a href="Axon 2 Detail Todos Notes.dc.html">Detail, Todos, Notes</a> · <a href="Axon 3 Journal Calendar.dc.html">Journal & Calendar</a> · <a href="Axon 4 Reports Inbox Trash Settings.dc.html">Reports, Inbox, Trash, Settings</a> · <a href="Axon 5 Overlays and States.dc.html">Overlays & States</a> · <a href="Axon 6 Mobile.dc.html">Mobile</a></div>
+  </div>
+
+  <section data-screen-label="Tokens · Colour" style="width:1400px;background:#fff;border-radius:16px;padding:48px;box-sizing:border-box;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;align-items:baseline;gap:14px"><span style="font-family:Geist Mono,monospace;color:#a0a0aa">01</span><span style="font-size:26px;font-weight:600;letter-spacing:-0.02em">Colour tokens</span><span style="color:#6c6c76">shadcn naming · paste into globals.css</span></div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:24px">
+      <sc-for list="{{ themes }}" as="t" hint-placeholder-count="2">
+        <div style="border-radius:12px;overflow:hidden;border:1px solid #e6e6ea">
+          <div style="background:{{ t.bg }};color:{{ t.fg }};padding:20px 22px;display:flex;flex-direction:column;gap:6px">
+            <div style="font-weight:600;margin-bottom:6px">{{ t.name }}</div>
+            <sc-for list="{{ t.rows }}" as="r" hint-placeholder-count="14">
+              <div style="display:flex;align-items:center;gap:12px;height:28px">
+                <div style="width:40px;height:22px;border-radius:5px;background:{{ r.v }};box-shadow:inset 0 0 0 1px {{ t.line }}"></div>
+                <span style="font-family:Geist Mono,monospace;font-size:12.5px;width:200px">{{ r.k }}</span>
+                <span style="font-family:Geist Mono,monospace;font-size:12.5px;opacity:.65">{{ r.v }}</span>
+                <span style="flex:1"></span>
+                <span style="font-size:12px;opacity:.55">{{ r.use }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+    <div>
+      <div style="font-weight:600;font-size:16px">Space accents</div>
+      <div style="color:#6c6c76;margin-top:4px">Vivid system hues. Pills and badges use them as fills: background = hue at 14%, text = hue mixed 72% with foreground, so contrast holds in both themes. Exposed as <span style="font-family:Geist Mono,monospace">--accent</span>, <span style="font-family:Geist Mono,monospace">--accent-soft</span> (10% light / 14% dark) and <span style="font-family:Geist Mono,monospace">--ring</span> on the space root. Global uses slate-neutral.</div>
+      <div style="display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:10px;margin-top:16px">
+        <sc-for list="{{ accents }}" as="a" hint-placeholder-count="10">
+          <div style="border:1px solid #e6e6ea;border-radius:10px;overflow:hidden">
+            <div style="height:56px;display:flex"><div style="flex:1;background:{{ a.l }}"></div><div style="flex:1;background:#0f0f11;display:flex;align-items:center;justify-content:center"><div style="width:24px;height:24px;border-radius:12px;background:{{ a.d }}"></div></div></div>
+            <div style="padding:8px 10px"><div style="font-weight:500">{{ a.k }}</div><div style="font-family:Geist Mono,monospace;font-size:10.5px;color:#6c6c76;margin-top:3px">{{ a.l }}</div><div style="font-family:Geist Mono,monospace;font-size:10.5px;color:#6c6c76">{{ a.d }}</div></div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Tokens · Type & scale" style="width:1400px;background:#fff;border-radius:16px;padding:48px;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);gap:48px">
+    <div>
+      <div style="display:flex;align-items:baseline;gap:14px"><span style="font-family:Geist Mono,monospace;color:#a0a0aa">02</span><span style="font-size:26px;font-weight:600;letter-spacing:-0.02em">Type</span><span style="color:#6c6c76">Geist + Geist Mono · tabular nums for stats</span></div>
+      <div style="display:flex;flex-direction:column;margin-top:24px">
+        <sc-for list="{{ type }}" as="t" hint-placeholder-count="9">
+          <div style="display:flex;align-items:baseline;gap:20px;padding:12px 0;border-bottom:1px solid #eeeef1">
+            <span style="width:92px;flex-shrink:0;font-family:Geist Mono,monospace;font-size:12px;color:#6c6c76">{{ t.k }}</span>
+            <span style="flex:1;font-size:{{ t.fs }};font-weight:{{ t.fw }};letter-spacing:{{ t.ls }};font-family:{{ t.ff }};line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ t.sample }}</span>
+            <span style="font-family:Geist Mono,monospace;font-size:11.5px;color:#a0a0aa;white-space:nowrap">{{ t.spec }}</span>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:28px">
+      <div>
+        <div style="font-weight:600;font-size:16px">Spacing · 4px base</div>
+        <div style="display:flex;flex-direction:column;gap:6px;margin-top:12px">
+          <sc-for list="{{ space }}" as="s" hint-placeholder-count="10"><div style="display:flex;align-items:center;gap:12px"><span style="width:60px;font-family:Geist Mono,monospace;font-size:12px;color:#6c6c76">{{ s.k }}</span><div style="height:10px;width:{{ s.w }};background:#007aff;border-radius:2px"></div><span style="font-family:Geist Mono,monospace;font-size:11.5px;color:#a0a0aa">{{ s.w }}</span><span style="font-size:12px;color:#6c6c76">{{ s.use }}</span></div></sc-for>
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:600;font-size:16px">Radius</div>
+        <div style="display:flex;gap:14px;margin-top:12px">
+          <sc-for list="{{ radii }}" as="r" hint-placeholder-count="5"><div style="display:flex;flex-direction:column;gap:6px;align-items:center"><div style="width:64px;height:48px;border:1.5px solid #1d1d1f;border-radius:{{ r.v }};background:#f6f6f8"></div><span style="font-family:Geist Mono,monospace;font-size:11.5px">{{ r.k }} · {{ r.v }}</span><span style="font-size:11px;color:#6c6c76">{{ r.use }}</span></div></sc-for>
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:600;font-size:16px">Borders & elevation</div>
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:12px">
+          <sc-for list="{{ shadows }}" as="s" hint-placeholder-count="4"><div style="display:flex;flex-direction:column;gap:8px"><div style="height:64px;border-radius:10px;background:#fff;border:1px solid #e6e6ea;box-shadow:{{ s.v }}"></div><span style="font-family:Geist Mono,monospace;font-size:11.5px">{{ s.k }}</span><span style="font-size:11px;color:#6c6c76;line-height:1.4">{{ s.use }}</span></div></sc-for>
+        </div>
+        <div style="font-size:12px;color:#6c6c76;margin-top:12px;line-height:1.5">Borders are always 1px hairlines (<span style="font-family:Geist Mono,monospace">--border</span>); inputs and emphasised outlines use <span style="font-family:Geist Mono,monospace">--border-strong</span>. In dark, shadows carry less — surfaces step up in lightness instead (bg → card → muted → hover).</div>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Motion" style="width:1400px;background:#fff;border-radius:16px;padding:48px;box-sizing:border-box;display:flex;flex-direction:column;gap:32px">
+    <div style="display:flex;align-items:baseline;gap:14px"><span style="font-family:Geist Mono,monospace;color:#a0a0aa">03</span><span style="font-size:26px;font-weight:600;letter-spacing:-0.02em">Motion</span><span style="color:#6c6c76">Framer Motion (motion/react) · CSS for hovers · nothing over 320ms</span></div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px">
+      <div style="border:1px solid #e6e6ea;border-radius:12px;padding:18px 20px">
+        <div style="font-weight:600">Durations</div>
+        <sc-for list="{{ durations }}" as="d" hint-placeholder-count="4"><div style="display:flex;align-items:center;gap:12px;margin-top:12px"><span style="width:70px;font-family:Geist Mono,monospace;font-size:12.5px">{{ d.k }}</span><div style="flex:1;height:6px;border-radius:3px;background:#f3f3f5;overflow:hidden"><div style="width:{{ d.w }};height:100%;background:#1d1d1f;border-radius:3px"></div></div><span style="font-family:Geist Mono,monospace;font-size:12px;width:48px;text-align:right">{{ d.v }}</span></div><div style="font-size:12px;color:#6c6c76;margin:4px 0 0 82px">{{ d.use }}</div></sc-for>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;padding:18px 20px">
+        <div style="font-weight:600">Easings</div>
+        <sc-for list="{{ easings }}" as="e" hint-placeholder-count="4"><div style="margin-top:12px"><div style="display:flex;gap:8px;align-items:baseline"><span style="font-family:Geist Mono,monospace;font-size:12.5px">{{ e.k }}</span><span style="flex:1"></span><span style="font-family:Geist Mono,monospace;font-size:11.5px;color:#6c6c76">{{ e.v }}</span></div><div style="font-size:12px;color:#6c6c76;margin-top:3px">{{ e.use }}</div></div></sc-for>
+      </div>
+      <div style="border:1px solid #e6e6ea;border-radius:12px;padding:18px 20px">
+        <div style="font-weight:600">Springs</div>
+        <sc-for list="{{ springs }}" as="s" hint-placeholder-count="2"><div style="margin-top:12px;padding:12px;border-radius:9px;background:#f6f6f8"><div style="font-family:Geist Mono,monospace;font-size:12.5px;font-weight:500">{{ s.k }}</div><div style="font-family:Geist Mono,monospace;font-size:11.5px;color:#3f3f46;margin-top:4px">{{ s.v }}</div><div style="font-size:12px;color:#6c6c76;margin-top:6px">{{ s.use }}</div></div></sc-for>
+        <div style="font-size:12px;color:#6c6c76;margin-top:12px;line-height:1.5"><span style="font-weight:600;color:#1d1d1f">Reduced motion:</span> transforms and layout animations off; every enter/exit becomes an opacity fade at 120ms. Shimmer stops (static muted block).</div>
+      </div>
+    </div>
+
+    <div style="border:1px solid #e6e6ea;border-radius:12px;overflow:hidden">
+      <div style="display:grid;grid-template-columns:200px minmax(0,1fr) 190px 150px;background:#f6f6f8;font-size:12px;font-weight:500;color:#6c6c76;padding:10px 18px;gap:16px"><span>Interaction</span><span>Choreography</span><span>Timing</span><span>Reduced</span></div>
+      <sc-for list="{{ choreo }}" as="c" hint-placeholder-count="10">
+        <div style="display:grid;grid-template-columns:200px minmax(0,1fr) 190px 150px;padding:12px 18px;gap:16px;border-top:1px solid #eeeef1;align-items:baseline"><span style="font-weight:500">{{ c.k }}</span><span style="color:#3f3f46;line-height:1.5">{{ c.v }}</span><span style="font-family:Geist Mono,monospace;font-size:11.5px;color:#6c6c76">{{ c.t }}</span><span style="font-size:12px;color:#6c6c76">{{ c.r }}</span></div>
+      </sc-for>
+    </div>
+
+    <div>
+      <div style="font-weight:600;font-size:16px">Storyboard · completing a todo</div>
+      <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-top:14px">
+        <sc-for list="{{ sbTodo }}" as="f" hint-placeholder-count="5">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="height:96px;border-radius:10px;border:1px solid #e6e6ea;background:#fbfbfc;display:flex;flex-direction:column;justify-content:center;padding:0 16px;gap:0;overflow:hidden">
+              <div style="height:{{ f.h }};opacity:{{ f.op }};display:flex;align-items:center;gap:10px;overflow:hidden;border-bottom:1px solid #eeeef1">
+                <div style="width:17px;height:17px;border-radius:6px;border:1.5px solid {{ f.bc }};background:{{ f.bg }};transform:{{ f.sc }};display:flex;align-items:center;justify-content:center;color:#fff;box-sizing:border-box;flex-shrink:0"><sc-if value="{{ f.check }}"><l-i n="check" s="12" w="3" style="clip-path:{{ f.clip }}"></l-i></sc-if></div>
+                <span style="position:relative;color:{{ f.fg }};white-space:nowrap">Rebase MR !1428 on develop<span style="position:absolute;left:0;top:52%;height:1.5px;width:{{ f.strike }};background:#a0a0aa"></span></span>
+              </div>
+              <div style="height:34px;display:flex;align-items:center;gap:10px;color:#6c6c76"><div style="width:17px;height:17px;border-radius:6px;border:1.5px solid #d4d4da;box-sizing:border-box"></div>Ask backend for contract ETA</div>
+            </div>
+            <div style="font-family:Geist Mono,monospace;font-size:11.5px">{{ f.t }}</div>
+            <div style="font-size:12px;color:#6c6c76;line-height:1.45">{{ f.d }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:32px">
+      <div>
+        <div style="font-weight:600;font-size:16px">Storyboard · kanban drag</div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px">
+          <sc-for list="{{ sbKanban }}" as="f" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="height:120px;border-radius:10px;background:#f3f3f5;padding:12px;box-sizing:border-box;position:relative">
+                <div style="height:10px;width:50%;border-radius:4px;background:#e0e0e5"></div>
+                <div style="position:absolute;left:12px;right:12px;top:{{ f.phTop }};height:44px;border-radius:8px;border:1.5px dashed {{ f.phC }}"></div>
+                <div style="position:absolute;left:12px;right:12px;top:{{ f.top }};height:44px;border-radius:8px;background:#fff;border:1px solid #e0e0e5;box-shadow:{{ f.sh }};transform:{{ f.tf }};padding:8px 10px;box-sizing:border-box;font-size:12px">Storefront: lazy-load…</div>
+              </div>
+              <div style="font-family:Geist Mono,monospace;font-size:11.5px">{{ f.t }}</div>
+              <div style="font-size:12px;color:#6c6c76;line-height:1.45">{{ f.d }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+      <div>
+        <div style="font-weight:600;font-size:16px">Storyboard · dialog / palette open</div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px">
+          <sc-for list="{{ sbDialog }}" as="f" hint-placeholder-count="3">
+            <div style="display:flex;flex-direction:column;gap:8px">
+              <div style="height:120px;border-radius:10px;background:#fbfbfc;border:1px solid #e6e6ea;position:relative;overflow:hidden">
+                <div style="position:absolute;inset:0;background:rgba(24,24,27,{{ f.dim }})"></div>
+                <div style="position:absolute;left:22%;right:22%;top:26px;height:64px;border-radius:9px;background:#fff;border:1px solid #e6e6ea;box-shadow:0 12px 30px rgba(0,0,0,.14);opacity:{{ f.op }};transform:scale({{ f.s }})"></div>
+              </div>
+              <div style="font-family:Geist Mono,monospace;font-size:11.5px">{{ f.t }}</div>
+              <div style="font-size:12px;color:#6c6c76;line-height:1.45">{{ f.d }}</div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div style="font-weight:600;font-size:16px">Storyboard · space switch & sidebar collapse</div>
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-top:14px">
+        <sc-for list="{{ sbSpace }}" as="f" hint-placeholder-count="4">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <div style="height:120px;border-radius:10px;border:1px solid #e6e6ea;background:#fbfbfc;display:flex;overflow:hidden">
+              <div style="width:{{ f.sw }};background:#f6f6f8;border-right:1px solid #e6e6ea;padding:10px 8px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px;overflow:hidden">
+                <div style="display:flex;align-items:center;gap:6px"><div style="width:18px;height:18px;border-radius:5px;background:{{ f.soft }};color:{{ f.c }};display:flex;align-items:center;justify-content:center;flex-shrink:0"><l-i n="{{ f.icon }}" s="11"></l-i></div><span style="font-size:11px;font-weight:600;opacity:{{ f.lo }};white-space:nowrap">{{ f.name }}</span></div>
+                <div style="height:18px;border-radius:5px;background:#ececef;display:flex;align-items:center;padding:0 5px;gap:5px"><div style="width:9px;height:9px;border-radius:2px;background:{{ f.c }};flex-shrink:0"></div><div style="height:5px;width:40px;border-radius:3px;background:#d4d4da;opacity:{{ f.lo }}"></div></div>
+                <div style="height:5px;width:60%;border-radius:3px;background:#e0e0e5;margin:4px 5px;opacity:{{ f.lo }}"></div>
+              </div>
+              <div style="flex:1;padding:14px;display:flex;flex-direction:column;gap:8px"><div style="height:8px;width:50%;border-radius:4px;background:#e0e0e5"></div><div style="height:30px;border-radius:6px;border:1px solid #e6e6ea;display:flex;align-items:flex-end;gap:3px;padding:4px"><div style="flex:1;height:40%;background:{{ f.c }};border-radius:1px"></div><div style="flex:1;height:70%;background:{{ f.c }};border-radius:1px"></div><div style="flex:1;height:55%;background:{{ f.c }};border-radius:1px"></div><div style="flex:1;height:90%;background:{{ f.c }};border-radius:1px"></div></div></div>
+            </div>
+            <div style="font-family:Geist Mono,monospace;font-size:11.5px">{{ f.t }}</div>
+            <div style="font-size:12px;color:#6c6c76;line-height:1.45">{{ f.d }}</div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Components" style="width:1400px;background:#fff;border-radius:16px;padding:48px;box-sizing:border-box;display:flex;flex-direction:column;gap:28px">
+    <div style="display:flex;align-items:baseline;gap:14px"><span style="font-family:Geist Mono,monospace;color:#a0a0aa">04</span><span style="font-size:26px;font-weight:600;letter-spacing:-0.02em">Components</span><span style="color:#6c6c76">each maps to a shadcn primitive (in brackets)</span></div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:20px;align-items:start">
+
+      <div style="border:1px solid #e6e6ea;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--bg)">
+        <div style="font-weight:600">Space switcher <span style="color:#a0a0aa;font-weight:400">[DropdownMenu]</span></div>
+        <div style="width:240px;border:1px solid var(--border);border-radius:10px;background:var(--card);box-shadow:0 12px 32px rgba(0,0,0,.1);padding:5px;font-size:13px">
+          <sc-for list="{{ switcher }}" as="s" hint-placeholder-count="4"><div style="height:32px;display:flex;align-items:center;gap:9px;padding:0 8px;border-radius:6px;background:{{ s.bg }}"><div style="width:20px;height:20px;border-radius:5px;background:{{ s.soft }};color:{{ s.c }};display:flex;align-items:center;justify-content:center"><l-i n="{{ s.icon }}" s="12"></l-i></div><span style="flex:1">{{ s.n }}</span><sc-if value="{{ s.on }}"><l-i n="check" s="14"></l-i></sc-if><span style="font-family:Geist Mono,monospace;font-size:10.5px;color:var(--faint)">{{ s.k }}</span></div></sc-for>
+          <div style="height:1px;background:var(--border);margin:5px -5px"></div>
+          <div style="height:30px;display:flex;align-items:center;gap:9px;padding:0 8px;color:var(--mfg)"><l-i n="plus" s="14"></l-i>New space…</div>
+          <div style="height:30px;display:flex;align-items:center;gap:9px;padding:0 8px;color:var(--mfg)"><l-i n="layout-grid" s="14"></l-i>Manage spaces…</div>
+        </div>
+      </div>
+
+      <div style="border:1px solid #e6e6ea;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:14px;background:var(--bg);font-size:13px">
+        <div style="font-weight:600;font-size:14px">Status · priority · due <span style="color:#a0a0aa;font-weight:400">[lucide + Tooltip]</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:14px"><sc-for list="{{ statuses }}" as="s" hint-placeholder-count="6"><span style="display:flex;align-items:center;gap:6px"><l-i n="{{ s.icon }}" s="15" style="color:{{ s.c }}"></l-i>{{ s.l }}</span></sc-for></div>
+        <div style="display:flex;flex-wrap:wrap;gap:14px"><sc-for list="{{ prios }}" as="p" hint-placeholder-count="5"><span style="display:flex;align-items:center;gap:6px;color:var(--mfg)"><l-i n="{{ p.icon }}" s="15" style="color:{{ p.c }}"></l-i>{{ p.l }}</span></sc-for></div>
+        <div style="display:flex;gap:16px;font-family:Geist Mono,monospace;font-size:12px"><span style="color:var(--mfg)">Fri 26 Sep</span><span style="color:var(--warn)">Today</span><span style="color:var(--destr)">Overdue · 3d</span></div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+          <sc-for list="{{ tagPills }}" as="t" hint-placeholder-count="4"><span style="height:20px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:500;display:flex;align-items:center;white-space:nowrap;background:color-mix(in oklab, {{ t.c }} 14%, transparent);color:color-mix(in oklab, {{ t.c }} 72%, var(--fg))">{{ t.n }}</span></sc-for>
+          <span style="height:20px;padding:0 7px;border-radius:5px;background:var(--muted);font-size:11px;color:var(--mfg);display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:3px;background:#007aff"></span>THMP</span>
+        </div>
+        <div style="font-size:12px;color:var(--mfg);line-height:1.5">Tag pill = round, colour dot keyed to tag. Space badge = square-ish 5px radius, muted fill — different shapes so they never read as the same thing.</div>
+      </div>
+
+      <div style="border:1px solid #e6e6ea;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--bg);font-size:13px">
+        <div style="font-weight:600;font-size:14px">Entity chip + hover preview <span style="color:#a0a0aa;font-weight:400">[HoverCard]</span></div>
+        <div style="line-height:1.7">Ship the <span style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:6px;background:var(--accent-soft);vertical-align:middle;white-space:nowrap;border:1px solid var(--accent)"><l-i n="circle-ellipsis" s="13" style="color:var(--review)"></l-i>RFQ pagination reset</span> fix, see <span style="display:inline-flex;align-items:center;gap:5px;height:24px;padding:0 8px;border-radius:6px;background:var(--muted);vertical-align:middle;white-space:nowrap"><l-i n="file-text" s="13" style="color:var(--mfg)"></l-i>Pagination RCA</span></div>
+        <div style="border:1px solid var(--border);border-radius:10px;background:var(--card);box-shadow:0 12px 32px rgba(0,0,0,.1);padding:12px 14px;max-width:300px">
+          <div style="display:flex;align-items:center;gap:6px;font-size:11.5px;color:var(--mfg)"><l-i n="circle-ellipsis" s="13" style="color:var(--review)"></l-i>In review · High<span style="flex:1"></span><span style="font-family:Geist Mono,monospace;color:var(--warn)">Today</span></div>
+          <div style="font-weight:600;margin-top:6px;line-height:1.4">Buyer portal: fix RFQ table pagination reset on filter change</div>
+        </div>
+      </div>
+
+      <div style="grid-column:span 2;border:1px solid #e6e6ea;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--bg);font-size:13px">
+        <div style="font-weight:600;font-size:14px">Page header · filter bar · task row</div>
+        <div style="border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--bg)">
+          <div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid var(--border)"><span style="color:var(--mfg)">THMP</span><l-i n="chevron-right" s="14" style="color:var(--faint)"></l-i><span style="font-weight:500">Tasks</span><span style="flex:1"></span><span style="height:26px;padding:0 10px;border-radius:7px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:6px;font-weight:500"><l-i n="plus" s="13"></l-i>New task</span></div>
+          <div style="height:44px;display:flex;align-items:center;gap:8px;padding:0 16px;border-bottom:1px solid var(--border)"><span style="height:26px;padding:0 9px;border-radius:7px;border:1px dashed var(--border2);display:flex;align-items:center;gap:6px;color:var(--mfg)"><l-i n="circle-dashed" s="13"></l-i>Status</span><span style="height:26px;padding:0 8px 0 9px;border-radius:7px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;gap:6px;font-weight:500">Priority ≥ Medium<l-i n="x" s="12"></l-i></span><span style="flex:1"></span><span style="width:180px;height:26px;border-radius:7px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:6px;padding:0 9px;color:var(--faint)"><l-i n="search" s="13"></l-i>Filter…</span></div>
+          <sc-for list="{{ rowStates }}" as="r" hint-placeholder-count="3">
+            <div style="height:42px;display:flex;align-items:center;gap:12px;padding:0 16px;border-bottom:1px solid var(--border);background:{{ r.bg }};box-shadow:{{ r.ring }}">
+              <l-i n="signal-high" s="15"></l-i><l-i n="circle-ellipsis" s="15" style="color:var(--review)"></l-i><span>Buyer portal: fix RFQ table pagination reset</span><span style="flex:1"></span>
+              <span style="height:20px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:500;display:flex;align-items:center;white-space:nowrap;background:color-mix(in oklab, #007aff 14%, transparent);color:color-mix(in oklab, #007aff 72%, var(--fg))">buyer-portal</span><l-i n="git-pull-request-arrow" s="14" style="color:var(--mfg)"></l-i><span style="font-family:Geist Mono,monospace;font-size:11.5px;color:var(--warn);width:40px;text-align:right">Today</span>
+              <span style="width:70px;font-size:11px;color:var(--faint);text-align:right">{{ r.l }}</span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="border:1px solid #e6e6ea;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--muted);font-size:13px">
+        <div style="font-weight:600;font-size:14px">Kanban card · note card</div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:10px"><div style="display:flex;gap:8px"><l-i n="circle" s="15" style="color:var(--mfg)"></l-i><span style="line-height:1.4">Storefront: lazy-load category images below the fold</span></div><div style="display:flex;align-items:center;gap:6px"><l-i n="signal-medium" s="14" style="color:var(--mfg)"></l-i><span style="height:20px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:500;display:flex;align-items:center;white-space:nowrap;background:color-mix(in oklab, #ff9500 14%, transparent);color:color-mix(in oklab, #ff9500 72%, var(--fg))">performance</span><span style="flex:1"></span><span style="font-family:Geist Mono,monospace;font-size:11px;color:var(--mfg)">Fri 26</span></div></div>
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px 16px;display:flex;flex-direction:column;gap:6px"><div style="font-weight:600">React Query caching patterns</div><div style="color:var(--mfg);line-height:1.5;max-height:3em;overflow:hidden">Prefer query keys that mirror the URL. staleTime per resource, not global.</div><div style="display:flex;align-items:center;gap:6px;margin-top:4px"><span style="height:20px;padding:0 7px;border-radius:6px;font-size:11px;font-weight:500;display:flex;align-items:center;white-space:nowrap;background:color-mix(in oklab, #30b0c7 14%, transparent);color:color-mix(in oklab, #30b0c7 72%, var(--fg))">react</span><span style="flex:1"></span><span style="font-family:Geist Mono,monospace;font-size:11px;color:var(--faint)">3d ago</span></div></div>
+      </div>
+
+      <div style="border:1px solid #e6e6ea;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--bg);font-size:13px">
+        <div style="font-weight:600;font-size:14px">Date picker <span style="color:#a0a0aa;font-weight:400">[Popover + Calendar]</span></div>
+        <div style="width:260px;border:1px solid var(--border);border-radius:10px;background:var(--card);box-shadow:0 12px 32px rgba(0,0,0,.1);padding:12px">
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px"><sc-for list="{{ quickDates }}" as="q" hint-placeholder-count="4"><span style="height:24px;padding:0 8px;border-radius:6px;border:1px solid var(--border);font-size:12px;display:flex;align-items:center">{{ q }}</span></sc-for></div>
+          <div style="display:flex;align-items:center;font-weight:500;margin-bottom:8px"><span style="flex:1">September 2026</span><l-i n="chevron-left" s="14" style="color:var(--mfg)"></l-i><l-i n="chevron-right" s="14" style="color:var(--mfg);margin-left:8px"></l-i></div>
+          <div style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:2px;text-align:center;font-size:12px">
+            <sc-for list="{{ calHead }}" as="h" hint-placeholder-count="7"><span style="color:var(--faint);font-size:11px;height:22px;line-height:22px">{{ h }}</span></sc-for>
+            <sc-for list="{{ cal }}" as="c" hint-placeholder-count="35"><span style="height:30px;line-height:30px;border-radius:7px;background:{{ c.bg }};color:{{ c.fg }};font-weight:{{ c.fw }};font-variant-numeric:tabular-nums">{{ c.n }}</span></sc-for>
+          </div>
+        </div>
+      </div>
+
+      <div style="border:1px solid #e6e6ea;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--bg);font-size:13px">
+        <div style="font-weight:600;font-size:14px">Tag picker <span style="color:#a0a0aa;font-weight:400">[Popover + Command]</span></div>
+        <div style="width:260px;border:1px solid var(--border);border-radius:10px;background:var(--card);box-shadow:0 12px 32px rgba(0,0,0,.1);padding:6px">
+          <div style="height:32px;display:flex;align-items:center;gap:6px;padding:0 8px;border-bottom:1px solid var(--border);margin-bottom:4px;flex-wrap:nowrap"><span style="height:20px;padding:0 6px;border-radius:10px;background:var(--muted);font-size:11px;display:flex;align-items:center;gap:4px">buyer-portal<l-i n="x" s="10"></l-i></span>port<span style="width:1.5px;height:14px;background:var(--fg)"></span></div>
+          <sc-for list="{{ tagPick }}" as="t" hint-placeholder-count="3"><div style="height:30px;display:flex;align-items:center;gap:8px;padding:0 8px;border-radius:6px;background:{{ t.bg }}"><div style="width:14px;height:14px;border-radius:4px;border:1.5px solid {{ t.bc }};background:{{ t.fill }};color:#fff;display:flex;align-items:center;justify-content:center;box-sizing:border-box"><sc-if value="{{ t.on }}"><l-i n="check" s="10" w="3"></l-i></sc-if></div><span style="width:6px;height:6px;border-radius:3px;background:{{ t.c }}"></span>{{ t.n }}</div></sc-for>
+          <div style="height:30px;display:flex;align-items:center;gap:8px;padding:0 8px;color:var(--mfg);border-top:1px solid var(--border);margin-top:4px"><l-i n="plus" s="13"></l-i>Create “port”</div>
+        </div>
+        <div style="font-size:12px;color:var(--mfg)">New tags get the next free colour key automatically.</div>
+      </div>
+
+      <div style="border:1px solid #e6e6ea;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--bg);font-size:13px">
+        <div style="font-weight:600;font-size:14px">Empty state · skeletons <span style="color:#a0a0aa;font-weight:400">[Skeleton]</span></div>
+        <div style="border:1px dashed var(--border2);border-radius:10px;padding:22px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:4px"><div style="width:36px;height:36px;border-radius:10px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:8px"><l-i n="file-text" s="16"></l-i></div><div style="font-weight:600">No notes yet</div><div style="color:var(--mfg);font-size:12px">Icon · one-line why · one primary action</div></div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:15px;height:15px;border-radius:8px;background:var(--muted)"></div><div style="width:55%;height:10px;border-radius:5px;background:linear-gradient(90deg,var(--muted),var(--hover),var(--muted))"></div></div>
+          <div style="display:flex;gap:10px;align-items:center"><div style="width:15px;height:15px;border-radius:8px;background:var(--muted)"></div><div style="width:40%;height:10px;border-radius:5px;background:var(--muted)"></div></div>
+          <div style="height:64px;border-radius:10px;background:var(--muted)"></div>
+        </div>
+        <div style="font-size:12px;color:var(--mfg)">Row · card · chart variants. Shimmer: 1.4s linear, gradient sweeps left→right.</div>
+      </div>
+
+      <div style="border:1px solid #e6e6ea;border-radius:12px;padding:18px;display:flex;flex-direction:column;gap:12px;background:var(--bg);font-size:13px">
+        <div style="font-weight:600;font-size:14px">Confirm dialog · toast <span style="color:#a0a0aa;font-weight:400">[AlertDialog · Sonner]</span></div>
+        <div style="border:1px solid var(--border);border-radius:12px;background:var(--card);box-shadow:0 12px 32px rgba(0,0,0,.1);padding:16px">
+          <div style="font-weight:600">Move 3 tasks to Trash?</div><div style="color:var(--mfg);margin-top:4px;line-height:1.5">You can restore them for 30 days.</div>
+          <div style="display:flex;justify-content:flex-end;gap:6px;margin-top:14px"><span style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--border);display:flex;align-items:center">Cancel</span><span style="height:28px;padding:0 10px;border-radius:7px;background:var(--destr);color:#fff;display:flex;align-items:center;font-weight:500">Move to Trash</span></div>
+        </div>
+        <div style="border:1px solid var(--border);border-radius:12px;background:var(--card);box-shadow:0 12px 32px rgba(0,0,0,.1);padding:10px 12px;display:flex;align-items:center;gap:10px"><l-i n="trash-2" s="15" style="color:var(--mfg)"></l-i><span style="flex:1;font-weight:500">Moved to Trash</span><span style="height:24px;padding:0 8px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;font-weight:500">Undo</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section data-screen-label="Rationale" style="width:1400px;background:#fff;border-radius:16px;padding:48px;box-sizing:border-box;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:56px">
+    <div>
+      <div style="display:flex;align-items:baseline;gap:14px"><span style="font-family:Geist Mono,monospace;color:#a0a0aa">05</span><span style="font-size:26px;font-weight:600;letter-spacing:-0.02em">Rationale</span></div>
+      <div style="font-size:15px;line-height:1.7;color:#3f3f46;margin-top:18px;display:flex;flex-direction:column;gap:14px;text-wrap:pretty">
+        <p style="margin:0"><span style="color:#1d1d1f;font-weight:600">Chrome recedes, content leads.</span> One neutral ramp does almost all the work; colour is reserved for meaning — status, due urgency, and the single space accent. The accent only touches the active nav icon, the space tile, primary highlights and charts, so switching space feels like changing rooms without repainting the house.</p>
+        <p style="margin:0"><span style="color:#1d1d1f;font-weight:600">Two widths of content.</span> Reading surfaces (note editor, report, journal) cap at a measure of 660–760px so lines stay near 70 characters. Data surfaces (tasks, calendar, board) run full-bleed to the page edge with 20px gutters, because scanning columns benefits from width.</p>
+        <p style="margin:0"><span style="color:#1d1d1f;font-weight:600">Density.</span> 13px UI text, 42px list rows, 36px group headers — closer to Linear than to a card feed. Comfort comes from generous page padding (36–40px) and quiet section gaps, not from padding inside rows. Stats use tabular numerals so columns don't jitter as numbers change.</p>
+        <p style="margin:0"><span style="color:#1d1d1f;font-weight:600">Keyboard first.</span> Every list has a focused row; every overlay shows its shortcut; mono type marks anything you can type or that is a date.</p>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:14px;padding-top:52px">
+      <sc-for list="{{ layout }}" as="l" hint-placeholder-count="8">
+        <div style="display:flex;gap:16px;padding:12px 0;border-bottom:1px solid #eeeef1;align-items:baseline"><span style="width:180px;flex-shrink:0;font-weight:500">{{ l.k }}</span><span style="flex:1;color:#3f3f46;line-height:1.5">{{ l.v }}</span><span style="font-family:Geist Mono,monospace;font-size:12.5px;white-space:nowrap">{{ l.n }}</span></div>
+      </sc-for>
+    </div>
+  </section>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script>
+class Component extends DCLogic {
+  renderVals() {
+    const row = (k, v, use) => ({ k, v, use: use || '' });
+    const light = [row('--background', '#ffffff', 'page'), row('--card / --popover', '#ffffff', 'surfaces'), row('--muted', '#f5f5f5', 'wells, note cards'), row('--accent (hover)', '#efefef', 'hover, selected row'), row('--border', '#e7e7e7', 'card borders'), row('--input / --border-strong', '#d4d4d4', 'inputs, dashed'), row('--foreground', '#1d1d1f', 'text'), row('--muted-foreground', '#6e6e73', 'secondary text'), row('--faint', '#aeaeb2', 'hints, placeholders'), row('--primary', '#1d1d1f', 'primary button (black)'), row('--primary-foreground', '#ffffff', ''), row('--destructive', '#ff3b30', 'delete, overdue'), row('--ring', 'var(--space-accent)', 'focus'), row('--sidebar', '#f7f7f6', 'shell, neutral'), row('--chart-1', '#007aff', 'space accent'), row('--chart-2', '#34c759', 'done'), row('--chart-3', '#ff9500', 'in progress'), row('--chart-4', '#af52de', 'in review'), row('--chart-5', '#ff2d55', '')];
+    const dark = [row('--background', '#0b0b0b', 'page'), row('--card / --popover', '#1a1a1a', 'surfaces'), row('--muted', '#222222', 'wells, note cards'), row('--accent (hover)', '#2c2c2e', 'hover, selected row'), row('--border', '#2c2c2e', 'card borders'), row('--input / --border-strong', '#3a3a3c', 'inputs, dashed'), row('--foreground', '#f5f5f7', 'text'), row('--muted-foreground', '#98989d', 'secondary text'), row('--faint', '#636366', 'hints, placeholders'), row('--primary', '#f5f5f7', 'primary button (white)'), row('--primary-foreground', '#1d1d1f', ''), row('--destructive', '#ff453a', 'delete, overdue'), row('--ring', 'var(--space-accent)', 'focus'), row('--sidebar', '#131313', 'shell, neutral'), row('--chart-1', '#0a84ff', 'space accent'), row('--chart-2', '#30d158', 'done'), row('--chart-3', '#ff9f0a', 'in progress'), row('--chart-4', '#bf5af2', 'in review'), row('--chart-5', '#ff375f', '')];
+    const A = [['slate', '#8e8e93', '#98989d'], ['blue', '#007aff', '#0a84ff'], ['indigo', '#5856d6', '#5e5ce6'], ['violet', '#af52de', '#bf5af2'], ['pink', '#ff2d55', '#ff375f'], ['red', '#ff3b30', '#ff453a'], ['orange', '#ff9500', '#ff9f0a'], ['amber', '#ffcc00', '#ffd60a'], ['green', '#34c759', '#30d158'], ['teal', '#30b0c7', '#40c8e0']];
+    const ty = (k, fs, fw, ls, sample, spec, ff) => ({ k, fs, fw, ls, sample, spec, ff: ff || 'Geist, sans-serif' });
+    const B = '#007aff', G = '#34c759', V = '#af52de';
+    const cal = [];
+    for (let i = 0; i < 35; i++) { const n = i + 1; const inM = n <= 30; const sel = n === 26, today = n === 23; cal.push({ n: String(inM ? n : n - 30), bg: sel ? '#1d1d1f' : today ? '#f3f3f5' : 'transparent', fg: sel ? '#fff' : inM ? (today ? '#d93a3a' : '#1d1d1f') : '#a0a0aa', fw: sel || today ? 600 : 400 }); }
+    return {
+      themes: [{ name: 'Light', bg: '#ffffff', fg: '#1d1d1f', line: 'rgba(0,0,0,.08)', rows: light }, { name: 'Dark', bg: '#0f0f11', fg: '#ececef', line: 'rgba(255,255,255,.1)', rows: dark }],
+      accents: A.map(([k, l, d]) => ({ k, l, d })),
+      type: [ty('display', '36px', 600, '-0.03em', 'Sprint 42 planning', '36/44 · 600 · −3%'), ty('h1', '26px', 600, '-0.025em', 'Good afternoon, Aditya', '26/32 · 600 · −2.5%'), ty('h2', '19px', 600, '-0.015em', 'Committed this sprint', '19/26 · 600'), ty('h3', '15px', 600, '-0.01em', 'Quarter progress', '15/22 · 600'), ty('body-read', '15px', 400, '0', 'Two-week sprint, capacity is lower this time.', '15/26 · 400'), ty('body-ui', '13px', 400, '0', 'Vendor portal: migrate product form to react-hook-form + zod', '13/20 · 400'), ty('small', '12px', 400, '0', 'Yesterday · Today · Blockers · Notes', '12/16 · 400'), ty('mono', '12px', 400, '0', 'Tue 23 Sep · Q2 FY 2026–27 · ⌘K', '12/16 · Geist Mono', 'Geist Mono, monospace'), ty('stat', '28px', 600, '-0.03em', '42  38  +4', '28/28 · tnum', 'Geist, sans-serif')],
+      space: [['1', '4px', 'icon gap'], ['1.5', '6px', 'chip gap'], ['2', '8px', 'inline gap'], ['3', '12px', 'row gap'], ['4', '16px', 'card padding'], ['5', '20px', 'page gutter'], ['6', '24px', ''], ['8', '32px', 'section'], ['10', '40px', 'page padding'], ['14', '56px', 'reading padding']].map(([k, w, use]) => ({ k, w, use })),
+      radii: [['sm', '5px', 'badges'], ['md', '7px', 'buttons, rows'], ['lg', '10px', 'cards, menus'], ['xl', '12px', 'widgets'], ['2xl', '14px', 'dialogs']].map(([k, v, use]) => ({ k, v, use })),
+      shadows: [['none', 'none', 'rows, cards at rest — border only'], ['xs', '0 1px 2px rgba(16,16,24,.06)', 'segmented thumb, inputs'], ['md', '0 12px 32px rgba(16,16,24,.10)', 'popovers, hover lift, toasts'], ['lg', '0 30px 80px rgba(16,16,24,.22)', 'dialogs, palette, dragged card']].map(([k, v, use]) => ({ k, v, use })),
+      durations: [['instant', '80ms', '25%', 'hover bg, press'], ['fast', '120ms', '37%', 'palette, exits, tooltips'], ['base', '200ms', '62%', 'page, list enter, dialogs'], ['slow', '320ms', '100%', 'collapse, accent crossfade']].map(([k, v, w, use]) => ({ k, v, w, use })),
+      easings: [['standard', 'cubic-bezier(.2,0,0,1)', 'most UI transitions'], ['enter', 'cubic-bezier(.16,1,.3,1)', 'things arriving — decelerate hard'], ['exit', 'cubic-bezier(.4,0,1,1)', 'things leaving — accelerate out'], ['linear', 'linear', 'shimmer, progress only']].map(([k, v, use]) => ({ k, v, use })),
+      springs: [{ k: 'snappy', v: '{ type: "spring", stiffness: 520, damping: 38, mass: 0.9 }', use: 'dialogs, reorder, drop settle, sidebar width. Settles ≈ 220ms, no visible overshoot.' }, { k: 'gentle', v: '{ type: "spring", stiffness: 260, damping: 30, mass: 1 }', use: 'sheets, row collapse, card lift. Settles ≈ 380ms, 1–2% overshoot.' }],
+      choreo: [
+        { k: 'Page transition', v: 'Outgoing page fades out. Incoming fades 0→1 and rises y 6px→0. Sidebar and header never animate.', t: 'out 120 exit · in 200 enter', r: 'fade 120' },
+        { k: 'List enter / exit', v: 'Items fade + y 4px→0 with 20ms stagger (first 8 only). Exit: fade + height→0. Reorder uses layout animation.', t: '160 enter · layout snappy', r: 'fade 120, no stagger' },
+        { k: 'Todo / task complete', v: 'Box fills with accent and scales 1→1.08→1; check stroke draws; strike-through sweeps left→right; text fades to faint; after 600ms hold the row collapses and leaves.', t: 'check 180 · strike 220 · collapse gentle', r: 'instant check, fade out 150' },
+        { k: 'Kanban drag', v: 'Pickup: scale 1.02, rotate 1.5°, shadow-lg, cursor grabbing. Target column border tints accent; dashed placeholder opens with layout. Drop: spring to slot, shadow back to none.', t: 'lift 120 standard · drop snappy', r: 'no scale/rotate; outline only' },
+        { k: 'Dialog', v: 'Overlay fades 0→1. Panel opacity 0→1, scale .96→1, y 8→0 from centre. Exit: opacity + scale .98.', t: 'in snappy · out 120 exit', r: 'fade 120' },
+        { k: 'Sheet / drawer', v: 'Slides from its edge x 100%→0 with overlay fade. Mobile drawer follows finger, then springs.', t: 'gentle · out 200 exit', r: 'fade 120' },
+        { k: 'Command palette', v: 'Pops, never slides: opacity 0→1, scale .98→1. Backdrop blur 0→2px. Result list height animates with layout.', t: '120 enter', r: 'fade 80' },
+        { k: 'Sidebar collapse', v: 'Labels fade out first (80ms), then width 240→56 on spring. Expand is the reverse: width first, labels fade in after.', t: 'labels 80 · width snappy', r: 'instant width, fade labels' },
+        { k: 'Space switch', v: 'Register --space-accent with @property as <color>; transition it so every accent use crossfades together. Content does a normal page transition.', t: '320 standard', r: 'instant swap' },
+        { k: 'Skeleton', v: 'Muted block with a hover-tone gradient sweeping left→right. Content replaces skeleton with a 120ms fade, no layout jump (skeletons match row height).', t: '1400 linear infinite', r: 'static block' },
+        { k: 'Hover lift (cards)', v: 'Space cards: y −2px, shadow-md, border-strong. Rows: background only.', t: '120 standard', r: 'background only' }
+      ],
+      sbTodo: [
+        { t: '0ms · rest', d: 'Unchecked box, full-ink text.', bc: '#d4d4da', bg: 'transparent', sc: 'none', check: false, clip: 'none', fg: '#1d1d1f', strike: '0', h: '38px', op: 1 },
+        { t: '0–180ms · check', d: 'Box fills accent, pops to 1.08, check stroke draws in.', bc: '#007aff', bg: '#007aff', sc: 'scale(1.08)', check: true, clip: 'inset(0 40% 0 0)', fg: '#1d1d1f', strike: '0', h: '38px', op: 1 },
+        { t: '60–280ms · strike', d: 'Line sweeps across; text fades to faint.', bc: '#007aff', bg: '#007aff', sc: 'none', check: true, clip: 'none', fg: '#a0a0aa', strike: '100%', h: '38px', op: 1 },
+        { t: '280–880ms · hold', d: 'Hold so the completion registers. Undo toast appears.', bc: '#007aff', bg: '#007aff', sc: 'none', check: true, clip: 'none', fg: '#a0a0aa', strike: '100%', h: '38px', op: 0.8 },
+        { t: '880ms+ · collapse', d: 'Height→0 and fade on gentle spring; siblings slide up.', bc: '#007aff', bg: '#007aff', sc: 'none', check: true, clip: 'none', fg: '#a0a0aa', strike: '100%', h: '12px', op: 0.25 }
+      ],
+      sbKanban: [
+        { t: 'pickup · 120ms', d: 'Scale 1.02, rotate 1.5°, lift shadow.', top: '28px', phTop: '28px', phC: '#d4d4da', sh: '0 12px 28px rgba(0,0,0,.16)', tf: 'rotate(1.5deg) scale(1.02)' },
+        { t: 'dragging', d: 'Placeholder opens at the target slot.', top: '44px', phTop: '64px', phC: '#007aff', sh: '0 16px 36px rgba(0,0,0,.18)', tf: 'translateX(14px) rotate(2deg) scale(1.02)' },
+        { t: 'drop · snappy spring', d: 'Card settles into slot, shadow resolves.', top: '64px', phTop: '64px', phC: 'transparent', sh: 'none', tf: 'none' }
+      ],
+      sbDialog: [
+        { t: '0ms', d: 'Trigger. Nothing visible yet.', dim: '0', op: 0, s: '0.96' },
+        { t: '≈80ms', d: 'Overlay half in, panel scaling from .96.', dim: '0.14', op: 0.7, s: '0.98' },
+        { t: '≈220ms · settled', d: 'Spring settles without overshoot.', dim: '0.28', op: 1, s: '1' }
+      ],
+      sbSpace: [
+        { t: 'THMP · expanded', d: 'Accent blue on tile, active nav and chart.', sw: '44%', lo: 1, c: B, soft: B + '1f', icon: 'briefcase', name: 'THMP' },
+        { t: 'switch · 160ms', d: '--space-accent mid-crossfade blue→green.', sw: '44%', lo: 1, c: '#35867f', soft: '#35867f1f', icon: 'leaf', name: 'Personal' },
+        { t: 'Personal · 320ms', d: 'Every accent use lands together.', sw: '44%', lo: 1, c: G, soft: G + '1f', icon: 'leaf', name: 'Personal' },
+        { t: 'collapse to rail', d: 'Labels fade first, then width springs to 56px.', sw: '16%', lo: 0, c: G, soft: G + '1f', icon: 'leaf', name: 'Personal' }
+      ],
+      switcher: [['layers', 'Global', '#3f3f46', '⌘0', false], ['briefcase', 'THMP', B, '⌘1', true], ['leaf', 'Personal', G, '⌘2', false], ['rocket', 'Side projects', V, '⌘3', false]].map(([icon, n, c, k, on]) => ({ icon, n, c, soft: c + '1a', k, on, bg: on ? '#ececef' : 'transparent' })),
+      statuses: [['circle', 'Todo', 'var(--mfg)'], ['circle-dot', 'In progress', 'var(--warn)'], ['circle-ellipsis', 'In review', 'var(--review)'], ['circle-alert', 'Blocked', 'var(--destr)'], ['circle-check', 'Done', 'var(--ok)'], ['circle-x', 'Cancelled', 'var(--faint)']].map(([icon, l, c]) => ({ icon, l, c })),
+      prios: [['minus', 'None', 'var(--faint)'], ['signal-low', 'Low', 'var(--mfg)'], ['signal-medium', 'Medium', 'var(--mfg)'], ['signal-high', 'High', 'var(--fg)'], ['triangle-alert', 'Urgent', 'var(--destr)']].map(([icon, l, c]) => ({ icon, l, c })),
+      tagPills: [['buyer-portal', '#007aff'], ['refactor', '#af52de'], ['performance', '#ff9500'], ['a11y', '#34c759']].map(([n, c]) => ({ n, c })),
+      rowStates: [{ l: 'rest', bg: 'transparent', ring: 'none' }, { l: 'hover', bg: 'var(--muted)', ring: 'none' }, { l: 'focused (J/K)', bg: 'var(--hover)', ring: 'inset 2px 0 0 var(--accent)' }],
+      quickDates: ['Today', 'Tomorrow', 'Fri', 'Next week'],
+      calHead: ['M', 'T', 'W', 'T', 'F', 'S', 'S'], cal,
+      tagPick: [['buyer-portal', '#007aff', true], ['vendor-portal', '#30b0c7', false], ['admin-portal', '#ff2d55', false]].map(([n, c, on], i) => ({ n, c, on, bg: i === 1 ? '#ececef' : 'transparent', bc: on ? '#007aff' : '#d4d4da', fill: on ? '#007aff' : 'transparent' })),
+      layout: [
+        { k: 'Grid', v: '12 columns inside the content area, 20px gutters; dashboard widgets snap to 7/5 and 6/6 splits.', n: '12 col · 20' },
+        { k: 'Sidebar', v: 'Expanded holds 22-character space names and badges; the collapsed rail fits a 36px hit target.', n: '240 / 56' },
+        { k: 'Right rail', v: 'Task meta and note side panel — label column plus a value that never wraps.', n: '280–300' },
+        { k: 'Reading max-width', v: 'Note editor and journal. Report page is wider to fit two charts side by side.', n: '680 · 760' },
+        { k: 'Data max-width', v: 'Dashboard caps for balance; tasks, board and calendar go full width.', n: '1080 · fluid' },
+        { k: 'Row heights', v: 'Task row, todo row, nav item, group header.', n: '42 · 40 · 30 · 36' },
+        { k: 'Header', v: 'Breadcrumb bar with page actions; toolbar row below it only where filters exist.', n: '48 + 48' },
+        { k: 'Breakpoints', v: 'Below 1024 the right rail becomes a Sheet; below 768 the sidebar becomes a drawer and rows go two-line.', n: '1024 · 768' }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

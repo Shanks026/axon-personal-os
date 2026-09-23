@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden;position:relative">
+  <header style="height:56px;flex-shrink:0;display:flex;align-items:center;padding:0 28px;gap:10px">
+    <div style="width:22px;height:22px;border-radius:7px;background:var(--fg);display:flex;align-items:center;justify-content:center"><div style="width:8px;height:8px;border-radius:4px;border:2px solid var(--bg)"></div></div><span style="font-size:15px;font-weight:600;letter-spacing:-0.02em">Axon</span>
+    <div style="flex:1"></div>
+    <div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center;color:var(--mfg)"><l-i name="settings" n="settings" s="16"></l-i></div>
+    <div style="width:28px;height:28px;border-radius:14px;background:var(--muted);border:1px solid var(--border);font-size:11px;font-weight:600;display:flex;align-items:center;justify-content:center">AR</div>
+  </header>
+  <sc-if value="{{ populated }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;overflow:hidden;padding:40px 40px">
+      <div style="max-width:1040px;margin:0 auto">
+        <div style="display:flex;align-items:flex-end;gap:16px">
+          <div style="flex:1"><div style="font-size:28px;font-weight:600;letter-spacing:-0.03em">Your spaces</div><div style="color:var(--mfg);margin-top:6px">Pick where to work. Drag to reorder.</div></div>
+          <div style="height:32px;padding:0 12px;border-radius:8px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:6px;font-weight:500"><l-i n="plus" s="14"></l-i>New space</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-top:28px">
+          <sc-for list="{{ cards }}" as="c" hint-placeholder-count="4">
+            <div style="border-radius:14px;border:1px solid {{ c.bd }};background:{{ c.bg }};padding:20px;min-height:176px;box-sizing:border-box;display:flex;flex-direction:column;box-shadow:{{ c.sh }};transform:{{ c.tf }}">
+              <div style="display:flex;align-items:flex-start;gap:10px">
+                <div style="width:40px;height:40px;border-radius:11px;background:{{ c.soft }};color:{{ c.color }};display:flex;align-items:center;justify-content:center"><l-i n="{{ c.icon }}" s="19"></l-i></div>
+                <div style="flex:1"></div>
+                <sc-if value="{{ c.hover }}"><l-i n="grip-vertical" s="15" style="color:var(--faint);margin-top:4px"></l-i></sc-if>
+                <div style="width:26px;height:26px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--faint);background:{{ c.menuBg }}"><l-i n="ellipsis" s="15"></l-i></div>
+              </div>
+              <div style="font-size:16px;font-weight:600;letter-spacing:-0.015em;margin-top:16px">{{ c.name }}</div>
+              <div style="color:var(--mfg);margin-top:4px;line-height:1.5">{{ c.desc }}</div>
+              <div style="flex:1"></div>
+              <div style="display:flex;gap:14px;margin-top:16px;font-family:Geist Mono,monospace;font-size:11.5px;color:var(--mfg)"><span>{{ c.tasks }} open tasks</span><span>{{ c.notes }} notes</span></div>
+            </div>
+          </sc-for>
+          <div style="border-radius:14px;border:1.5px dashed var(--border2);min-height:176px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;color:var(--mfg)"><l-i n="plus" s="18"></l-i>New space</div>
+        </div>
+        <div style="margin-top:32px;display:flex;align-items:center;gap:8px;color:var(--mfg);border-top:1px solid var(--border);padding-top:16px"><l-i n="chevron-right" s="14"></l-i><l-i n="archive" s="14"></l-i><span style="font-weight:500">Archived</span><span style="font-family:Geist Mono,monospace;font-size:12px;color:var(--faint)">2</span></div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ empty }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;display:flex;align-items:center;justify-content:center;padding-bottom:56px">
+      <div style="display:flex;flex-direction:column;align-items:center;text-align:center;max-width:440px">
+        <div style="display:flex;gap:10px;margin-bottom:28px">
+          <sc-for list="{{ ghosts }}" as="g" hint-placeholder-count="3"><div style="width:52px;height:52px;border-radius:14px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;color:{{ g.c }};transform:{{ g.tf }}"><l-i n="{{ g.icon }}" s="22"></l-i></div></sc-for>
+        </div>
+        <div style="font-size:30px;font-weight:600;letter-spacing:-0.03em">Create your first space</div>
+        <div style="color:var(--mfg);font-size:15px;line-height:1.55;margin-top:10px">Spaces keep work and life separate. Global shows everything.</div>
+        <div style="height:38px;padding:0 16px;border-radius:9px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:8px;font-weight:500;font-size:14px;margin-top:28px"><l-i n="plus" s="15"></l-i>Create a space</div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ dialog }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;background:var(--overlay);display:flex;align-items:center;justify-content:center">
+      <div style="width:520px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.22);overflow:hidden">
+        <div style="padding:18px 22px;display:flex;align-items:center;border-bottom:1px solid var(--border)"><span style="font-size:15px;font-weight:600;flex:1">New space</span><l-i n="x" s="16" style="color:var(--faint)"></l-i></div>
+        <div style="padding:20px 22px;display:flex;flex-direction:column;gap:16px">
+          <div style="display:flex;gap:12px;align-items:flex-end">
+            <div style="width:40px;height:40px;border-radius:11px;background:#14958a1f;color:#14958a;display:flex;align-items:center;justify-content:center;flex-shrink:0"><l-i n="graduation-cap" s="19"></l-i></div>
+            <div style="flex:1;display:flex;flex-direction:column;gap:6px"><span style="font-weight:500">Name</span><div style="height:36px;border-radius:8px;border:1px solid var(--fg);box-shadow:0 0 0 3px color-mix(in oklab, var(--fg) 10%, transparent);display:flex;align-items:center;padding:0 10px;font-size:14px">Learning<span style="width:1.5px;height:16px;background:var(--fg);margin-left:1px"></span></div></div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;font-family:Geist Mono,monospace;font-size:12px;color:var(--mfg)"><span style="color:var(--faint)">axon.app/s/</span><span style="height:24px;padding:0 6px;border-radius:5px;background:var(--muted);display:flex;align-items:center;color:var(--fg)">learning</span><l-i n="pencil" s="12" style="color:var(--faint)"></l-i></div>
+          <div style="display:flex;flex-direction:column;gap:6px"><span style="font-weight:500">Description</span><div style="height:36px;border-radius:8px;border:1px solid var(--border2);display:flex;align-items:center;padding:0 10px;color:var(--faint)">Courses, books, talks</div></div>
+          <div style="display:flex;flex-direction:column;gap:8px"><span style="font-weight:500">Colour</span>
+            <div style="display:flex;gap:8px">
+              <sc-for list="{{ swatches }}" as="s" hint-placeholder-count="10"><div style="width:26px;height:26px;border-radius:13px;background:{{ s.c }};box-shadow:{{ s.ring }}"></div></sc-for>
+            </div>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px"><span style="font-weight:500">Icon</span>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:8px">
+              <div style="height:30px;display:flex;align-items:center;gap:8px;padding:0 6px;color:var(--faint);border-bottom:1px solid var(--border);margin:-2px -2px 8px;padding-bottom:6px"><l-i n="search" s="13"></l-i>Search icons…</div>
+              <div style="display:grid;grid-template-columns:repeat(9,minmax(0,1fr));gap:4px">
+                <sc-for list="{{ icons }}" as="i" hint-placeholder-count="18"><div style="height:36px;border-radius:7px;display:flex;align-items:center;justify-content:center;background:{{ i.bg }};color:{{ i.fg }}"><l-i n="{{ i.n }}" s="16"></l-i></div></sc-for>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="padding:14px 22px;border-top:1px solid var(--border);display:flex;justify-content:flex-end;gap:8px;background:var(--muted)">
+          <div style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center">Cancel</div>
+          <div style="height:32px;padding:0 12px;border-radius:8px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:8px;font-weight:500">Create space<span style="font-family:Geist Mono,monospace;font-size:11px;opacity:.6">⌘↵</span></div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+  <sc-if value="{{ del }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;background:var(--overlay);display:flex;align-items:center;justify-content:center">
+      <div style="width:440px;background:var(--card);border:1px solid var(--border);border-radius:14px;box-shadow:0 24px 64px rgba(0,0,0,.22);padding:22px">
+        <div style="width:36px;height:36px;border-radius:10px;background:color-mix(in oklab, var(--destr) 12%, transparent);color:var(--destr);display:flex;align-items:center;justify-content:center"><l-i n="triangle-alert" s="17"></l-i></div>
+        <div style="font-size:16px;font-weight:600;margin-top:14px">Delete “Side projects”?</div>
+        <div style="color:var(--mfg);line-height:1.55;margin-top:6px">This permanently deletes the space and everything in it:</div>
+        <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;margin-top:12px">
+          <sc-for list="{{ delList }}" as="d" hint-placeholder-count="6"><div style="border-radius:8px;background:var(--muted);padding:8px 10px"><div style="font-weight:600;font-variant-numeric:tabular-nums">{{ d.v }}</div><div style="color:var(--mfg);font-size:12px">{{ d.l }}</div></div></sc-for>
+        </div>
+        <div style="margin-top:18px;display:flex;flex-direction:column;gap:6px"><span style="color:var(--mfg)">Type <span style="font-family:Geist Mono,monospace;color:var(--fg);background:var(--muted);padding:1px 5px;border-radius:4px">Side projects</span> to confirm</span><div style="height:36px;border-radius:8px;border:1px solid var(--border2);display:flex;align-items:center;padding:0 10px;font-size:14px">Side proj<span style="width:1.5px;height:16px;background:var(--fg);margin-left:1px"></span></div></div>
+        <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:20px">
+          <div style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center">Cancel</div>
+          <div style="height:32px;padding:0 12px;border-radius:8px;background:var(--destr);color:#fff;display:flex;align-items:center;font-weight:500;opacity:.4">Delete space</div>
+        </div>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;populated&quot;,&quot;empty&quot;,&quot;dialog&quot;,&quot;delete&quot;],&quot;default&quot;:&quot;populated&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const st = this.props.state || 'populated';
+    const P = dark
+      ? { slate: '#94a3b8', blue: '#6b95f0', indigo: '#8b8cf0', violet: '#a08af2', pink: '#ec74ad', red: '#f06363', orange: '#f39455', amber: '#e0a83a', green: '#4fc28a', teal: '#3cc1b3' }
+      : { slate: '#64748b', blue: '#3b6fe0', indigo: '#5b5bd6', violet: '#7c5ce0', pink: '#d6408a', red: '#d93a3a', orange: '#e0702a', amber: '#c98a12', green: '#2f9e6a', teal: '#14958a' };
+    const a = dark ? '24' : '1a';
+    const card = (name, icon, color, desc, tasks, notes, o) => Object.assign({ name, icon, color, soft: color + a, desc, tasks: String(tasks), notes: String(notes), bd: 'var(--border)', bg: 'var(--card)', sh: 'none', tf: 'none', hover: false, menuBg: 'transparent' }, o || {});
+    const neutral = dark ? '#d4d4d8' : '#3f3f46';
+    const cards = [
+      card('Global', 'layers', neutral, 'Everything from every space, in one view.', 12, 11, { bg: 'var(--muted)', bd: 'var(--border)' }),
+      card('THMP', 'briefcase', P.blue, 'Frontend work on the THMP marketplace portals', 5, 4, { hover: true, sh: '0 10px 30px rgba(0,0,0,.08), 0 1px 3px rgba(0,0,0,.05)', tf: 'translateY(-2px)', bd: 'var(--border2)', menuBg: 'var(--hover)' }),
+      card('Personal', 'leaf', P.green, 'Life admin, health, learning', 3, 2),
+      card('Side projects', 'rocket', P.violet, 'Axon and other experiments', 4, 5)
+    ];
+    const keys = ['slate', 'blue', 'indigo', 'violet', 'pink', 'red', 'orange', 'amber', 'green', 'teal'];
+    const swatches = keys.map(k => ({ c: P[k], ring: k === 'teal' ? '0 0 0 2px var(--card), 0 0 0 4px ' + P[k] : 'none' }));
+    const icons = ['briefcase', 'leaf', 'rocket', 'book-open', 'graduation-cap', 'heart', 'dumbbell', 'code', 'palette', 'music', 'plane', 'house', 'camera', 'coffee', 'globe', 'flask-conical', 'sprout', 'wallet'].map(n => ({ n, bg: n === 'graduation-cap' ? P.teal + a : 'transparent', fg: n === 'graduation-cap' ? P.teal : 'var(--mfg)' }));
+    return {
+      dark, populated: st !== 'empty', empty: st === 'empty', dialog: st === 'dialog', del: st === 'delete',
+      cards, swatches, icons,
+      ghosts: [{ icon: 'briefcase', c: P.blue, tf: 'rotate(-8deg) translateY(6px)' }, { icon: 'layers', c: 'var(--fg)', tf: 'none' }, { icon: 'leaf', c: P.green, tf: 'rotate(8deg) translateY(6px)' }],
+      delList: [['4', 'tasks'], ['5', 'notes'], ['3', 'todos'], ['2', 'events'], ['9', 'journal days'], ['0', 'reports']].map(([v, l]) => ({ v, l }))
+    };
+  }
+}
+</script>
+</body>
+</html>

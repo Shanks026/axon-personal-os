@@ -1,0 +1,373 @@
+[
+ {
+  "id": "03",
+  "name": "Dashboard · THMP",
+  "dc": "Dashboard",
+  "h": 1120
+ },
+ {
+  "id": "03b",
+  "name": "Dashboard · Global",
+  "note": "neutral accent · per-space breakdown",
+  "dc": "Dashboard",
+  "props": "global=\"{{ true }}\"",
+  "h": 1300,
+  "acc": "global"
+ },
+ {
+  "id": "04a",
+  "name": "Tasks & Todos · Grid",
+  "note": "one module: tasks + todos as cards, filled status pills",
+  "dc": "Tasks",
+  "h": 1180,
+  "props": ""
+ },
+ {
+  "id": "04b",
+  "name": "Tasks & Todos · Global",
+  "note": "space shown in card footer",
+  "dc": "Tasks",
+  "props": "global=\"{{ true }}\"",
+  "h": 1420,
+  "acc": "global"
+ },
+ {
+  "id": "04c",
+  "name": "Tasks & Todos · Board",
+  "note": "card lifted mid-drag → drop target",
+  "dc": "Tasks",
+  "props": "view=\"board\"",
+  "h": 1000
+ },
+ {
+  "id": "04d",
+  "name": "Tasks & Todos · Empty",
+  "dc": "Tasks",
+  "props": "state=\"empty\"",
+  "h": 900
+ },
+ {
+  "id": "04e",
+  "name": "Tasks & Todos · Loading",
+  "dc": "Tasks",
+  "props": "state=\"loading\"",
+  "h": 900
+ },
+ {
+  "id": "05",
+  "name": "Task detail",
+  "dc": "Task Detail",
+  "h": 1100
+ },
+ {
+  "id": "06",
+  "name": "Tasks & Todos · Todos tab",
+  "note": "todos filtered; check-off shown on \"Rebase MR\"",
+  "dc": "Tasks",
+  "h": 900,
+  "props": "tab=\"todos\""
+ },
+ {
+  "id": "07a",
+  "name": "Notes · Grid",
+  "note": "pinned first, tag filter",
+  "dc": "Notes",
+  "h": 900
+ },
+ {
+  "id": "07b",
+  "name": "Note editor · Slash menu + bubble toolbar",
+  "note": "sidebar collapsed to rail, \"Saving…\"",
+  "dc": "Note Editor",
+  "h": 900
+ },
+ {
+  "id": "07c",
+  "name": "Note editor · [[ task mention + chip hover preview",
+  "dc": "Note Editor",
+  "props": "mode=\"b\"",
+  "h": 900
+ },
+ {
+  "id": "08",
+  "name": "Journal",
+  "note": "date strip with entry dots, standup template",
+  "dc": "Journal",
+  "h": 900
+ },
+ {
+  "id": "09a",
+  "name": "Calendar · Week (Global)",
+  "note": "coloured by space, now-line, event mid-drag with origin ghost",
+  "dc": "Calendar",
+  "h": 900,
+  "acc": "global"
+ },
+ {
+  "id": "09b",
+  "name": "Calendar · Month (Global)",
+  "note": "● event · □ due date",
+  "dc": "Calendar",
+  "props": "view=\"month\"",
+  "h": 900,
+  "acc": "global"
+ },
+ {
+  "id": "10a",
+  "name": "Reports · List",
+  "note": "fiscal years → quarter cards; Generate for missing quarter",
+  "dc": "Reports",
+  "h": 900
+ },
+ {
+  "id": "10b",
+  "name": "Report · Editor",
+  "note": "reading width 760, stats header, charts, written sections",
+  "dc": "Reports",
+  "props": "view=\"doc\"",
+  "h": 1700
+ },
+ {
+  "id": "10c",
+  "name": "Report · Print / PDF",
+  "note": "no chrome, white paper, always light",
+  "dc": "Reports",
+  "props": "view=\"print\"",
+  "h": 1800,
+  "single": true
+ },
+ {
+  "id": "11a",
+  "name": "Inbox · Triage",
+  "note": "focused row shows actions with single-key shortcuts",
+  "dc": "Inbox",
+  "h": 900
+ },
+ {
+  "id": "11b",
+  "name": "Inbox · Zero",
+  "dc": "Inbox",
+  "props": "state=\"empty\"",
+  "h": 900
+ },
+ {
+  "id": "14a",
+  "name": "Trash",
+  "dc": "Trash",
+  "h": 900
+ },
+ {
+  "id": "14b",
+  "name": "Trash · Empty confirm",
+  "dc": "Trash",
+  "props": "confirm=\"{{ true }}\"",
+  "h": 900
+ },
+ {
+  "id": "15a",
+  "name": "Settings · Preferences",
+  "note": "live fiscal-quarter preview",
+  "dc": "Settings",
+  "h": 900
+ },
+ {
+  "id": "15b",
+  "name": "Settings · Profile & account",
+  "dc": "Settings",
+  "props": "section=\"account\"",
+  "h": 900
+ },
+ {
+  "id": "01a",
+  "name": "Login · inline validation",
+  "dc": "Auth",
+  "h": 900
+ },
+ {
+  "id": "01b",
+  "name": "Sign up · Check email · Forgot · Reset",
+  "note": "light",
+  "dc": "Auth",
+  "h": 900,
+  "items": [
+   {
+    "props": "screen=\"signup\""
+   },
+   {
+    "props": "screen=\"check\""
+   },
+   {
+    "props": "screen=\"forgot\""
+   },
+   {
+    "props": "screen=\"reset\""
+   }
+  ]
+ },
+ {
+  "id": "02a",
+  "name": "Space gallery",
+  "note": "Global first · hover lift + drag handle · ghost card · archived collapsed",
+  "dc": "Spaces",
+  "h": 900
+ },
+ {
+  "id": "02b",
+  "name": "Space gallery · Empty",
+  "dc": "Spaces",
+  "props": "state=\"empty\"",
+  "h": 900
+ },
+ {
+  "id": "02c",
+  "name": "Create / edit space",
+  "note": "auto slug, 10 accents, searchable icon grid",
+  "dc": "Spaces",
+  "props": "state=\"dialog\"",
+  "h": 900
+ },
+ {
+  "id": "02d",
+  "name": "Delete space · type to confirm",
+  "dc": "Spaces",
+  "props": "state=\"delete\"",
+  "h": 900
+ },
+ {
+  "id": "12",
+  "name": "Quick capture",
+  "note": "defaults to Inbox; ⇥ cycles type chips",
+  "dc": "Overlays",
+  "props": "which=\"capture\"",
+  "h": 900
+ },
+ {
+  "id": "13",
+  "name": "Command palette",
+  "note": "grouped results, matched-text highlight, space badges",
+  "dc": "Overlays",
+  "props": "which=\"cmd\"",
+  "h": 900
+ },
+ {
+  "id": "16",
+  "name": "Keyboard shortcuts",
+  "dc": "Overlays",
+  "props": "which=\"keys\"",
+  "h": 900
+ },
+ {
+  "id": "04f",
+  "name": "New task dialog",
+  "note": "tag picker with create",
+  "dc": "Overlays",
+  "props": "which=\"task\"",
+  "h": 900
+ },
+ {
+  "id": "10d",
+  "name": "Generate report",
+  "note": "scope → period → preview numbers",
+  "dc": "Overlays",
+  "props": "which=\"generate\"",
+  "h": 900
+ },
+ {
+  "id": "09c",
+  "name": "Event dialog",
+  "dc": "Overlays",
+  "props": "which=\"event\"",
+  "h": 900
+ },
+ {
+  "id": "17a",
+  "name": "Toasts",
+  "note": "success · error · Moved to Trash + Undo",
+  "dc": "States",
+  "h": 900
+ },
+ {
+  "id": "17b",
+  "name": "Not found · Error · Splash",
+  "note": "light",
+  "dc": "States",
+  "h": 900,
+  "items": [
+   {
+    "props": "which=\"notfound\""
+   },
+   {
+    "props": "which=\"error\""
+   },
+   {
+    "props": "which=\"splash\""
+   },
+   {
+    "props": "which=\"splash\"",
+    "dark": true
+   }
+  ]
+ },
+ {
+  "id": "18a",
+  "name": "Mobile · light",
+  "note": "390 × 844",
+  "dc": "Mobile",
+  "h": 844,
+  "items": [
+   {
+    "w": 390,
+    "props": "screen=\"dashboard\""
+   },
+   {
+    "w": 390,
+    "props": "screen=\"tasks\""
+   },
+   {
+    "w": 390,
+    "props": "screen=\"tasks\" drawer=\"{{ true }}\""
+   },
+   {
+    "w": 390,
+    "props": "screen=\"note\""
+   },
+   {
+    "w": 390,
+    "props": "screen=\"todos\""
+   }
+  ]
+ },
+ {
+  "id": "18b",
+  "name": "Mobile · dark",
+  "dc": "Mobile",
+  "h": 844,
+  "items": [
+   {
+    "w": 390,
+    "props": "screen=\"dashboard\"",
+    "dark": true
+   },
+   {
+    "w": 390,
+    "props": "screen=\"tasks\"",
+    "dark": true
+   },
+   {
+    "w": 390,
+    "props": "screen=\"tasks\" drawer=\"{{ true }}\"",
+    "dark": true
+   },
+   {
+    "w": 390,
+    "props": "screen=\"note\"",
+    "dark": true
+   },
+   {
+    "w": 390,
+    "props": "screen=\"todos\"",
+    "dark": true
+   }
+  ]
+ }
+]

@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden">
+  <dc-import name="Sidebar" active="dashboard" space="{{ spaceKey }}" dark="{{ dark }}" hint-size="240px,100%"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:56px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 28px;gap:8px">
+      <span style="color:var(--mfg)">{{ spaceName }}</span><l-i n="chevron-right" s="14" style="color:var(--faint)"></l-i><span style="font-weight:500">Dashboard</span>
+      <div style="flex:1"></div>
+      <span style="display:flex;align-items:center;gap:8px;color:var(--destr);font-weight:500"><span style="width:7px;height:7px;border-radius:4px;background:var(--destr)"></span>{{ overdueMsg }}<span style="text-decoration:underline;text-underline-offset:3px">Take action</span></span>
+      <div style="width:34px;height:34px;border-radius:9px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;color:var(--mfg);margin-left:12px"><l-i n="{{ themeIcon }}" s="16"></l-i></div>
+    </header>
+    <div style="flex:1;overflow:hidden;padding:32px 36px">
+      <div style="max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:22px">
+        <div style="display:flex;align-items:flex-end;gap:12px">
+          <div style="flex:1">
+            <div style="font-size:30px;font-weight:600;letter-spacing:-0.03em">Good afternoon, Aditya</div>
+            <div style="display:flex;align-items:center;gap:10px;margin-top:8px;font-size:14px;color:var(--mfg)">Tuesday, 23 September<span style="height:24px;padding:0 9px;border-radius:12px;background:var(--accent-soft);color:var(--accent);font-size:12px;font-weight:600;display:flex;align-items:center">Q2 FY 2026–27</span><span style="font-size:13px">Day 85 of 92</span></div>
+          </div>
+          <div style="height:36px;padding:0 14px;border-radius:10px;border:1px solid var(--border);display:flex;align-items:center;gap:7px;font-weight:500;font-size:14px;white-space:nowrap"><l-i n="notebook-pen" s="15"></l-i>Write today's log</div>
+          <div style="height:36px;padding:0 14px;border-radius:10px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:7px;font-weight:500;font-size:14px;white-space:nowrap"><l-i n="plus" s="15"></l-i>New task</div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px">
+          <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+            <div style="border-radius:16px;border:1px solid {{ s.bd }};background:{{ s.bg }};padding:16px 18px;display:flex;flex-direction:column;gap:14px">
+              <div style="display:flex;align-items:center;gap:8px"><span style="width:28px;height:28px;border-radius:14px;background:{{ s.soft }};color:{{ s.fg }};display:flex;align-items:center;justify-content:center"><l-i n="{{ s.icon }}" s="15"></l-i></span><span style="font-weight:500;font-size:13.5px">{{ s.l }}</span></div>
+              <div style="display:flex;align-items:baseline;gap:8px"><span style="font-size:34px;font-weight:600;letter-spacing:-0.035em;font-variant-numeric:tabular-nums;line-height:1">{{ s.v }}</span><span style="font-size:12.5px;font-weight:500;color:{{ s.fg }}">{{ s.d }}</span></div>
+            </div>
+          </sc-for>
+        </div>
+
+        <sc-if value="{{ isGlobal }}" hint-placeholder-val="{{ false }}">
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+            <sc-for list="{{ breakdown }}" as="b" hint-placeholder-count="3">
+              <div style="border-radius:16px;border:1px solid var(--border);background:var(--card);padding:16px 18px;display:flex;flex-direction:column;gap:12px">
+                <div style="display:flex;align-items:center;gap:10px"><span style="width:32px;height:32px;border-radius:9px;background:{{ b.soft }};color:{{ b.color }};display:flex;align-items:center;justify-content:center"><l-i n="{{ b.icon }}" s="16"></l-i></span><span style="font-weight:600;font-size:14px;flex:1">{{ b.name }}</span><l-i n="arrow-up-right" s="15" style="color:var(--faint)"></l-i></div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap"><sc-for list="{{ b.pills }}" as="p" hint-placeholder-count="3"><span style="height:24px;padding:0 9px;border-radius:12px;background:{{ p.bg }};color:{{ p.fg }};font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:3px;background:{{ p.dot }}"></span>{{ p.l }}</span></sc-for></div>
+                <div style="height:6px;border-radius:3px;background:var(--muted);overflow:hidden;display:flex"><div style="width:{{ b.w }};background:{{ b.color }};border-radius:3px"></div></div>
+              </div>
+            </sc-for>
+          </div>
+        </sc-if>
+
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:17px;font-weight:600;letter-spacing:-0.015em">Today</span><span style="color:var(--faint);font-size:15px">{{ todayCount }}</span><div style="flex:1"></div><span style="color:var(--mfg);display:flex;align-items:center;gap:4px">All tasks &amp; todos<l-i n="chevron-right" s="14"></l-i></span></div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px">
+            <sc-for list="{{ today }}" as="c" hint-placeholder-count="3">
+              <div style="border:1px solid var(--border);border-radius:16px;background:var(--card);padding:16px 18px;display:flex;flex-direction:column;box-shadow:0 1px 2px rgba(0,0,0,.04)">
+                <div style="display:flex;align-items:center;gap:6px">
+                  <sc-if value="{{ c.isTodo }}"><div style="width:18px;height:18px;border-radius:6px;border:1.5px solid {{ c.cbBd }};background:{{ c.cbBg }};color:#fff;display:flex;align-items:center;justify-content:center;box-sizing:border-box;margin-right:2px"><sc-if value="{{ c.done }}"><l-i n="check" s="12" w="3"></l-i></sc-if></div></sc-if>
+                  <span style="height:24px;padding:0 9px;border-radius:12px;background:{{ c.st.bg }};color:{{ c.st.fg }};font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px;white-space:nowrap"><span style="width:6px;height:6px;border-radius:3px;background:{{ c.st.dot }}"></span>{{ c.st.l }}</span>
+                  <sc-if value="{{ c.pr }}"><span style="height:24px;padding:0 9px;border-radius:12px;border:1px solid var(--border);font-size:12px;font-weight:500;display:flex;align-items:center;gap:6px"><span style="width:6px;height:6px;border-radius:3px;background:{{ c.prC }}"></span>{{ c.pr }}</span></sc-if>
+                  <div style="flex:1"></div><l-i n="ellipsis-vertical" s="16" style="color:var(--faint)"></l-i>
+                </div>
+                <div style="font-size:15px;font-weight:600;line-height:1.4;margin-top:12px;color:{{ c.tfg }};text-decoration:{{ c.td }};text-wrap:pretty">{{ c.t }}</div>
+                <div style="flex:1"></div>
+                <div style="border-top:1px dashed var(--border2);margin-top:14px;padding-top:12px;display:flex;align-items:center;gap:8px">
+                  <sc-for list="{{ c.tags }}" as="tg" hint-placeholder-count="1"><span style="height:22px;padding:0 8px;border-radius:6px;background:{{ tg.bg }};color:{{ tg.fg }};font-size:12px;font-weight:500;display:flex;align-items:center">{{ tg.n }}</span></sc-for>
+                  <div style="flex:1"></div><span style="font-size:13px;font-weight:500;color:{{ c.dc }};white-space:nowrap">{{ c.due }}</span>
+                </div>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:minmax(0,7fr) minmax(0,5fr);gap:14px">
+          <section style="border:1px solid var(--border);border-radius:16px;background:var(--card);padding:18px 20px">
+            <div style="display:flex;align-items:flex-start;gap:16px">
+              <div style="flex:1"><div style="font-size:15px;font-weight:600">Quarter progress</div><div style="color:var(--mfg);margin-top:3px">Tasks completed per week · Jul–Sep</div></div>
+              <div style="display:flex;align-items:center;gap:8px"><span style="font-size:30px;font-weight:600;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;line-height:1">42</span><span style="height:24px;padding:0 8px;border-radius:12px;background:color-mix(in oklab, var(--ok) 15%, transparent);color:color-mix(in oklab, var(--ok) 72%, var(--fg));font-size:12px;font-weight:600;display:flex;align-items:center;gap:3px"><l-i n="trending-up" s="13"></l-i>+4 vs Q1</span></div>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:10px;height:128px;margin-top:18px">
+              <sc-for list="{{ weeks }}" as="w" hint-placeholder-count="13">
+                <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:6px">
+                  <span style="font-size:10.5px;color:var(--faint);font-variant-numeric:tabular-nums">{{ w.v }}</span>
+                  <div style="width:100%;max-width:26px;height:{{ w.h }};border-radius:6px;background:{{ w.c }}"></div>
+                  <span style="font-size:10.5px;color:var(--faint)">{{ w.l }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+          <section style="border:1px solid var(--border);border-radius:16px;background:var(--card);padding:18px 20px 10px">
+            <div style="display:flex;align-items:center;gap:8px"><span style="font-size:15px;font-weight:600;flex:1">Upcoming</span><span style="color:var(--mfg)">Next 7 days</span></div>
+            <div style="display:flex;flex-direction:column;margin-top:10px">
+              <sc-for list="{{ upcoming }}" as="u" hint-placeholder-count="4">
+                <div style="display:flex;align-items:center;gap:12px;min-height:44px;border-top:1px solid {{ u.bt }}">
+                  <div style="width:40px;text-align:center;line-height:1.1"><div style="font-size:10.5px;font-weight:600;color:{{ u.dc }};text-transform:uppercase;letter-spacing:.04em">{{ u.wd }}</div><div style="font-size:17px;font-weight:600;font-variant-numeric:tabular-nums">{{ u.d }}</div></div>
+                  <span style="flex:1;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ u.title }}</span>
+                  <span style="height:24px;padding:0 9px;border-radius:12px;background:{{ u.bg }};color:{{ u.fg }};font-size:12px;font-weight:500;display:flex;align-items:center;white-space:nowrap">{{ u.time }}</span>
+                </div>
+              </sc-for>
+            </div>
+          </section>
+        </div>
+
+        <div>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px"><span style="font-size:17px;font-weight:600;letter-spacing:-0.015em">Recent notes</span><div style="flex:1"></div><span style="color:var(--mfg);display:flex;align-items:center;gap:4px">All notes<l-i n="chevron-right" s="14"></l-i></span></div>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px">
+            <sc-for list="{{ notes }}" as="n" hint-placeholder-count="4">
+              <div style="border:1px solid var(--border);border-radius:14px;background:var(--muted);padding:14px 16px;display:flex;flex-direction:column;gap:10px;min-height:112px;box-sizing:border-box">
+                <div style="display:flex;align-items:center;gap:8px"><l-i n="file-text" s="15" style="color:var(--mfg)"></l-i><div style="flex:1"></div><span style="font-size:12px;color:var(--faint)">{{ n.when }}</span></div>
+                <div style="font-size:14px;font-weight:600;line-height:1.35">{{ n.title }}</div>
+                <div style="flex:1"></div>
+                <span style="align-self:flex-start;height:22px;padding:0 8px;border-radius:6px;background:{{ n.bg }};color:{{ n.fg }};font-size:12px;font-weight:500;display:flex;align-items:center">{{ n.tag }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1120},&quot;global&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const b = v => v === true || v === 'true';
+    const g = b(this.props.global), dark = b(this.props.dark);
+    const blue = dark ? '#0a84ff' : '#007aff', green = dark ? '#30d158' : '#34c759', violet = dark ? '#bf5af2' : '#af52de';
+    const mix = (c, p, base) => 'color-mix(in oklab, ' + c + ' ' + p + '%, ' + (base || 'transparent') + ')';
+    const pill = (l, c) => ({ l, dot: c, bg: mix(c, 14), fg: 'color-mix(in oklab, ' + c + ' 72%, var(--fg))' });
+    const tint = (l, v, d, icon, c) => ({ l, v, d, icon, bg: mix(c, dark ? 10 : 6, 'var(--card)'), bd: mix(c, dark ? 30 : 22, 'var(--border)'), soft: mix(c, 16), fg: 'color-mix(in oklab, ' + c + ' 80%, var(--fg))' });
+    const TC = { 'buyer-portal': blue, 'admin-portal': '#ff2d55', health: green, sprint: blue, rca: '#ff2d55', react: '#30b0c7', '1:1': '#ff9500' };
+    const tag = n => ({ n, bg: mix(TC[n], 14), fg: 'color-mix(in oklab, ' + TC[n] + ' 72%, var(--fg))' });
+    const card = (o) => { const done = !!o.done; return { st: o.st, isTodo: !!o.todo, done, pr: o.pr ? o.pr[0] : '', prC: o.pr ? o.pr[1] : '', t: o.t, tags: (o.tags || []).map(tag), due: o.due, dc: o.dc || 'var(--mfg)', tfg: done ? 'var(--mfg)' : 'var(--fg)', td: done ? 'line-through' : 'none', cbBd: done ? 'var(--ok)' : 'var(--border2)', cbBg: done ? 'var(--ok)' : 'transparent' }; };
+    const today = [
+      card({ st: pill('Blocked', 'var(--destr)'), pr: ['Urgent', 'var(--destr)'], t: 'Admin portal: role-based menu visibility', tags: ['admin-portal'], due: 'Overdue 3d', dc: 'var(--destr)' }),
+      card({ st: pill('In review', 'var(--review)'), pr: ['High', 'var(--warn)'], t: 'Buyer portal: fix RFQ table pagination reset on filter change', tags: ['buyer-portal'], due: 'Due today', dc: 'var(--warn)' }),
+      g ? card({ todo: true, st: pill('Todo', 'var(--mfg)'), t: 'Book dentist appointment', tags: ['health'], due: 'Today', dc: 'var(--warn)' })
+        : card({ todo: true, st: pill('Todo', 'var(--mfg)'), t: 'Reply to PM about Q3 release scope', due: 'Today', dc: 'var(--warn)' })
+    ];
+    const vals = [2, 3, 4, 3, 5, 2, 4, 3, 4, 5, 3, 3, 1];
+    const weeks = vals.map((v, i) => ({ v, h: (v / 5 * 84 + 4) + 'px', l: 'W' + (i + 1), c: i === 12 ? mix('var(--accent)', 28) : 'var(--accent)' }));
+    const up = (wd, d, title, time, c, i, today) => ({ wd, d, title, time, bg: mix(c, 14), fg: 'color-mix(in oklab, ' + c + ' 72%, var(--fg))', dc: today ? 'var(--destr)' : 'var(--mfg)', bt: i ? 'var(--border)' : 'transparent' });
+    const upcoming = g
+      ? [up('Tue', '23', 'Daily standup', '10:00', blue, 0, 1), up('Tue', '23', 'Gym', '19:00', green, 1, 1), up('Thu', '25', 'Sprint review', '15:00', blue, 2), up('Sat', '27', 'Renew Axon domain', 'Due', violet, 3)]
+      : [up('Tue', '23', 'Daily standup', '10:00', blue, 0, 1), up('Thu', '25', 'Sprint review', '15:00', blue, 1), up('Fri', '26', 'Storefront lazy-load', 'Due', '#ff9500', 2), up('Mon', '29', 'Daily standup', '10:00', blue, 3)];
+    const note = (title, when, t) => Object.assign({ title, when }, (x => ({ tag: x.n, bg: x.bg, fg: x.fg }))(tag(t)));
+    const bd = (name, icon, color, w, a, c, d) => ({ name, icon, color, soft: mix(color, 16), w, pills: [pill(a + ' open', blue), pill(c + ' overdue', 'var(--destr)'), pill(d + ' done', 'var(--ok)')] });
+    return {
+      dark, isGlobal: g, spaceKey: g ? 'global' : 'thmp', spaceName: g ? 'Global' : 'THMP', themeIcon: dark ? 'moon' : 'sun',
+      overdueMsg: g ? '3 overdue across spaces.' : '2 overdue in THMP.',
+      stats: [tint('Overdue', g ? '3' : '2', 'oldest 3d', 'triangle-alert', 'var(--destr)'), tint('Due today', g ? '4' : '3', '1 todo done', 'sun', 'var(--warn)'), tint('In progress', g ? '4' : '2', '1 in review', 'loader', 'var(--review)'), tint('Completed · Q2', g ? '48' : '42', '+4 vs Q1', 'circle-check', 'var(--ok)')],
+      breakdown: [bd('THMP', 'briefcase', blue, '72%', 6, 2, 31), bd('Personal', 'leaf', green, '45%', 3, 0, 6), bd('Side projects', 'rocket', violet, '30%', 4, 1, 5)],
+      today, todayCount: String(today.length), weeks, upcoming,
+      notes: [note('Sprint 42 planning', '2h ago', 'sprint'), note('Buyer portal: pagination bug RCA', 'Yesterday', 'rca'), note('React Query caching patterns', '3d ago', 'react'), note('Q2 1:1 with manager: feedback', '6d ago', '1:1')]
+    };
+  }
+}
+</script>
+</body>
+</html>

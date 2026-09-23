@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden">
+  <dc-import name="Sidebar" active="todos" space="thmp" dark="{{ dark }}" hint-size="240px,100%"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:48px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:8px">
+      <l-i n="panel-left" s="16" style="color:var(--mfg)"></l-i>
+      <div style="width:1px;height:16px;background:var(--border);margin:0 6px"></div>
+      <span style="color:var(--mfg)">THMP</span><l-i n="chevron-right" s="14" style="color:var(--faint)"></l-i><span style="font-weight:500">Todos</span>
+      <div style="flex:1"></div>
+      <div style="display:flex;align-items:center;gap:8px;color:var(--mfg)">Show done<div style="width:28px;height:16px;border-radius:8px;background:var(--border2);position:relative"><div style="position:absolute;left:2px;top:2px;width:12px;height:12px;border-radius:6px;background:var(--card)"></div></div></div>
+    </header>
+    <div style="flex:1;overflow:hidden;padding:40px 40px">
+      <div style="max-width:680px;margin:0 auto">
+        <div style="font-size:26px;font-weight:600;letter-spacing:-0.025em">Todos</div>
+        <div style="color:var(--mfg);margin-top:6px">Small things that don't need a status. 7 open.</div>
+        <div style="margin-top:24px;height:44px;border-radius:10px;border:1px solid var(--border2);background:var(--card);display:flex;align-items:center;gap:12px;padding:0 14px;box-shadow:0 1px 2px rgba(0,0,0,.04)">
+          <l-i n="plus" s="16" style="color:var(--accent)"></l-i><span style="flex:1;color:var(--faint);font-size:14px">Add a todo…</span>
+          <span style="font-family:Geist Mono,monospace;font-size:11px;color:var(--faint);white-space:nowrap">today · ↵</span>
+        </div>
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="4">
+          <div style="margin-top:28px">
+            <div style="display:flex;align-items:center;gap:8px;padding:0 4px 8px;border-bottom:1px solid var(--border)"><span style="font-weight:600;color:{{ g.color }}">{{ g.label }}</span><span style="font-family:Geist Mono,monospace;font-size:12px;color:var(--faint)">{{ g.count }}</span></div>
+            <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="2">
+              <div style="min-height:40px;display:flex;align-items:center;gap:12px;padding:0 4px;border-bottom:1px solid var(--border);opacity:{{ t.op }}">
+                <div style="width:17px;height:17px;border-radius:6px;border:1.5px solid {{ t.bc }};background:{{ t.bg }};color:var(--pfg);display:flex;align-items:center;justify-content:center;box-sizing:border-box;flex-shrink:0;transform:{{ t.sc }}"><sc-if value="{{ t.done }}"><l-i n="check" s="12" w="3"></l-i></sc-if></div>
+                <span style="flex:0 1 auto;font-size:14px;color:{{ t.fg }};text-decoration:{{ t.td }}">{{ t.t }}</span>
+                <sc-if value="{{ t.task }}"><span style="height:22px;padding:0 8px;border-radius:6px;background:var(--muted);color:var(--mfg);font-size:11.5px;display:flex;align-items:center;gap:5px;white-space:nowrap;max-width:260px;overflow:hidden"><l-i n="corner-down-right" s="12"></l-i><span style="overflow:hidden;text-overflow:ellipsis">{{ t.task }}</span></span></sc-if>
+                <div style="flex:1"></div>
+                <span style="font-family:Geist Mono,monospace;font-size:11.5px;color:{{ t.dc }};white-space:nowrap">{{ t.due }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const t = (text, due, dc, o = {}) => ({ t: text, due, dc, task: o.task || '', done: !!o.done, op: o.done ? 0.85 : 1, bc: o.done ? 'var(--accent)' : 'var(--border2)', bg: o.done ? 'var(--accent)' : 'transparent', fg: o.done ? 'var(--faint)' : 'var(--fg)', td: o.done ? 'line-through' : 'none', sc: o.done ? 'scale(1.08)' : 'none' });
+    return {
+      dark,
+      groups: [
+        { label: 'Overdue', color: 'var(--destr)', count: '1', items: [t('Send RFQ edge cases to QA', 'Mon 22', 'var(--destr)', { task: 'Buyer portal: fix RFQ table pagination reset' })] },
+        { label: 'Today', color: 'var(--fg)', count: '3', items: [t('Reply to PM about Q3 release scope', '', ''), t('Rebase MR !1428 on develop', '', '', { done: true, task: 'Vendor portal: migrate product form' }), t('Ask backend for admin role contract ETA', '', '', { task: 'Admin portal: role-based menu visibility' })] },
+        { label: 'Upcoming', color: 'var(--fg)', count: '2', items: [t('Prepare sprint review demo', 'Thu 25', 'var(--mfg)'), t('Measure LCP before/after lazy-load', 'Fri 26', 'var(--mfg)', { task: 'Storefront: lazy-load category images' })] },
+        { label: 'Someday', color: 'var(--mfg)', count: '1', items: [t('Write up React Query caching patterns for the team', '', '')] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

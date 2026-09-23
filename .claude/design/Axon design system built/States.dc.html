@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden;position:relative">
+  <sc-if value="{{ isToasts }}" hint-placeholder-val="{{ false }}">
+    <dc-import name="Sidebar" active="tasks" space="thmp" dark="{{ dark }}" hint-size="240px,100%"></dc-import>
+    <main style="flex:1;padding:84px 80px;display:flex;flex-direction:column;gap:12px">
+      <div style="width:280px;height:22px;border-radius:6px;background:var(--muted)"></div>
+      <sc-for list="{{ rows }}" as="r" hint-placeholder-count="8"><div style="height:42px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px"><div style="width:15px;height:15px;border-radius:8px;border:1.5px solid var(--border2)"></div><div style="width:{{ r }};height:9px;border-radius:5px;background:var(--muted)"></div></div></sc-for>
+    </main>
+    <div style="position:absolute;right:24px;bottom:24px;display:flex;flex-direction:column;gap:10px;width:360px">
+      <sc-for list="{{ toasts }}" as="t" hint-placeholder-count="3">
+        <div style="background:var(--card);border:1px solid var(--border);border-radius:12px;box-shadow:0 12px 32px rgba(0,0,0,.12),0 2px 6px rgba(0,0,0,.05);padding:12px 14px;display:flex;align-items:flex-start;gap:10px;opacity:{{ t.op }};transform:{{ t.tf }}">
+          <l-i n="{{ t.icon }}" s="16" style="color:{{ t.c }};margin-top:1px"></l-i>
+          <div style="flex:1;min-width:0"><div style="font-weight:500">{{ t.t }}</div><sc-if value="{{ t.sub }}"><div style="color:var(--mfg);margin-top:2px;line-height:1.45">{{ t.sub }}</div></sc-if></div>
+          <sc-if value="{{ t.action }}"><div style="height:26px;padding:0 9px;border-radius:6px;border:1px solid var(--border);display:flex;align-items:center;gap:6px;font-weight:500;white-space:nowrap">{{ t.action }}<span style="font-family:Geist Mono,monospace;font-size:10.5px;color:var(--faint)">⌘Z</span></div></sc-if>
+          <l-i n="x" s="14" style="color:var(--faint);margin-top:2px"></l-i>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+  <sc-if value="{{ isCenter }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:40px">
+      <sc-if value="{{ isSplash }}" hint-placeholder-val="{{ false }}">
+        <div style="width:48px;height:48px;border-radius:14px;background:var(--fg);display:flex;align-items:center;justify-content:center"><div style="width:18px;height:18px;border-radius:9px;border:3px solid var(--bg)"></div></div>
+        <div style="width:120px;height:3px;border-radius:2px;background:var(--muted);margin-top:28px;overflow:hidden"><div style="width:40%;height:100%;border-radius:2px;background:var(--fg)"></div></div>
+        <div style="font-family:Geist Mono,monospace;font-size:11.5px;color:var(--faint);margin-top:14px">Syncing your spaces…</div>
+      </sc-if>
+      <sc-if value="{{ isMsg }}" hint-placeholder-val="{{ true }}">
+        <div style="font-family:Geist Mono,monospace;font-size:88px;font-weight:500;letter-spacing:-0.04em;color:var(--border2);line-height:1">{{ code }}</div>
+        <div style="font-size:22px;font-weight:600;letter-spacing:-0.02em;margin-top:22px">{{ title }}</div>
+        <div style="color:var(--mfg);font-size:14px;line-height:1.55;margin-top:8px;max-width:400px">{{ sub }}</div>
+        <sc-if value="{{ trace }}"><div style="font-family:Geist Mono,monospace;font-size:11.5px;color:var(--mfg);background:var(--muted);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-top:18px">{{ trace }}</div></sc-if>
+        <div style="display:flex;gap:8px;margin-top:26px">
+          <div style="height:34px;padding:0 14px;border-radius:8px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:6px;font-weight:500"><l-i n="{{ ctaIcon }}" s="14"></l-i>{{ cta }}</div>
+          <div style="height:34px;padding:0 14px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;gap:8px">Search<span style="font-family:Geist Mono,monospace;font-size:11px;color:var(--faint)">⌘K</span></div>
+        </div>
+      </sc-if>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;which&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;toasts&quot;,&quot;notfound&quot;,&quot;error&quot;,&quot;splash&quot;],&quot;default&quot;:&quot;toasts&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const w = this.props.which || 'toasts';
+    const M = {
+      notfound: { code: '404', title: 'Nothing here', sub: 'This page was moved, deleted, or never existed. If it was a task or note, check Trash.', cta: 'Back to dashboard', ctaIcon: 'arrow-left', trace: '' },
+      error: { code: '500', title: 'Something broke on our side', sub: 'Your data is safe. Try again — if it keeps happening, the reference below helps.', cta: 'Try again', ctaIcon: 'rotate-cw', trace: 'ref 7f3a-19c2 · 23 Sep 2026 14:32 IST' }
+    };
+    const m = M[w] || M.notfound;
+    return Object.assign({
+      dark, isToasts: w === 'toasts', isCenter: w !== 'toasts', isSplash: w === 'splash', isMsg: w === 'notfound' || w === 'error',
+      rows: ['46%', '38%', '52%', '31%', '44%', '58%', '36%', '41%'],
+      toasts: [
+        { icon: 'circle-check', c: 'var(--ok)', t: 'Task created', sub: 'Storefront: reserve image aspect ratio', action: '', op: 1, tf: 'none' },
+        { icon: 'circle-alert', c: 'var(--destr)', t: 'Couldn’t save note', sub: 'You’re offline. We’ll retry when you reconnect.', action: '', op: 1, tf: 'none' },
+        { icon: 'trash-2', c: 'var(--mfg)', t: 'Moved to Trash', sub: '', action: 'Undo', op: 1, tf: 'none' }
+      ]
+    }, m);
+  }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden">
+  <sc-if value="{{ chrome }}" hint-placeholder-val="{{ true }}">
+    <dc-import name="Sidebar" active="reports" space="thmp" dark="{{ dark }}" hint-size="240px,100%"></dc-import>
+  </sc-if>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <sc-if value="{{ chrome }}" hint-placeholder-val="{{ true }}">
+      <header style="height:48px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:8px">
+        <l-i n="panel-left" s="16" style="color:var(--mfg)"></l-i>
+        <div style="width:1px;height:16px;background:var(--border);margin:0 6px"></div>
+        <span style="color:var(--mfg)">THMP</span><l-i n="chevron-right" s="14" style="color:var(--faint)"></l-i><span style="font-weight:500;color:{{ crumbFg }}">Reports</span>
+        <sc-if value="{{ isDoc }}"><l-i n="chevron-right" s="14" style="color:var(--faint)"></l-i><span style="font-weight:500">Q2 FY 2026–27</span></sc-if>
+        <div style="flex:1"></div>
+        <sc-if value="{{ isList }}"><div style="height:28px;padding:0 10px;border-radius:7px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:6px;font-weight:500;white-space:nowrap"><l-i n="sparkles" s="14"></l-i>Generate report</div></sc-if>
+        <sc-if value="{{ isDoc }}">
+          <div style="display:flex;gap:6px;align-items:center">
+            <span style="display:flex;align-items:center;gap:6px;color:var(--faint);font-size:12px;margin-right:6px"><l-i n="refresh-cw" s="12"></l-i>Numbers from 23 Sep, 14:02</span>
+            <div style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--border);display:flex;align-items:center;gap:6px;white-space:nowrap"><l-i n="refresh-cw" s="13"></l-i>Refresh</div>
+            <div style="height:28px;padding:0 10px;border-radius:7px;border:1px solid var(--border);display:flex;align-items:center;gap:6px;white-space:nowrap"><l-i n="download" s="13"></l-i>Export<l-i n="chevron-down" s="12" style="color:var(--faint)"></l-i></div>
+            <div style="height:28px;padding:0 10px;border-radius:7px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:6px;font-weight:500;white-space:nowrap"><l-i n="lock" s="13"></l-i>Mark final</div>
+          </div>
+        </sc-if>
+      </header>
+    </sc-if>
+
+    <sc-if value="{{ isList }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;overflow:hidden;padding:36px 40px">
+        <div style="max-width:1080px;margin:0 auto">
+          <div style="font-size:26px;font-weight:600;letter-spacing:-0.025em">Reports</div>
+          <div style="color:var(--mfg);margin-top:6px">Fiscal year runs April to March. Today is in <span style="color:var(--fg);font-weight:500">Q2 FY 2026–27</span>.</div>
+          <sc-for list="{{ years }}" as="y" hint-placeholder-count="2">
+            <div style="margin-top:32px">
+              <div style="display:flex;align-items:baseline;gap:10px;margin-bottom:12px"><span style="font-size:15px;font-weight:600">{{ y.fy }}</span><span style="font-family:Geist Mono,monospace;font-size:12px;color:var(--faint)">{{ y.range }}</span></div>
+              <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px">
+                <sc-for list="{{ y.qs }}" as="q" hint-placeholder-count="4">
+                  <div style="border:1px {{ q.bs }} {{ q.bd }};background:{{ q.bg }};border-radius:12px;padding:16px;min-height:168px;box-sizing:border-box;display:flex;flex-direction:column;gap:6px">
+                    <div style="display:flex;align-items:center;gap:8px"><span style="font-weight:600;font-size:14px">{{ q.q }}</span><span style="font-family:Geist Mono,monospace;font-size:11.5px;color:var(--faint)">{{ q.months }}</span><div style="flex:1"></div>
+                      <sc-if value="{{ q.status }}"><span style="height:20px;padding:0 7px;border-radius:5px;font-size:11px;font-weight:500;display:flex;align-items:center;gap:4px;background:{{ q.sbg }};color:{{ q.sfg }}">{{ q.status }}</span></sc-if>
+                    </div>
+                    <sc-if value="{{ q.has }}">
+                      <div style="margin-top:auto">
+                        <div style="font-size:30px;font-weight:600;letter-spacing:-0.03em;font-variant-numeric:tabular-nums;line-height:1">{{ q.done }}</div>
+                        <div style="color:var(--mfg);margin-top:6px">tasks completed</div>
+                        <div style="display:flex;gap:12px;margin-top:10px;font-family:Geist Mono,monospace;font-size:11.5px;color:var(--mfg)"><span>{{ q.created }} created</span><span>{{ q.carried }} carried</span></div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ q.gen }}">
+                      <div style="margin-top:auto;display:flex;flex-direction:column;gap:10px">
+                        <div style="color:var(--mfg);line-height:1.5">{{ q.hint }}</div>
+                        <div style="height:30px;border-radius:7px;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;gap:6px;font-weight:500"><l-i n="sparkles" s="13" style="color:var(--accent)"></l-i>Generate</div>
+                      </div>
+                    </sc-if>
+                    <sc-if value="{{ q.future }}"><div style="margin-top:auto;color:var(--faint)">{{ q.hint }}</div></sc-if>
+                  </div>
+                </sc-for>
+              </div>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ isDoc }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;overflow:hidden;padding:{{ docPad }};background:{{ docBg }}">
+        <div style="max-width:760px;margin:0 auto;background:{{ paperBg }};border:{{ paperBd }};border-radius:{{ paperR }};padding:{{ paperPad }};box-shadow:{{ paperSh }}">
+          <div style="display:flex;align-items:center;gap:8px;font-family:Geist Mono,monospace;font-size:12px;color:var(--mfg)"><span style="width:8px;height:8px;border-radius:2px;background:var(--accent)"></span>THMP · Jul 1 – Sep 30, 2026<div style="flex:1"></div><span style="height:20px;padding:0 7px;border-radius:5px;font-family:Geist,sans-serif;font-size:11px;font-weight:500;display:flex;align-items:center;background:var(--muted);color:var(--mfg)">{{ docStatus }}</span></div>
+          <div style="font-size:34px;font-weight:600;letter-spacing:-0.03em;margin-top:14px;line-height:1.15">Q2 FY 2026–27</div>
+          <div style="color:var(--mfg);font-size:14px;margin-top:6px">Quarterly report · Aditya Rao · Frontend, THMP marketplace portals</div>
+          <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border:1px solid var(--border);border-radius:10px;margin-top:28px;overflow:hidden">
+            <sc-for list="{{ stats }}" as="s" hint-placeholder-count="4">
+              <div style="padding:14px 16px;border-left:1px solid {{ s.bl }}"><div style="font-size:26px;font-weight:600;letter-spacing:-0.03em;font-variant-numeric:tabular-nums">{{ s.v }}</div><div style="color:var(--mfg);margin-top:2px">{{ s.l }}</div><div style="font-family:Geist Mono,monospace;font-size:11px;color:{{ s.dc }};margin-top:6px">{{ s.d }}</div></div>
+            </sc-for>
+          </div>
+          <div style="display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:14px;margin-top:14px">
+            <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+              <div style="font-weight:500">Completed per week</div>
+              <div style="display:flex;align-items:flex-end;gap:5px;height:96px;margin-top:12px;border-bottom:1px solid var(--border)">
+                <sc-for list="{{ weeks }}" as="w" hint-placeholder-count="13"><div style="flex:1;height:{{ w.h }};background:var(--accent);border-radius:3px 3px 0 0"></div></sc-for>
+              </div>
+              <div style="display:flex;justify-content:space-between;font-family:Geist Mono,monospace;font-size:10px;color:var(--faint);margin-top:6px"><span>Jul</span><span>Aug</span><span>Sep</span></div>
+            </div>
+            <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px">
+              <div style="font-weight:500">By priority</div>
+              <div style="display:flex;align-items:center;gap:18px;margin-top:12px">
+                <div style="width:92px;height:92px;border-radius:50%;background:conic-gradient(var(--destr) 0 10%, var(--fg) 10% 38%, var(--mfg) 38% 74%, var(--faint) 74% 90%, var(--border2) 90% 100%);position:relative;flex-shrink:0"><div style="position:absolute;inset:16px;border-radius:50%;background:{{ paperBg2 }}"></div></div>
+                <div style="display:flex;flex-direction:column;gap:5px;font-size:12px">
+                  <sc-for list="{{ prio }}" as="p" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:7px"><span style="width:8px;height:8px;border-radius:2px;background:{{ p.c }}"></span><span style="width:52px">{{ p.l }}</span><span style="font-family:Geist Mono,monospace;color:var(--mfg)">{{ p.v }}</span></div></sc-for>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div style="border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-top:14px">
+            <div style="font-weight:500">By tag</div>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:12px">
+              <sc-for list="{{ tags }}" as="t" hint-placeholder-count="5"><div style="display:flex;align-items:center;gap:10px"><span style="width:110px;font-size:12px;color:var(--mfg)">{{ t.n }}</span><div style="flex:1;height:8px;border-radius:4px;background:var(--muted)"><div style="width:{{ t.w }};height:100%;border-radius:4px;background:{{ t.c }}"></div></div><span style="width:24px;text-align:right;font-family:Geist Mono,monospace;font-size:11.5px">{{ t.v }}</span></div></sc-for>
+            </div>
+          </div>
+          <div style="font-size:14px;line-height:1.7;margin-top:32px;display:flex;flex-direction:column;gap:24px">
+            <div><div style="font-size:18px;font-weight:600;letter-spacing:-0.015em">Summary</div><p style="margin:6px 0 0">A quality-focused quarter on the buyer and onboarding portals. Shipped KYC document upload with per-file progress, cleared the RFQ pagination regression, and started the vendor product form migration to react-hook-form + zod.</p></div>
+            <div><div style="font-size:18px;font-weight:600;letter-spacing:-0.015em">Highlights</div>
+              <sc-for list="{{ highlights }}" as="h" hint-placeholder-count="3"><div style="margin-top:10px"><div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--mfg);font-weight:500"><span style="width:6px;height:6px;border-radius:3px;background:{{ h.c }}"></span>{{ h.tag }}</div><sc-for list="{{ h.items }}" as="i" hint-placeholder-count="2"><div style="display:flex;gap:8px;margin-top:4px"><l-i n="check" s="14" style="color:var(--ok);margin-top:5px"></l-i><span>{{ i }}</span></div></sc-for></div></sc-for>
+            </div>
+            <div><div style="font-size:18px;font-weight:600;letter-spacing:-0.015em">In progress</div><div style="display:flex;gap:8px;margin-top:6px"><l-i n="circle-dot" s="14" style="color:var(--warn);margin-top:5px"></l-i><span>Vendor portal: product form migration — 3 of 5 steps on the new schema.</span></div><div style="display:flex;gap:8px;margin-top:4px"><l-i n="circle-ellipsis" s="14" style="color:var(--review);margin-top:5px"></l-i><span>Buyer portal: RFQ pagination — in review, MR !1431.</span></div></div>
+            <div><div style="font-size:18px;font-weight:600;letter-spacing:-0.015em">Key notes</div><div style="display:flex;flex-direction:column;gap:4px;margin-top:6px"><span style="display:flex;gap:8px;align-items:center"><l-i n="file-text" s="14" style="color:var(--faint)"></l-i>Buyer portal: pagination bug RCA</span><span style="display:flex;gap:8px;align-items:center"><l-i n="file-text" s="14" style="color:var(--faint)"></l-i>Q2 1:1 with manager: feedback</span></div></div>
+            <div><div style="font-size:18px;font-weight:600;letter-spacing:-0.015em">Next quarter focus</div><p style="margin:6px 0 0">Finish the vendor form migration, ship role-based menus once the contract lands, and bring storefront LCP under 2s.</p></div>
+            <div><div style="font-size:18px;font-weight:600;letter-spacing:-0.015em">Blocked or carried over</div><div style="display:flex;gap:8px;margin-top:6px"><l-i n="circle-alert" s="14" style="color:var(--destr);margin-top:5px"></l-i><span>Admin portal: role-based menu visibility — waiting on API contract since 12 Sep.</span></div></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;view&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;list&quot;,&quot;doc&quot;,&quot;print&quot;],&quot;default&quot;:&quot;list&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const view = this.props.view || 'list';
+    const print = view === 'print';
+    const isDoc = view === 'doc' || print;
+    const q = (qq, months, o) => Object.assign({ q: qq, months, status: '', has: false, gen: false, future: false, hint: '', bs: 'solid', bd: 'var(--border)', bg: 'var(--card)', sbg: 'var(--muted)', sfg: 'var(--mfg)' }, o);
+    const fin = (done, created, carried) => ({ status: 'Final', has: true, done: String(done), created: String(created), carried: String(carried), sbg: 'var(--muted)', sfg: 'var(--mfg)' });
+    const years = [
+      { fy: 'FY 2026–27', range: 'Apr 2026 – Mar 2027', qs: [
+        q('Q1', 'Apr–Jun', fin(38, 45, 4)),
+        q('Q2', 'Jul–Sep', { status: 'Draft', has: true, done: '42', created: '51', carried: '6', bd: 'var(--accent)', sbg: 'var(--accent-soft)', sfg: 'var(--accent)' }),
+        q('Q3', 'Oct–Dec', { future: true, hint: 'Starts 1 Oct', bs: 'dashed', bg: 'transparent' }),
+        q('Q4', 'Jan–Mar', { future: true, hint: 'Starts 1 Jan', bs: 'dashed', bg: 'transparent' })
+      ] },
+      { fy: 'FY 2025–26', range: 'Apr 2025 – Mar 2026', qs: [
+        q('Q1', 'Apr–Jun', fin(29, 36, 5)), q('Q2', 'Jul–Sep', fin(33, 38, 3)), q('Q3', 'Oct–Dec', fin(31, 40, 6)),
+        q('Q4', 'Jan–Mar', { gen: true, hint: '35 tasks completed. No report yet.', bs: 'dashed', bg: 'transparent' })
+      ] }
+    ];
+    const vals = [2, 3, 4, 3, 5, 2, 4, 3, 4, 5, 3, 3, 1];
+    const T = [['buyer-portal', 14, '#4f7fe6'], ['onboarding', 9, '#c99a1a'], ['vendor-portal', 7, '#1fa39a'], ['performance', 6, '#e0782f'], ['a11y', 4, '#3aa55f'], ['admin-portal', 2, '#d6508a']];
+    return {
+      dark, chrome: !print, isList: view === 'list', isDoc, crumbFg: isDoc ? 'var(--mfg)' : 'var(--fg)',
+      docStatus: print ? 'Final' : 'Draft',
+      docPad: print ? '0' : '32px 40px', docBg: print ? '#e9e9ec' : 'transparent',
+      paperBg: print ? '#ffffff' : 'transparent', paperBg2: print ? '#ffffff' : 'var(--bg)', paperBd: print ? 'none' : 'none', paperR: '0', paperPad: print ? '56px 64px' : '0', paperSh: 'none',
+      years,
+      stats: [['42', 'Completed', '+4 vs Q1', 'var(--ok)'], ['51', 'Created', '+6 vs Q1', 'var(--mfg)'], ['6', 'In progress at end', '', 'var(--mfg)'], ['2', 'Overdue', '−1 vs Q1', 'var(--ok)']].map(([v, l, d, dc], i) => ({ v, l, d, dc, bl: i ? 'var(--border)' : 'transparent' })),
+      weeks: vals.map(v => ({ h: (v / 5 * 88) + 'px' })),
+      prio: [['Urgent', 4, 'var(--destr)'], ['High', 12, 'var(--fg)'], ['Medium', 15, 'var(--mfg)'], ['Low', 7, 'var(--faint)'], ['None', 4, 'var(--border2)']].map(([l, v, c]) => ({ l, v: String(v), c })),
+      tags: T.map(([n, v, c]) => ({ n, v: String(v), c, w: (v / 14 * 100) + '%' })),
+      highlights: [
+        { tag: 'onboarding', c: '#c99a1a', items: ['KYC document upload with per-file progress and retry', 'Resumable uploads for files over 10 MB'] },
+        { tag: 'buyer-portal', c: '#4f7fe6', items: ['RFQ table pagination resets on filter change; page kept in URL', 'Quote comparison view: sticky header and column pinning'] },
+        { tag: 'performance', c: '#e0782f', items: ['Storefront LCP down from 3.1s to 2.2s on category pages'] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

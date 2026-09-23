@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;flex-direction:column;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:14px;overflow:hidden;position:relative">
+  <div style="height:50px;flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:0 30px 0 34px;font-size:15px;font-weight:600"><span>9:41</span><div style="display:flex;gap:6px;align-items:center"><l-i n="signal" s="15"></l-i><l-i n="wifi" s="15"></l-i><l-i n="battery-full" s="18"></l-i></div></div>
+  <header style="height:52px;flex-shrink:0;display:flex;align-items:center;gap:8px;padding:0 10px;border-bottom:1px solid {{ hdrBd }}">
+    <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center"><l-i n="{{ leftIcon }}" s="20"></l-i></div>
+    <div style="flex:1;display:flex;align-items:center;gap:8px;font-weight:600;font-size:16px"><sc-if value="{{ showSpace }}"><span style="width:22px;height:22px;border-radius:6px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;justify-content:center"><l-i n="briefcase" s="12"></l-i></span></sc-if>{{ title }}</div>
+    <div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--mfg)"><l-i n="{{ rightIcon }}" s="20"></l-i></div>
+  </header>
+
+  <sc-if value="{{ isDash }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;overflow:hidden;padding:20px 16px;display:flex;flex-direction:column;gap:14px">
+      <div><div style="font-size:24px;font-weight:600;letter-spacing:-0.025em">Good afternoon</div><div style="font-family:Geist Mono,monospace;font-size:12px;color:var(--mfg);margin-top:6px">Tue 23 Sep · Q2 FY 2026–27</div></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:6px 0">
+        <div style="padding:10px 16px 6px;font-weight:600;display:flex;gap:8px;align-items:center"><l-i n="sun" s="15" style="color:var(--accent)"></l-i>Today</div>
+        <sc-for list="{{ today }}" as="t" hint-placeholder-count="4"><div style="min-height:48px;display:flex;align-items:center;gap:12px;padding:0 16px;border-top:1px solid {{ t.bt }}"><l-i n="{{ t.icon }}" s="17" style="color:{{ t.c }}"></l-i><span style="flex:1;font-size:14px;line-height:1.35;color:{{ t.fg }};text-decoration:{{ t.td }}">{{ t.t }}</span><span style="font-family:Geist Mono,monospace;font-size:11px;color:{{ t.dc }};white-space:nowrap">{{ t.due }}</span></div></sc-for>
+      </div>
+      <div style="border:1px dashed var(--border2);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px"><l-i n="notebook-pen" s="18" style="color:var(--mfg)"></l-i><div style="flex:1"><div style="font-weight:500">Write today's log</div><div style="font-size:12px;color:var(--mfg);margin-top:2px">Standup template</div></div><l-i n="chevron-right" s="16" style="color:var(--faint)"></l-i></div>
+      <div style="background:var(--card);border:1px solid var(--border);border-radius:14px;padding:14px 16px">
+        <div style="display:flex;align-items:baseline"><span style="font-weight:600;flex:1">Quarter</span><span style="font-size:22px;font-weight:600;font-variant-numeric:tabular-nums">42</span><span style="font-family:Geist Mono,monospace;font-size:11px;color:var(--ok);margin-left:8px">+4</span></div>
+        <div style="display:flex;align-items:flex-end;gap:4px;height:56px;margin-top:10px"><sc-for list="{{ bars }}" as="b" hint-placeholder-count="13"><div style="flex:1;height:{{ b }};border-radius:3px 3px 0 0;background:var(--accent)"></div></sc-for></div>
+      </div>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isTasks }}" hint-placeholder-val="{{ false }}">
+    <div style="display:flex;gap:6px;padding:10px 16px;overflow:hidden;flex-shrink:0">
+      <sc-for list="{{ chips }}" as="c" hint-placeholder-count="4"><div style="height:32px;padding:0 12px;border-radius:16px;border:1px solid var(--border);background:{{ c.bg }};color:{{ c.fg }};display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:13px">{{ c.l }}</div></sc-for>
+    </div>
+    <div style="flex:1;overflow:hidden">
+      <sc-for list="{{ groups }}" as="g" hint-placeholder-count="3">
+        <div>
+          <div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 16px;background:var(--muted);font-size:13px"><l-i n="{{ g.icon }}" s="15" style="color:{{ g.c }}"></l-i><span style="font-weight:500">{{ g.l }}</span><span style="font-family:Geist Mono,monospace;font-size:12px;color:var(--faint)">{{ g.n }}</span></div>
+          <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="1">
+            <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;gap:12px;align-items:flex-start">
+              <l-i n="{{ r.icon }}" s="17" style="color:{{ r.c }};margin-top:1px"></l-i>
+              <div style="flex:1;min-width:0"><div style="line-height:1.4">{{ r.t }}</div><div style="display:flex;gap:8px;align-items:center;margin-top:6px"><l-i n="{{ r.p }}" s="13" style="color:var(--mfg)"></l-i><span style="font-size:11.5px;color:var(--mfg);display:flex;align-items:center;gap:5px"><span style="width:6px;height:6px;border-radius:3px;background:{{ r.tc }}"></span>{{ r.tag }}</span><div style="flex:1"></div><span style="font-family:Geist Mono,monospace;font-size:11px;color:{{ r.dc }}">{{ r.due }}</span></div></div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ isNote }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;overflow:hidden;padding:22px 20px;font-size:16px;line-height:1.65">
+      <div style="font-size:28px;font-weight:600;letter-spacing:-0.03em;line-height:1.2">Sprint 42 planning</div>
+      <div style="display:flex;gap:6px;margin-top:12px;align-items:center"><span style="height:24px;padding:0 9px;border-radius:6px;font-size:12px;font-weight:500;display:flex;align-items:center;white-space:nowrap;background:color-mix(in oklab, #007aff 14%, transparent);color:color-mix(in oklab, #007aff 72%, var(--fg))">sprint</span><span style="font-family:Geist Mono,monospace;font-size:11px;color:var(--faint);margin-left:6px">Saved</span></div>
+      <p style="margin:20px 0 0">Two-week sprint, 22 Sep – 3 Oct. Capacity is lower this time.</p>
+      <div style="font-size:18px;font-weight:600;margin-top:16px">Committed</div>
+      <div style="display:flex;gap:10px;margin-top:6px"><span style="color:var(--faint)">•</span><span>Ship the <span style="display:inline-flex;align-items:center;gap:5px;height:26px;padding:0 8px;border-radius:6px;background:var(--accent-soft);font-size:14px;vertical-align:middle;white-space:nowrap"><l-i n="circle-ellipsis" s="13" style="color:var(--review)"></l-i>RFQ pagination</span> fix.</span></div>
+      <div style="display:flex;gap:10px;margin-top:6px"><span style="color:var(--faint)">•</span><span>Start the vendor product form migration.</span></div>
+    </div>
+    <div style="height:48px;flex-shrink:0;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-around;background:var(--sidebar);margin-bottom:300px">
+      <sc-for list="{{ kbar }}" as="k" hint-placeholder-count="7"><div style="width:44px;height:44px;display:flex;align-items:center;justify-content:center;color:var(--fg)"><l-i n="{{ k }}" s="18"></l-i></div></sc-for>
+    </div>
+    <div style="position:absolute;left:0;right:0;bottom:0;height:300px;background:var(--muted);border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-family:Geist Mono,monospace;font-size:12px;color:var(--faint)">system keyboard</div>
+  </sc-if>
+
+  <sc-if value="{{ isTodos }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;overflow:hidden;padding:14px 16px">
+      <div style="height:48px;border-radius:12px;border:1px solid var(--border2);background:var(--card);display:flex;align-items:center;gap:12px;padding:0 14px;color:var(--faint)"><l-i n="plus" s="18" style="color:var(--accent)"></l-i>Add a todo…</div>
+      <sc-for list="{{ todoGroups }}" as="g" hint-placeholder-count="3">
+        <div style="margin-top:22px">
+          <div style="font-weight:600;font-size:13px;color:{{ g.c }};padding-bottom:6px;border-bottom:1px solid var(--border)">{{ g.l }}</div>
+          <sc-for list="{{ g.items }}" as="t" hint-placeholder-count="2">
+            <div style="min-height:52px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);padding:8px 0;box-sizing:border-box">
+              <div style="width:22px;height:22px;border-radius:7px;border:1.5px solid {{ t.bc }};background:{{ t.bg }};color:var(--pfg);display:flex;align-items:center;justify-content:center;box-sizing:border-box;flex-shrink:0"><sc-if value="{{ t.done }}"><l-i n="check" s="14" w="3"></l-i></sc-if></div>
+              <div style="flex:1;min-width:0"><div style="color:{{ t.fg }};text-decoration:{{ t.td }}">{{ t.t }}</div><sc-if value="{{ t.task }}"><div style="font-size:12px;color:var(--mfg);margin-top:3px;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden"><l-i n="corner-down-right" s="12"></l-i><span style="overflow:hidden;text-overflow:ellipsis">{{ t.task }}</span></div></sc-if></div>
+            </div>
+          </sc-for>
+        </div>
+      </sc-for>
+    </div>
+  </sc-if>
+
+  <sc-if value="{{ fab }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;right:18px;bottom:34px;width:56px;height:56px;border-radius:28px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;justify-content:center;box-shadow:0 10px 24px rgba(0,0,0,.2)"><l-i n="plus" s="22"></l-i></div>
+  </sc-if>
+  <div style="position:absolute;left:50%;bottom:8px;width:134px;height:5px;border-radius:3px;background:var(--fg);transform:translateX(-50%);opacity:.85"></div>
+
+  <sc-if value="{{ drawer }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;background:var(--overlay)"></div>
+    <div style="position:absolute;left:0;top:0;bottom:0;width:240px;display:flex;background:var(--sidebar);box-shadow:8px 0 32px rgba(0,0,0,.18);padding-top:50px;box-sizing:border-box">
+      <dc-import name="Sidebar" active="tasks" space="thmp" dark="{{ dark }}" style="width:100%;height:100%" hint-size="280px,100%"></dc-import>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:390,&quot;height&quot;:844},&quot;screen&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;dashboard&quot;,&quot;tasks&quot;,&quot;note&quot;,&quot;todos&quot;],&quot;default&quot;:&quot;dashboard&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;drawer&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const sc = this.props.screen || 'dashboard';
+    const drawer = this.props.drawer === true || this.props.drawer === 'true';
+    const T = { 'buyer-portal': '#007aff', 'vendor-portal': '#30b0c7', performance: '#ff9500', 'admin-portal': '#ff2d55', a11y: '#34c759' };
+    const titles = { dashboard: 'THMP', tasks: 'Tasks', note: '', todos: 'Todos' };
+    const tr = (icon, c, t, p, tag, due, dc) => ({ icon, c, t, p, tag, tc: T[tag], due, dc });
+    const td = (t, done, task, first) => ({ t, done, task: task || '', bc: done ? 'var(--accent)' : 'var(--border2)', bg: done ? 'var(--accent)' : 'transparent', fg: done ? 'var(--faint)' : 'var(--fg)', td: done ? 'line-through' : 'none', bt: first ? 'transparent' : 'var(--border)', icon: '', c: '', due: '', dc: '' });
+    const dt = (icon, c, t, due, dc, first, done) => ({ icon, c, t, due, dc, bt: first ? 'transparent' : 'var(--border)', fg: done ? 'var(--faint)' : 'var(--fg)', td: done ? 'line-through' : 'none' });
+    return {
+      dark, drawer,
+      isDash: sc === 'dashboard', isTasks: sc === 'tasks', isNote: sc === 'note', isTodos: sc === 'todos',
+      title: titles[sc], showSpace: sc === 'dashboard',
+      leftIcon: sc === 'note' ? 'chevron-left' : 'menu', rightIcon: sc === 'note' ? 'ellipsis' : sc === 'tasks' ? 'search' : 'search',
+      hdrBd: sc === 'note' ? 'transparent' : 'var(--border)', fab: sc === 'dashboard' || sc === 'tasks',
+      today: [dt('circle-alert', 'var(--destr)', 'Admin portal: role-based menu visibility', 'Overdue · 3d', 'var(--destr)', true), dt('circle-ellipsis', 'var(--review)', 'Buyer portal: fix RFQ table pagination reset', 'Today', 'var(--warn)'), dt('square', 'var(--border2)', 'Reply to PM about Q3 release scope', '', ''), dt('square-check', 'var(--accent)', 'Rebase MR !1428 on develop', '', '', false, true)],
+      bars: [2, 3, 4, 3, 5, 2, 4, 3, 4, 5, 3, 3, 1].map(v => (v / 5 * 52) + 'px'),
+      chips: [['All', 1], ['Todo', 0], ['In progress', 0], ['Blocked', 0]].map(([l, on]) => ({ l, bg: on ? 'var(--fg)' : 'transparent', fg: on ? 'var(--bg)' : 'var(--mfg)' })),
+      groups: [
+        { l: 'Todo', icon: 'circle', c: 'var(--mfg)', n: '2', rows: [tr('circle', 'var(--mfg)', 'Storefront: lazy-load category images below the fold', 'signal-medium', 'performance', 'Fri 26 Sep', 'var(--mfg)'), tr('circle', 'var(--mfg)', 'Signup portal: address autocomplete accessibility audit', 'signal-low', 'a11y', '', '')] },
+        { l: 'In progress', icon: 'circle-dot', c: 'var(--warn)', n: '1', rows: [tr('circle-dot', 'var(--warn)', 'Vendor portal: migrate product form to react-hook-form + zod', 'signal-medium', 'vendor-portal', 'Tue 30', 'var(--mfg)')] },
+        { l: 'In review', icon: 'circle-ellipsis', c: 'var(--review)', n: '1', rows: [tr('circle-ellipsis', 'var(--review)', 'Buyer portal: fix RFQ table pagination reset on filter change', 'signal-high', 'buyer-portal', 'Today', 'var(--warn)')] },
+        { l: 'Blocked', icon: 'circle-alert', c: 'var(--destr)', n: '1', rows: [tr('circle-alert', 'var(--destr)', 'Admin portal: role-based menu visibility', 'triangle-alert', 'admin-portal', 'Overdue · 3d', 'var(--destr)')] }
+      ],
+      kbar: ['heading-2', 'list', 'list-checks', 'bold', 'at-sign', 'image', 'chevron-down'],
+      todoGroups: [
+        { l: 'Overdue', c: 'var(--destr)', items: [td('Send RFQ edge cases to QA', false, 'Buyer portal: fix RFQ table pagination')] },
+        { l: 'Today', c: 'var(--fg)', items: [td('Reply to PM about Q3 release scope', false), td('Rebase MR !1428 on develop', true, 'Vendor portal: migrate product form'), td('Ask backend for admin role contract ETA', false)] },
+        { l: 'Upcoming', c: 'var(--fg)', items: [td('Prepare sprint review demo', false), td('Measure LCP before/after lazy-load', false)] }
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>

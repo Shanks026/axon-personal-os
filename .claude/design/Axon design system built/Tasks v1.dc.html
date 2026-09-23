@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden">
+  <dc-import name="Sidebar" active="tasks" space="{{ spaceKey }}" dark="{{ dark }}" hint-size="240px,100%"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:48px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:8px">
+      <l-i n="panel-left" s="16" style="color:var(--mfg)"></l-i>
+      <div style="width:1px;height:16px;background:var(--border);margin:0 6px"></div>
+      <span style="color:var(--mfg)">{{ spaceName }}</span><l-i n="chevron-right" s="14" style="color:var(--faint)"></l-i><span style="font-weight:500">Tasks</span>
+      <div style="flex:1"></div>
+      <div style="height:28px;padding:0 10px;border-radius:7px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:6px;font-weight:500;white-space:nowrap"><l-i n="plus" s="14"></l-i>New task<span style="font-family:Geist Mono,monospace;font-size:11px;opacity:.6;margin-left:4px">C</span></div>
+    </header>
+    <div style="height:48px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:8px">
+      <div style="display:flex;padding:2px;border-radius:8px;background:var(--muted);gap:2px">
+        <div style="height:24px;padding:0 10px;border-radius:6px;display:flex;align-items:center;gap:6px;background:{{ listBg }};color:{{ listFg }};box-shadow:{{ listSh }}"><l-i n="list" s="14"></l-i>List</div>
+        <div style="height:24px;padding:0 10px;border-radius:6px;display:flex;align-items:center;gap:6px;background:{{ boardBg }};color:{{ boardFg }};box-shadow:{{ boardSh }}"><l-i n="square-kanban" s="14"></l-i>Board</div>
+      </div>
+      <div style="width:1px;height:16px;background:var(--border);margin:0 4px"></div>
+      <sc-for list="{{ filters }}" as="f" hint-placeholder-count="4">
+        <div style="height:28px;padding:0 10px;border-radius:7px;border:1px dashed var(--border2);display:flex;align-items:center;gap:6px;color:var(--mfg);white-space:nowrap"><l-i n="{{ f.icon }}" s="13"></l-i>{{ f.label }}</div>
+      </sc-for>
+      <div style="height:28px;padding:0 8px 0 10px;border-radius:7px;background:var(--accent-soft);color:var(--accent);display:flex;align-items:center;gap:6px;white-space:nowrap;font-weight:500">Priority ≥ Medium<l-i n="x" s="13"></l-i></div>
+      <div style="flex:1"></div>
+      <div style="width:220px;height:28px;border-radius:7px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;gap:8px;padding:0 10px;color:var(--faint)"><l-i n="search" s="14"></l-i>Filter tasks…<span style="flex:1"></span><span style="font-family:Geist Mono,monospace;font-size:11px">/</span></div>
+      <div style="height:28px;width:28px;border-radius:7px;display:flex;align-items:center;justify-content:center;color:var(--mfg)"><l-i n="sliders-horizontal" s="14"></l-i></div>
+    </div>
+
+    <sc-if value="{{ showList }}" hint-placeholder-val="{{ true }}">
+      <div style="flex:1;overflow:hidden">
+        <sc-for list="{{ groups }}" as="g" hint-placeholder-count="5">
+          <div>
+            <div style="height:36px;display:flex;align-items:center;gap:8px;padding:0 20px 0 14px;background:var(--muted);border-bottom:1px solid var(--border)">
+              <l-i n="{{ g.chev }}" s="14" style="color:var(--faint)"></l-i>
+              <l-i n="{{ g.icon }}" s="15" style="color:{{ g.color }}"></l-i>
+              <span style="font-weight:500">{{ g.label }}</span>
+              <span style="color:var(--faint);font-family:Geist Mono,monospace;font-size:12px">{{ g.count }}</span>
+              <div style="flex:1"></div>
+              <l-i n="plus" s="14" style="color:var(--faint)"></l-i>
+            </div>
+            <sc-for list="{{ g.rows }}" as="r" hint-placeholder-count="1">
+              <div style="height:42px;display:flex;align-items:center;gap:12px;padding:0 20px 0 24px;border-bottom:1px solid var(--border);background:{{ r.bg }}">
+                <l-i n="{{ r.pIcon }}" s="15" style="color:{{ r.pColor }}"></l-i>
+                <l-i n="{{ r.icon }}" s="15" style="color:{{ r.sc }}"></l-i>
+                <span style="flex:0 1 auto;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:{{ r.tc }}">{{ r.title }}</span>
+                <sc-if value="{{ r.note }}"><span style="color:var(--mfg);font-size:12px;white-space:nowrap">· {{ r.note }}</span></sc-if>
+                <div style="flex:1"></div>
+                <sc-if value="{{ r.showSpace }}"><span style="height:20px;padding:0 7px;border-radius:5px;background:var(--muted);font-size:11px;color:var(--mfg);display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:6px;height:6px;border-radius:3px;background:{{ r.spaceColor }}"></span>{{ r.space }}</span></sc-if>
+                <sc-for list="{{ r.tags }}" as="tg" hint-placeholder-count="1">
+                  <span style="height:20px;padding:0 7px;border-radius:10px;border:1px solid var(--border);font-size:11px;color:var(--mfg);display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:6px;height:6px;border-radius:3px;background:{{ tg.c }}"></span>{{ tg.n }}</span>
+                </sc-for>
+                <sc-if value="{{ r.link }}"><l-i n="git-pull-request-arrow" s="14" style="color:var(--mfg)"></l-i></sc-if>
+                <span style="width:92px;text-align:right;font-family:Geist Mono,monospace;font-size:11.5px;color:{{ r.dc }};white-space:nowrap">{{ r.due }}</span>
+              </div>
+            </sc-for>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showBoard }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;overflow:hidden;display:flex;gap:12px;padding:16px 20px">
+        <sc-for list="{{ columns }}" as="c" hint-placeholder-count="5">
+          <div style="width:252px;flex-shrink:0;display:flex;flex-direction:column;gap:8px;background:{{ c.bg }};border-radius:10px;padding:8px;border:1px solid {{ c.bd }}">
+            <div style="height:28px;display:flex;align-items:center;gap:8px;padding:0 4px">
+              <l-i n="{{ c.icon }}" s="15" style="color:{{ c.color }}"></l-i><span style="font-weight:500">{{ c.label }}</span><span style="color:var(--faint);font-family:Geist Mono,monospace;font-size:12px">{{ c.count }}</span>
+              <div style="flex:1"></div><l-i n="ellipsis" s="14" style="color:var(--faint)"></l-i>
+            </div>
+            <sc-for list="{{ c.cards }}" as="k" hint-placeholder-count="1">
+              <div style="background:var(--card);border:1px solid {{ k.bd }};border-radius:9px;padding:12px;display:flex;flex-direction:column;gap:10px;box-shadow:{{ k.sh }};transform:{{ k.tf }};opacity:{{ k.op }}">
+                <div style="display:flex;gap:8px;align-items:flex-start"><l-i n="{{ k.icon }}" s="15" style="color:{{ k.sc }};margin-top:1px"></l-i><span style="line-height:1.4;text-wrap:pretty">{{ k.title }}</span></div>
+                <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+                  <l-i n="{{ k.pIcon }}" s="14" style="color:{{ k.pColor }}"></l-i>
+                  <sc-for list="{{ k.tags }}" as="tg" hint-placeholder-count="1"><span style="height:20px;padding:0 7px;border-radius:10px;border:1px solid var(--border);font-size:11px;color:var(--mfg);display:flex;align-items:center;gap:5px;white-space:nowrap"><span style="width:6px;height:6px;border-radius:3px;background:{{ tg.c }}"></span>{{ tg.n }}</span></sc-for>
+                  <div style="flex:1"></div>
+                  <span style="font-family:Geist Mono,monospace;font-size:11px;color:{{ k.dc }};white-space:nowrap">{{ k.due }}</span>
+                </div>
+              </div>
+            </sc-for>
+            <sc-if value="{{ c.drop }}"><div style="height:74px;border-radius:9px;border:1.5px dashed var(--accent);background:var(--accent-soft)"></div></sc-if>
+            <div style="height:30px;display:flex;align-items:center;gap:8px;padding:0 6px;color:var(--faint);border-radius:7px"><l-i n="plus" s="14"></l-i>Add task</div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showEmpty }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;display:flex;align-items:center;justify-content:center">
+        <div style="display:flex;flex-direction:column;align-items:center;text-align:center;max-width:340px;gap:6px">
+          <div style="width:44px;height:44px;border-radius:12px;border:1px solid var(--border);background:var(--card);display:flex;align-items:center;justify-content:center;color:var(--accent);margin-bottom:12px"><l-i n="square-check-big" s="20"></l-i></div>
+          <div style="font-size:16px;font-weight:600">No tasks in THMP yet</div>
+          <div style="color:var(--mfg);line-height:1.5;text-wrap:pretty">Tasks track work with a status and a due date. Everything you finish shows up in your quarterly report.</div>
+          <div style="display:flex;gap:8px;margin-top:16px">
+            <div style="height:32px;padding:0 12px;border-radius:8px;background:var(--primary);color:var(--pfg);display:flex;align-items:center;gap:6px;font-weight:500"><l-i n="plus" s="14"></l-i>New task</div>
+            <div style="height:32px;padding:0 12px;border-radius:8px;border:1px solid var(--border);display:flex;align-items:center;gap:6px;color:var(--mfg)">or press <span style="font-family:Geist Mono,monospace;font-size:11px;border:1px solid var(--border);border-radius:4px;padding:0 5px">C</span></div>
+          </div>
+        </div>
+      </div>
+    </sc-if>
+
+    <sc-if value="{{ showLoading }}" hint-placeholder-val="{{ false }}">
+      <div style="flex:1;overflow:hidden">
+        <sc-for list="{{ skel }}" as="s" hint-placeholder-count="10">
+          <div style="height:42px;display:flex;align-items:center;gap:12px;padding:0 20px 0 24px;border-bottom:1px solid var(--border);background:{{ s.bg }}">
+            <div style="width:15px;height:15px;border-radius:8px;background:var(--muted)"></div>
+            <div style="width:{{ s.w }};height:10px;border-radius:5px;background:linear-gradient(90deg,var(--muted) 0%,var(--hover) 50%,var(--muted) 100%)"></div>
+            <div style="flex:1"></div>
+            <div style="width:64px;height:10px;border-radius:5px;background:var(--muted)"></div>
+            <div style="width:48px;height:10px;border-radius:5px;background:var(--muted)"></div>
+          </div>
+        </sc-for>
+      </div>
+    </sc-if>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:900},&quot;view&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;list&quot;,&quot;board&quot;],&quot;default&quot;:&quot;list&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;state&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;populated&quot;,&quot;empty&quot;,&quot;loading&quot;],&quot;default&quot;:&quot;populated&quot;,&quot;tsType&quot;:&quot;string&quot;},&quot;global&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const b = v => v === true || v === 'true';
+    const g = b(this.props.global), dark = b(this.props.dark);
+    const view = this.props.view || 'list', state = this.props.state || 'populated';
+    const S = { todo: ['Todo', 'circle', 'var(--mfg)'], progress: ['In progress', 'circle-dot', 'var(--warn)'], review: ['In review', 'circle-ellipsis', 'var(--review)'], blocked: ['Blocked', 'circle-alert', 'var(--destr)'], done: ['Done', 'circle-check', 'var(--ok)'], cancelled: ['Cancelled', 'circle-x', 'var(--faint)'] };
+    const P = { none: ['minus', 'var(--faint)'], low: ['signal-low', 'var(--mfg)'], medium: ['signal-medium', 'var(--mfg)'], high: ['signal-high', 'var(--fg)'], urgent: ['triangle-alert', 'var(--destr)'] };
+    const T = { 'buyer-portal': '#4f7fe6', 'vendor-portal': '#1fa39a', refactor: '#8a6ae6', performance: '#e0782f', 'admin-portal': '#d6508a', onboarding: '#c99a1a', a11y: '#3aa55f', groceries: '#3aa55f', axon: '#8a6ae6' };
+    const sp = { THMP: dark ? '#6b95f0' : '#3b6fe0', Personal: dark ? '#4fc28a' : '#2f9e6a', 'Side projects': dark ? '#a08af2' : '#7c5ce0' };
+    const tasks = [
+      ['todo', 'Storefront: lazy-load category images below the fold', 'medium', ['performance'], 'Fri 26 Sep', 'var(--mfg)'],
+      ['todo', 'Signup portal: address autocomplete accessibility audit', 'low', ['a11y'], '', ''],
+      ['progress', 'Vendor portal: migrate product form to react-hook-form + zod', 'medium', ['vendor-portal', 'refactor'], 'Tue 30 Sep', 'var(--mfg)'],
+      ['review', 'Buyer portal: fix RFQ table pagination reset on filter change', 'high', ['buyer-portal'], 'Today', 'var(--warn)', true],
+      ['blocked', 'Admin portal: role-based menu visibility', 'urgent', ['admin-portal'], 'Overdue · 3d', 'var(--destr)', false, 'waiting on API contract'],
+      ['done', 'Onboarding portal: KYC document upload progress UI', 'none', ['onboarding'], 'Done 18 Sep', 'var(--faint)']
+    ];
+    if (g) tasks.splice(1, 0, ['todo', 'Renew domain for Axon', 'medium', ['axon'], 'Mon 29 Sep', 'var(--mfg)', false, '', 'Side projects'], ['todo', 'Compare health insurance renewals', 'low', [], 'Oct', 'var(--mfg)', false, '', 'Personal']);
+    const mk = (t, i) => ({ st: t[0], icon: S[t[0]][1], sc: S[t[0]][2], title: t[1], pIcon: P[t[2]][0], pColor: P[t[2]][1], tags: t[3].map(n => ({ n, c: T[n] })), due: t[4], dc: t[5], link: !!t[6], note: t[7] || '', space: t[8] || 'THMP', spaceColor: sp[t[8] || 'THMP'], showSpace: g, tc: t[0] === 'done' ? 'var(--mfg)' : 'var(--fg)', bg: t[0] === 'review' ? 'var(--hover)' : 'transparent' });
+    const all = tasks.map(mk);
+    const order = ['todo', 'progress', 'review', 'blocked', 'done', 'cancelled'];
+    const groups = order.map(k => {
+      const rows = all.filter(r => r.st === k);
+      const collapsed = k === 'done' || k === 'cancelled';
+      return { label: S[k][0], icon: S[k][1], color: S[k][2], count: String(rows.length), chev: collapsed ? 'chevron-right' : 'chevron-down', rows: collapsed ? [] : rows };
+    });
+    const columns = order.slice(0, 5).map(k => {
+      let cards = all.filter(r => r.st === k).map(r => ({ ...r, bd: 'var(--border)', sh: 'none', tf: 'none', op: 1 }));
+      let drop = false;
+      if (k === 'todo') cards = cards.map((c, i) => i === 0 ? { ...c, bd: 'var(--border2)', sh: '0 12px 28px rgba(0,0,0,.14), 0 2px 6px rgba(0,0,0,.08)', tf: 'translate(262px, 34px) rotate(2deg) scale(1.02)' } : c);
+      if (k === 'progress') drop = true;
+      return { label: S[k][0], icon: S[k][1], color: S[k][2], count: String(cards.length), cards, drop, bg: 'var(--muted)', bd: k === 'progress' ? 'var(--accent)' : 'transparent' };
+    });
+    const on = { bg: 'var(--card)', fg: 'var(--fg)', sh: '0 1px 2px rgba(0,0,0,.08)' }, off = { bg: 'transparent', fg: 'var(--mfg)', sh: 'none' };
+    const L = view === 'list' ? on : off, B = view === 'board' ? on : off;
+    return {
+      dark, spaceKey: g ? 'global' : 'thmp', spaceName: g ? 'Global' : 'THMP',
+      listBg: L.bg, listFg: L.fg, listSh: L.sh, boardBg: B.bg, boardFg: B.fg, boardSh: B.sh,
+      filters: [{ icon: 'circle-dashed', label: 'Status' }, { icon: 'tag', label: 'Tag' }, { icon: 'calendar', label: 'Due' }],
+      groups, columns,
+      showList: state === 'populated' && view === 'list', showBoard: state === 'populated' && view === 'board',
+      showEmpty: state === 'empty', showLoading: state === 'loading',
+      skel: [52, 38, 61, 44, 30, 57, 40, 48, 35, 55, 42, 50].map((w, i) => ({ w: w + '%', bg: i % 4 === 0 ? 'var(--muted)' : 'transparent' }))
+    };
+  }
+}
+</script>
+</body>
+</html>

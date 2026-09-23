@@ -1,0 +1,299 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+@import 'shadcn/tailwind.css';
+@import '@fontsource-variable/geist';
+@import '@fontsource-variable/geist-mono';
+
+/* Design system v1: tokens from .claude/rules/design-system.md. Never add raw hex outside this file. */
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: 'Geist Variable', system-ui, sans-serif;
+  --font-heading: var(--font-sans);
+  --font-mono: 'Geist Mono Variable', ui-monospace, monospace;
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* Axon extras */
+  --color-faint: var(--faint);
+  --color-border-strong: var(--border-strong);
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-review: var(--review);
+  --color-overlay: var(--overlay);
+  --color-space: var(--space-accent);
+  --color-space-soft: var(--space-soft);
+
+  /* Radius */
+  --radius-sm: 5px;
+  --radius-md: 7px;
+  --radius-lg: 10px;
+  --radius-xl: 12px;
+  --radius-2xl: 14px;
+
+  /* Elevation */
+  --shadow-xs: 0 1px 2px rgba(16, 16, 24, 0.06);
+  --shadow-md: 0 12px 32px rgba(16, 16, 24, 0.1);
+  --shadow-lg: 0 30px 80px rgba(16, 16, 24, 0.22);
+
+  /* Type scale: text-display | text-h1 | text-h2 | text-h3 | text-read | text-ui | text-small | text-stat */
+  --text-display: 36px;
+  --text-display--line-height: 44px;
+  --text-display--letter-spacing: -0.03em;
+  --text-display--font-weight: 600;
+  --text-h1: 26px;
+  --text-h1--line-height: 32px;
+  --text-h1--letter-spacing: -0.025em;
+  --text-h1--font-weight: 600;
+  --text-h2: 19px;
+  --text-h2--line-height: 26px;
+  --text-h2--letter-spacing: -0.015em;
+  --text-h2--font-weight: 600;
+  --text-h3: 15px;
+  --text-h3--line-height: 22px;
+  --text-h3--letter-spacing: -0.01em;
+  --text-h3--font-weight: 600;
+  --text-read: 15px;
+  --text-read--line-height: 26px;
+  --text-ui: 13px;
+  --text-ui--line-height: 20px;
+  --text-small: 12px;
+  --text-small--line-height: 16px;
+  --text-stat: 28px;
+  --text-stat--line-height: 28px;
+  --text-stat--letter-spacing: -0.03em;
+  --text-stat--font-weight: 600;
+}
+
+@property --space-accent {
+  syntax: '<color>';
+  inherits: true;
+  initial-value: #8e8e93;
+}
+
+:root {
+  --radius: 10px;
+
+  --background: #ffffff;
+  --foreground: #1d1d1f;
+  --card: #ffffff;
+  --card-foreground: #1d1d1f;
+  --popover: #ffffff;
+  --popover-foreground: #1d1d1f;
+  --primary: #1d1d1f;
+  --primary-foreground: #ffffff;
+  --secondary: #f5f5f5;
+  --secondary-foreground: #1d1d1f;
+  --muted: #f5f5f5;
+  --muted-foreground: #6e6e73;
+  --accent: #efefef;
+  --accent-foreground: #1d1d1f;
+  --destructive: #ff3b30;
+  --border: #e7e7e7;
+  --input: #d4d4d4;
+  --ring: var(--space-accent);
+
+  --sidebar: #f7f7f6;
+  --sidebar-foreground: #1d1d1f;
+  --sidebar-primary: #1d1d1f;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #efefef;
+  --sidebar-accent-foreground: #1d1d1f;
+  --sidebar-border: #e7e7e7;
+  --sidebar-ring: var(--space-accent);
+
+  --faint: #aeaeb2;
+  --border-strong: #d4d4d4;
+  --ok: #34c759;
+  --warn: #ff9500;
+  --review: #af52de;
+  --overlay: rgba(0, 0, 0, 0.22);
+
+  --chart-1: var(--space-accent);
+  --chart-2: #34c759;
+  --chart-3: #ff9500;
+  --chart-4: #af52de;
+  --chart-5: #ff2d55;
+
+  /* Space accent palette (keys stored in spaces.color / tags.color) */
+  --hue-slate: #8e8e93;
+  --hue-blue: #007aff;
+  --hue-indigo: #5856d6;
+  --hue-violet: #af52de;
+  --hue-pink: #ff2d55;
+  --hue-red: #ff3b30;
+  --hue-orange: #ff9500;
+  --hue-amber: #ffcc00;
+  --hue-green: #34c759;
+  --hue-teal: #30b0c7;
+
+  --space-accent: var(--hue-slate);
+  --space-soft-mix: 10%;
+  --space-soft: color-mix(in oklab, var(--space-accent) var(--space-soft-mix), transparent);
+
+  /* Motion (mirrors src/components/motion/presets.js) */
+  --dur-instant: 80ms;
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --ease-enter: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit: cubic-bezier(0.4, 0, 1, 1);
+}
+
+.dark {
+  --background: #0b0b0b;
+  --foreground: #f5f5f7;
+  --card: #1a1a1a;
+  --card-foreground: #f5f5f7;
+  --popover: #1a1a1a;
+  --popover-foreground: #f5f5f7;
+  --primary: #f5f5f7;
+  --primary-foreground: #1d1d1f;
+  --secondary: #222222;
+  --secondary-foreground: #f5f5f7;
+  --muted: #222222;
+  --muted-foreground: #98989d;
+  --accent: #2c2c2e;
+  --accent-foreground: #f5f5f7;
+  --destructive: #ff453a;
+  --border: #2c2c2e;
+  --input: #3a3a3c;
+
+  --sidebar: #131313;
+  --sidebar-foreground: #f5f5f7;
+  --sidebar-primary: #f5f5f7;
+  --sidebar-primary-foreground: #1d1d1f;
+  --sidebar-accent: #2c2c2e;
+  --sidebar-accent-foreground: #f5f5f7;
+  --sidebar-border: #2c2c2e;
+
+  --faint: #636366;
+  --border-strong: #3a3a3c;
+  --ok: #30d158;
+  --warn: #ff9f0a;
+  --review: #bf5af2;
+  --overlay: rgba(0, 0, 0, 0.5);
+
+  --chart-2: #30d158;
+  --chart-3: #ff9f0a;
+  --chart-4: #bf5af2;
+  --chart-5: #ff375f;
+
+  --hue-slate: #98989d;
+  --hue-blue: #0a84ff;
+  --hue-indigo: #5e5ce6;
+  --hue-violet: #bf5af2;
+  --hue-pink: #ff375f;
+  --hue-red: #ff453a;
+  --hue-orange: #ff9f0a;
+  --hue-amber: #ffd60a;
+  --hue-green: #30d158;
+  --hue-teal: #40c8e0;
+
+  --space-soft-mix: 14%;
+}
+
+/* Space scope: AppLayout sets data-space-color on the shell root. Global leaves it unset (slate). */
+[data-space-color] {
+  transition: --space-accent var(--dur-slow) var(--ease-standard);
+}
+[data-space-color='slate'] {
+  --space-accent: var(--hue-slate);
+}
+[data-space-color='blue'] {
+  --space-accent: var(--hue-blue);
+}
+[data-space-color='indigo'] {
+  --space-accent: var(--hue-indigo);
+}
+[data-space-color='violet'] {
+  --space-accent: var(--hue-violet);
+}
+[data-space-color='pink'] {
+  --space-accent: var(--hue-pink);
+}
+[data-space-color='red'] {
+  --space-accent: var(--hue-red);
+}
+[data-space-color='orange'] {
+  --space-accent: var(--hue-orange);
+}
+[data-space-color='amber'] {
+  --space-accent: var(--hue-amber);
+}
+[data-space-color='green'] {
+  --space-accent: var(--hue-green);
+}
+[data-space-color='teal'] {
+  --space-accent: var(--hue-teal);
+}
+
+/* Tint recipe for tag, status and space pills. Set --tint via tintStyle(key) from @/lib/tint. */
+@utility tint {
+  background-color: color-mix(in oklab, var(--tint, var(--hue-slate)) 14%, transparent);
+  color: color-mix(in oklab, var(--tint, var(--hue-slate)) 72%, var(--foreground));
+}
+
+/* Skeleton shimmer: a muted block with a hover-tone sweep. Static under reduced motion. */
+@keyframes axon-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+  to {
+    background-position: -200% 0;
+  }
+}
+@utility shimmer {
+  background-image: linear-gradient(90deg, var(--muted) 25%, var(--accent) 50%, var(--muted) 75%);
+  background-size: 200% 100%;
+  animation: axon-shimmer 1.4s linear infinite;
+  @media (prefers-reduced-motion: reduce) {
+    animation: none;
+    background-image: none;
+    background-color: var(--muted);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans;
+  }
+  body {
+    @apply bg-background text-ui text-foreground antialiased;
+  }
+}

@@ -1,0 +1,475 @@
+# Feature 04: Tasks (List, Board and Tags)
+
+**Product**: Axon, a personal second-brain OS
+**File**: `.claude/features/04-tasks.md`
+**Status**: 🔵 Planned
+**Depends on**: 03
+**Last Updated**: September 2026
+
+---
+
+## Context
+
+Tasks are the tracked units of work: the THMP tickets, MRs and chores that later feed the quarterly report. Each task has a status, priority, optional start and due dates, an external link (GitLab MR or Jira) and tags. This feature adapts Tercero's task list and kanban, drops assignees and workspaces, and is the first real consumer of `scopeSpaceIds`: every read takes `spaceIds`, so the same page works inside a space and in Global. The rich description, checklist and activity log arrive in Features 05 and 07.
+
+---
+
+## Phase Overview
+
+```
+Phase 1: Core list
+  tasks table, api.js, list view grouped by status, create/edit dialog, quick status change, filters in the URL, soft delete + Undo.
+
+Phase 2: Board view
+  ?view=board kanban with a column per status, dnd-kit drag across columns (status + position), quick-add per column.
+
+Phase 3: Tags
+  tags + task_tags tables, tags api, TagPicker / TagPill / ManageTagsDialog shared components, tag assignment and tag filter.
+```
+
+**After each phase, stop and wait for approval.**
+
+---
+
+## Phase 1: Core List
+
+### Goal
+At `/s/:slug/tasks` the user sees their tasks grouped by status in collapsible groups with counts. They can create and edit a task (title, status, priority, start and due dates, external link, and a space when in Global), change status from the row in one click, filter by status, priority, due window and a title search (all in the URL, so filtered views are shareable and survive reloads), and delete a task with an Undo toast. In Global every row shows its space badge.
+
+### Before Starting: Confirm With Codebase
+1. Feature 03 is complete: `useSpace()` returns `scopeSpaceIds`, `isGlobal`, `activeSpaces`, `spaceById`; `SpaceBadge`, `SpaceIcon`, `usePageHeader`, `useSpacePaths` exist; `/s/:spaceSlug/tasks` is a placeholder page.
+2. `lib/dates.js` exports `formatDueLabel`, `toISODate`, `parseISODate`, `isOverdue`; `lib/position.js` exports `positionAfterLast`; `AnimatedList`, `EmptyState`, `ErrorState` exist.
+3. `components/shared/SpacePickerField.jsx`: the patterns catalogue lists it under Feature 03, but the 03 doc does not build it. If it is missing, create it here (1.3). Same for `DatePickerField` (new here).
+4. `design-system.md` is still a placeholder unless the user has approved a design. If so, use shadcn defaults and semantic tokens only, and flag the row and dialog layouts for a design pass.
+5. Use the Supabase MCP `list_tables` to confirm `public.tasks` does not exist yet.
+
+### 1.1 Database
+Migration `create_tasks`: the SQL from `data-model.md` **tasks**, written out in full.
+
+```sql
+create table public.tasks (
+  id                uuid primary key default gen_random_uuid(),
+  user_id           uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  space_id          uuid not null,
+  title             text not null check (char_length(btrim(title)) between 1 and 300),
+  description       jsonb,
+  description_text  text not null default '',
+  status            text not null default 'todo'
+                    check (status in ('todo','in_progress','in_review','blocked','done','cancelled')),
+  priority          text not null default 'none'
+                    check (priority in ('none','low','medium','high','urgent')),
+  start_date        date,
+  due_date          date,
+  completed_at      timestamptz,
+  external_url      text,
+  position          double precision not null default 0,
+  pinned_at         timestamptz,
+  deleted_at        timestamptz,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now(),
+  search            tsvector generated always as (
+                      setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+                      setweight(to_tsvector('english', coalesce(description_text, '')), 'B')
+                    ) stored,
+  check (start_date is null or due_date is null or start_date <= due_date),
+  unique (id, user_id),
+  foreign key (space_id, user_id) references public.spaces(id, user_id) on delete cascade
+);
+
+create index tasks_scope_idx  on public.tasks (user_id, space_id, status) where deleted_at is null;
+create index tasks_due_idx    on public.tasks (user_id, due_date) where deleted_at is null and due_date is not null;
+create index tasks_done_idx   on public.tasks (user_id, completed_at) where completed_at is not null;
+create index tasks_search_idx on public.tasks using gin (search);
+create index tasks_title_trgm on public.tasks using gin (title extensions.gin_trgm_ops);
+
+create or replace function public.tasks_set_completed_at()
+returns trigger language plpgsql set search_path = '' as $$
+begin
+  if new.status = 'done' and (tg_op = 'INSERT' or old.status is distinct from 'done') then
+    new.completed_at = now();
+  elsif new.status <> 'done' then
+    new.completed_at = null;
+  end if;
+  return new;
+end;
+$$;
+create trigger tasks_completed_at before insert or update of status on public.tasks
+  for each row execute function public.tasks_set_completed_at();
+
+create trigger tasks_updated_at before update on public.tasks
+  for each row execute function public.set_updated_at();
+
+alter table public.tasks enable row level security;
+create policy "tasks_owner_all" on public.tasks for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+```
+
+Verify with `execute_sql`: a task inserted as `done` gets `completed_at`; moving it back to `todo` clears it; `start_date > due_date` is rejected. Then run `get_advisors` (security).
+
+### 1.2 API Layer
+`src/features/tasks/api.js`:
+
+```js
+export const taskKeys = {
+  all: ['tasks'],
+  lists: () => [...taskKeys.all, 'list'],
+  list: (params) => [...taskKeys.lists(), params],   // { spaceIds, status, priority, due, q, today }
+  details: () => [...taskKeys.all, 'detail'],
+  detail: (id) => [...taskKeys.details(), id],
+}
+const LIST_COLUMNS = 'id, space_id, title, status, priority, start_date, due_date, completed_at, external_url, position, pinned_at, created_at, updated_at'
+```
+
+| Function / hook | Details |
+|---|---|
+| `fetchTasks({ spaceIds, status, priority, due, q, today, weekEnd })` | `.in('space_id', spaceIds).is('deleted_at', null).order('position')`. `status`/`priority` arrays → `.in()`. `due`: `overdue` → `due_date < today` and status not in done/cancelled; `today` → `= today`; `week` → `between today and weekEnd`; `none` → `is null`. `q` → `.ilike('title', %q%)` (escape `%` and `_`). When `status` is empty, closed tasks are windowed: `.or('status.not.in.(done,cancelled),updated_at.gte.<today − DONE_WINDOW_DAYS>')`. |
+| `createTask(values)` | If `values.position` is missing, reads the space's max position (`order desc limit 1 maybeSingle`) and uses `positionAfterLast`. Insert, `.select(LIST_COLUMNS).single()`. |
+| `updateTask(id, patch)` | returns the row (`LIST_COLUMNS`) |
+| `softDeleteTask(id)` / `restoreTask(id)` | `deleted_at` = now ISO / null |
+| `useTasks(params)` | `taskKeys.list(params)`, `enabled: params.spaceIds?.length > 0`, `placeholderData: keepPreviousData` so filter changes don't flash skeletons |
+| `useCreateTask()` | invalidates `taskKeys.lists()` |
+| `useUpdateTask()` | full edits from the dialog; invalidates `lists()`, `setQueryData(detail(row.id))` |
+| `useQuickUpdateTask()` | **optimistic** (patterns §3) for `{ id, patch }` where patch is `status`, `priority` or `due_date`; rollback on error; `onSettled` invalidates `lists()` (picks up `completed_at`) |
+| `useDeleteTask()` / `useRestoreTask()` | invalidate `taskKeys.all` |
+
+`dates` param: the page computes `today = toISODate(new Date())` and `weekEnd` from `usePreferences().weekStartsOn`, and passes both, so the query key changes at midnight on the next render.
+
+### 1.3 Components
+
+```
+src/features/tasks/
+├── api.js
+├── constants.js                 # TASK_STATUSES, TASK_STATUS_MAP, TASK_PRIORITIES, TASK_PRIORITY_MAP, DUE_FILTERS, CLOSED_STATUSES, DONE_WINDOW_DAYS = 30
+├── schemas.js                   # taskSchema
+├── utils.js                     # groupTasksByStatus(tasks), weekEndISO(today, weekStartsOn), sortByPosition
+├── hooks/useTaskFilters.js      # URL state (patterns §9): view, status[], priority[], due, q, tag[] (tag used in Phase 3)
+├── components/
+│   ├── TaskToolbar.jsx          # search input (debounced 250ms → q, replace), StatusFilter, PriorityFilter, DueFilter, Clear
+│   ├── FacetFilter.jsx          # generic multi-select Popover+Command with counts: ({ label, options, value, onChange })
+│   ├── TaskList.jsx             # groups + states
+│   ├── TaskGroup.jsx            # collapsible header (icon, label, count, chevron) + AnimatedList of TaskRow
+│   ├── TaskRow.jsx
+│   ├── TaskStatusIcon.jsx       # ({ status, className }) — reused by 05 and 07
+│   ├── TaskPriorityIcon.jsx     # ({ priority, className }) with Tooltip
+│   ├── StatusPopover.jsx        # ({ status, onChange, children }) Popover + Command, keyboard 1–6
+│   ├── TaskDialog.jsx           # create/edit
+│   └── TaskListSkeleton.jsx
+└── pages/TasksPage.jsx          # /s/:slug/tasks
+src/components/shared/
+├── DatePicker.jsx               # ({ value: 'yyyy-MM-dd'|null, onChange, placeholder, clearable, align }) Popover + Calendar + quick picks Today/Tomorrow/Next week
+├── DatePickerField.jsx          # RHF wrapper: ({ control, name, label, placeholder })
+└── SpacePickerField.jsx         # ({ control, name, label = 'Space' }) Select of activeSpaces with SpaceIcon (only if not built in 03)
+```
+
+**`constants.js`**
+- `TASK_STATUSES` in this order, each `{ value, label, icon, tone }` (icons from lucide; `tone` is a placeholder key for the design system):
+  `todo` "To do" `Circle` · `in_progress` "In progress" `CircleDashed` · `in_review` "In review" `CircleDot` · `blocked` "Blocked" `CircleSlash` · `done` "Done" `CircleCheck` · `cancelled` "Cancelled" `CircleX`.
+- `TASK_PRIORITIES` `{ value, label, icon, rank }`: `none` "No priority" `Minus` 0 · `low` `SignalLow` 1 · `medium` `SignalMedium` 2 · `high` `SignalHigh` 3 · `urgent` `OctagonAlert` 4.
+- `DUE_FILTERS`: `overdue` "Overdue", `today` "Due today", `week` "This week", `none` "No due date".
+- The value lists mirror the DB check constraints exactly.
+
+**`schemas.js`**: `taskSchema` = `title` trimmed 1–300; `status` and `priority` enums from constants; `start_date`, `due_date` nullable `yyyy-MM-dd`; refine `start_date <= due_date` (error on `due_date`: "Due date is before the start date"); `external_url` empty → null, else `z.string().url()`; `space_id` uuid.
+
+**`TasksPage`**
+- `usePageHeader({ title: 'Tasks', actions: <Button>New task</Button> })`. In Global the header shows "All spaces".
+- Reads filters from `useTaskFilters()`, calls `useTasks({ spaceIds: scopeSpaceIds, ...filters, today, weekEnd })`, renders `TaskToolbar` + `TaskList`, owns the `TaskDialog` open state (`editing` task or `null`).
+- Wrapped in `PageTransition`.
+
+**`TaskList`** `({ tasks, isLoading, error, refetch, hasFilters, onEdit, onCreate })`
+- Loading: `TaskListSkeleton` (3 group headers × 4 rows). Error: `ErrorState` with `refetch`.
+- Empty and no filters: `EmptyState icon={ListTodo} title="No tasks yet" description="Track work with a status, priority and due date." action="Create your first task"`. Empty with filters: "No tasks match these filters" with a Clear filters action.
+- Groups follow `TASK_STATUSES` order; groups with zero tasks are hidden unless that status is explicitly filtered. Collapsed state: `useLocalStorage('axon:tasks:collapsed', ['done','cancelled'])`.
+- When `done`/`cancelled` are windowed, the Done group footer shows "Showing the last 30 days · Show all" (sets `status=done`).
+
+**`TaskRow`** `({ task, showSpace, onEdit })`
+- Left to right: `StatusPopover` wrapping a `TaskStatusIcon` button (`aria-label="Change status"`) → `useQuickUpdateTask`; `TaskPriorityIcon` (click opens a DropdownMenu to change priority, same optimistic hook); title as a `<button>` that calls `onEdit(task)`; due label via `formatDueLabel(task.due_date)` in `text-destructive` when `isOverdue` and not closed; `SpaceBadge` when `showSpace`; external link icon button (`<a target="_blank" rel="noopener noreferrer">`, `aria-label="Open link"`, Tooltip showing the host); a row DropdownMenu (Edit, Open link, Delete).
+- Closed tasks: title `text-muted-foreground line-through`.
+- Delete: `useDeleteTask` then `toast('Task moved to Trash', { action: { label: 'Undo', onClick: restore } })`.
+- Motion: rows are `AnimatedList` items (`listItem`, `layout`), so a status change animates the row into its new group. No animation on first paint.
+
+**`TaskDialog`** `({ open, onOpenChange, task, initialValues, onSuccess })`
+- Fields: title (autofocus), status Select, priority Select, start and due `DatePickerField`s side by side, external URL, and `SpacePickerField` only when `isGlobal`. No description field (edited on the detail page, Feature 07).
+- `initialValues` prefills a **create** (for example `{ status }` from board quick-add in Global, or `{ title, space_id }` from inbox triage in Feature 13); it is ignored when `task` is set. Default `space_id`: `initialValues.space_id ?? space?.id ?? profile.last_space_id (if active) ?? activeSpaces[0].id`.
+- `onSuccess(row)` is called with the saved row after the dialog's own success handling (closing, toast), so callers can chain work (linking, marking an inbox item processed).
+- **Mountable standalone:** the dialog depends only on `useSpace()`, its own hooks and props, never on `TasksPage` state. Feature 12's `GlobalDialogs` (in `AppLayout`) opens it from `?new=task`.
+- `form.reset()` when `open`, `task` or `initialValues` changes; Ctrl/Cmd+Enter submits; the submit button shows `isPending`; closes in the mutation's `onSuccess`. Toast "Task created" only on create.
+
+### 1.4 Routes and Integration
+- `router.jsx`: `tasks` renders the real `TasksPage` (replaces the placeholder file). `tasks/:taskId` stays a placeholder until Feature 07.
+- No sidebar change (the Tasks nav item exists from 03).
+
+### 1.5 Impact on Existing Features
+| Existing feature | Impact | Action |
+|---|---|---|
+| 01 `lib/dates.js` | `weekEndISO` needs week start | Keep it in `features/tasks/utils.js`; lift to `lib/dates.js` when a second feature needs it |
+| 03 shared components | `SpacePickerField` may not exist | Create it here and record it in the changelog |
+| 03 SpaceCard | Task counts become possible | Not now (03's "counts later" note stands) |
+
+### 1.6 Not in This Phase
+- Board view (Phase 2); tags and tag filter (Phase 3)
+- Description, detail page, activity log (07); checklist (05)
+- Pin and unpin UI (14); recurring tasks (16); bulk actions and multi-select (backlog)
+
+### 1.7 Checklist: Before Marking Complete
+- [ ] `create_tasks` is applied and mirrored; the `completed_at` and date-order checks are verified; advisors are clean
+- [ ] Tasks group by status in the defined order; groups collapse with counts; collapsed state persists
+- [ ] Create and edit work in a space and in Global (Global requires a space and rows show `SpaceBadge`)
+- [ ] `TaskDialog` prefills from `initialValues`, calls `onSuccess(row)`, and works when mounted outside `TasksPage` (verified with a temporary mount or a component test)
+- [ ] `restoreTask` / `useRestoreTask` are exported
+- [ ] Status and priority changes from the row are instant (optimistic) and roll back with an error toast when offline
+- [ ] Every filter and the search live in the URL; reload restores them; Clear resets
+- [ ] Due filters return correct rows for overdue, today, this week (per the week-start preference) and none
+- [ ] Delete shows the Undo toast and Undo restores the row
+- [ ] Loading, error, empty and filtered-empty states render as specified
+- [ ] Tests: `groupTasksByStatus`, `weekEndISO` (both week starts), `taskSchema` date refine
+- [ ] `npm run lint`, `npm test` and `npm run build` pass
+- [ ] `axon-rules` audit is clean for the changed files
+- [ ] `00-index.md` DB registry, status and changelog (new shared `DatePicker`, `DatePickerField`, `SpacePickerField`) are updated; `axon-data-patterns.md` §10 lists them
+
+**Stop here. Show the result and wait for approval.**
+
+---
+
+## Phase 2: Board View
+
+### Goal
+The user toggles List / Board (`?view=board`). The board shows one column per status with counts. Cards drag within and across columns; a drop updates status and position instantly and persists. Each column has a quick-add at the bottom. Dragging is fully keyboard accessible.
+
+### Before Starting: Confirm Phase 1 Is Approved
+1. Phase 1 is `✅ Complete`.
+2. Check the installed `@dnd-kit/core` and `@dnd-kit/sortable` versions and their current APIs: `DndContext`, `DragOverlay`, `useSortable`, `verticalListSortingStrategy`, `KeyboardSensor` with `sortableKeyboardCoordinates`, `useDroppable`, and the `accessibility.announcements` prop. Do not switch to the `@dnd-kit/react` rewrite.
+3. `lib/position.js` exports `positionBetween` and `needsRebalance` with tests.
+
+### 2.1 Database
+No database changes in this phase.
+
+### 2.2 API Layer
+Additions to `src/features/tasks/api.js`:
+
+| Function / hook | Details |
+|---|---|
+| `useMoveTask()` | `mutationFn: ({ id, status, position }) => updateTask(id, { status, position })`. **Optimistic** on every `taskKeys.lists()` query; rollback and toast on error; `onSettled` invalidates `lists()` |
+| `rebalanceTasks(orderedIds)` | sets `position = (i + 1) * 1000` for each id with `Promise.all` of `updateTask`; called by the board after a move when `needsRebalance` is true for the new neighbours |
+
+### 2.3 Components
+
+```
+src/features/tasks/components/
+├── ViewToggle.jsx               # ToggleGroup List | Board → setFilter('view')
+├── TaskBoard.jsx                # DndContext, sensors, DragOverlay, announcements, move logic
+├── BoardColumn.jsx              # ({ status, tasks, onQuickAdd }) header (icon, label, count) + SortableContext + useDroppable
+├── BoardCard.jsx                # ({ task, showSpace, overlay }) useSortable; title, priority, due label, SpaceBadge, link icon
+├── ColumnQuickAdd.jsx           # "+ Add task" → inline input; Enter creates, Esc closes
+└── TaskBoardSkeleton.jsx
+```
+
+- **Sensors:** `PointerSensor` (activation distance 6px, so clicks still open the card), `KeyboardSensor` with `sortableKeyboardCoordinates`. Screen-reader announcements read "Picked up {title}", "Moved to {column}, position {n}", "Dropped in {column}".
+- **Move logic** (`TaskBoard`): local column state mirrors the query data; `onDragOver` moves the item between columns in local state; `onDragEnd` computes `position = positionBetween(prev?.position, next?.position)` from its new neighbours and calls `useMoveTask` with the column's status. A same-column, same-index drop does nothing.
+- **Filters:** priority, due and search apply. The status filter selects which columns are visible (all six when empty). The closed-task window from Phase 1 applies to the Done and Cancelled columns.
+- **Quick-add:** in a space, creates `{ title, status: column, position: positionAfterLast(column) }` via `useCreateTask`. In Global it opens `TaskDialog` with `initialValues={{ status }}` instead, because a space must be picked.
+- **Click** on a card opens `TaskDialog` (edit); in Feature 07 it navigates to the detail page.
+- **Motion:** `DragOverlay` renders a lifted `BoardCard overlay` (scale via `springSnappy`); cards use `layout` so the drop settles smoothly. Horizontal scroll on narrow widths; columns keep a fixed min width via semantic spacing tokens.
+- **States:** skeleton columns while loading; `ErrorState`; the page-level `EmptyState` when there are no tasks at all (empty columns still render with their quick-add).
+- `ViewToggle` sits in `TaskToolbar`; the last view is also remembered in `useLocalStorage('axon:tasks:view')` and used when the URL has no `view`.
+
+### 2.4 Routes and Integration
+- `TasksPage` renders `TaskBoard` when `filters.view === 'board'`, else `TaskList`.
+
+### 2.5 Impact on Existing Features
+| Existing feature | Impact | Action |
+|---|---|---|
+| 04 Phase 1 list | Shares filters and position | List order stays `position`, so board order and list order agree |
+
+### 2.6 Not in This Phase
+- Swimlanes (by priority or space), WIP limits, custom columns: backlog
+- Dragging between list groups: list stays status-grouped via the status popover
+
+### 2.7 Checklist: Before Marking Complete
+- [ ] `?view=board` renders six columns with counts; the toggle round-trips with the list
+- [ ] Dragging within a column reorders and persists after reload
+- [ ] Dragging across columns changes status (and `completed_at` for Done) and persists
+- [ ] A failed move rolls the card back and shows an error toast
+- [ ] The keyboard alone can pick up, move and drop a card; announcements are read
+- [ ] Quick-add creates at the bottom of the column in a space, and opens the dialog in Global
+- [ ] Rebalance runs when neighbours are closer than `1e-9` (unit test on the helper that decides it)
+- [ ] `npm run lint`, `npm test` and `npm run build` pass
+- [ ] `axon-rules` audit is clean for the changed files
+- [ ] `00-index.md` status and changelog are updated
+
+**Stop here. Show the result and wait for approval.**
+
+---
+
+## Phase 3: Tags
+
+### Goal
+The user can create tags inline while tagging a task, see tag pills on rows and cards, filter tasks by tag, and manage tags (rename, recolour, delete, and change scope between one space and all spaces). Tags are shared with notes in Feature 06.
+
+### Before Starting: Confirm Phase 2 Is Approved
+1. Phase 2 is `✅ Complete`.
+2. Check PostgREST embedding and aliasing: `tag_ids:task_tags(tag_id)` on a list select, and a second inner-joined alias `tag_match:task_tags!inner(tag_id)` filtered with `.in('tag_match.tag_id', ids)`, so filtering does not trim the displayed tags. If aliasing the same relation twice fails, filter by tag on the client and note it.
+3. Confirm the `or` filter syntax for `space_id.is.null,space_id.in.(…)`.
+4. `TAG_COLORS` reuses the same placeholder colour keys as `SPACE_COLORS` (design system pending).
+
+### 3.1 Database
+Migration `create_tags_and_task_tags`:
+
+```sql
+create table public.tags (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  space_id    uuid,                                   -- NULL = available in every space
+  name        text not null check (char_length(btrim(name)) between 1 and 40),
+  color       text not null default 'slate',
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  unique (id, user_id),
+  foreign key (space_id, user_id) references public.spaces(id, user_id) on delete cascade
+);
+create unique index tags_name_unique on public.tags
+  (user_id, coalesce(space_id, '00000000-0000-0000-0000-000000000000'::uuid), lower(name));
+create trigger tags_updated_at before update on public.tags
+  for each row execute function public.set_updated_at();
+alter table public.tags enable row level security;
+create policy "tags_owner_all" on public.tags for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+
+create table public.task_tags (
+  task_id     uuid not null,
+  tag_id      uuid not null,
+  user_id     uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  created_at  timestamptz not null default now(),
+  primary key (task_id, tag_id),
+  foreign key (task_id, user_id) references public.tasks(id, user_id) on delete cascade,
+  foreign key (tag_id,  user_id) references public.tags(id,  user_id) on delete cascade
+);
+create index task_tags_tag_idx on public.task_tags (tag_id);
+alter table public.task_tags enable row level security;
+create policy "task_tags_owner_all" on public.task_tags for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+```
+
+Verify: a duplicate name (case-insensitive) in the same scope is rejected; the same name in a space and globally is allowed; deleting a tag removes its `task_tags`. Run advisors.
+
+### 3.2 API Layer
+`src/features/tags/api.js`:
+
+```js
+export const tagKeys = {
+  all: ['tags'],
+  lists: () => [...tagKeys.all, 'list'],
+  list: (params) => [...tagKeys.lists(), params],   // { spaceIds }
+}
+```
+
+| Function / hook | Details |
+|---|---|
+| `fetchTags({ spaceIds })` / `useTags({ spaceIds })` | `select('id, space_id, name, color, task_tags(count)')`, `.or('space_id.is.null,space_id.in.(ids)')`, order `name`. Returns global tags plus tags of those spaces. `enabled: spaceIds?.length > 0` |
+| `createTag({ name, color, space_id })` / `useCreateTag()` | returns the row; maps error `23505` to "A tag with this name already exists"; invalidates `tagKeys.all` |
+| `updateTag(id, patch)` / `useUpdateTag()` | rename, recolour, scope; invalidates `tagKeys.all` and `taskKeys.lists()` |
+| `deleteTag(id)` / `useDeleteTag()` | **hard delete** (tags are not soft-deleted); invalidates `tagKeys.all` and `taskKeys.all` |
+
+Additions to `src/features/tasks/api.js`:
+- `LIST_COLUMNS` gains `tag_ids:task_tags(tag_id)`; the fetch maps it to `tag_ids: string[]`. `fetchTasks` accepts `tag` (ids, any-of) using the `tag_match` inner alias. `fetchTask` reads include tags when added in 07.
+- `setTaskTags(taskId, tagIds)`: delete rows for this task where `tag_id not in tagIds`, then `upsert` the rest with `{ onConflict: 'task_id,tag_id', ignoreDuplicates: true }`. `useSetTaskTags()` invalidates `taskKeys.lists()` and `tagKeys.all` (counts).
+
+### 3.3 Components
+
+```
+src/features/tags/
+├── api.js
+└── constants.js                 # TAG_COLORS (placeholder keys)
+src/components/shared/
+├── TagPill.jsx                  # ({ tag, size = 'sm', onRemove }) data-color={tag.color}; remove button has aria-label
+├── TagPicker.jsx
+└── ManageTagsDialog.jsx
+```
+
+**`TagPicker`** `({ value: string[], onChange, spaceIds, createSpaceId, mode = 'assign', trigger })`
+- Popover + Command multi-select over `useTags({ spaceIds })`, showing a check, the colour dot and a scope hint ("All spaces" or the space name in Global).
+- Typing a name with no exact match offers "Create tag '…'" (only when `createSpaceId !== undefined`; `null` creates a global tag). The new tag is selected immediately.
+- `mode="filter"` hides create and shows "Clear".
+- Footer: "Manage tags…" opens `ManageTagsDialog`.
+
+**`ManageTagsDialog`** `({ open, onOpenChange, spaceIds })`
+- One row per tag: inline rename input (saves on blur or Enter), colour swatch popover (`TAG_COLORS`), scope Select ("All spaces" or one active space), usage count, delete.
+- Narrowing a tag's scope to one space while it is used elsewhere shows an inline warning ("Items in other spaces keep this tag, but it can't be added there").
+- Delete uses `ConfirmDialog` ("Delete 'frontend'? It will be removed from 12 tasks.").
+- Empty state: "No tags yet. Create one from any tag picker."
+
+**Integration in tasks**
+- `TaskDialog` gains a Tags field: `TagPicker` with `spaceIds=[watch('space_id')]` and `createSpaceId=watch('space_id')`. On submit, the dialog saves the task, then calls `setTaskTags`. Changing the space in Global drops tags that are scoped to another space.
+- `TaskRow` and `BoardCard` show up to 3 `TagPill`s plus "+n", resolving `tag_ids` through a `Map` built once per list from `useTags({ spaceIds: scopeSpaceIds })`.
+- `TaskToolbar` gains a Tags filter: `TagPicker mode="filter"` → `setFilter('tag', ids)`.
+
+### 3.4 Routes and Integration
+None beyond the component changes above.
+
+### 3.5 Impact on Existing Features
+| Existing feature | Impact | Action |
+|---|---|---|
+| 04 Phase 1–2 | List select and filters change | Update `LIST_COLUMNS`, `fetchTasks`, `useTaskFilters` (`tag`) |
+| 03 delete space | Space-scoped tags cascade | Already covered by `qc.invalidateQueries()` in `useDeleteSpace` |
+| 06 notes (future) | Shares tags | 06 adds `note_tags` and `note_tags(count)` to the tag select |
+
+### 3.6 Not in This Phase
+- Tag hierarchy or groups, tag pages: backlog
+- Note tags (06)
+
+### 3.7 Checklist: Before Marking Complete
+- [ ] `create_tags_and_task_tags` is applied and mirrored; uniqueness and cascade checks are verified; advisors are clean
+- [ ] Creating a tag inline from `TaskDialog` works and selects it; duplicates show the friendly error
+- [ ] A space tag is not offered in another space; a global tag is offered everywhere
+- [ ] Row and card pills render; the tag filter lives in the URL and keeps all pills visible on filtered rows
+- [ ] Rename, recolour, scope change and delete work from `ManageTagsDialog`; delete confirms with the usage count
+- [ ] `npm run lint`, `npm test` and `npm run build` pass
+- [ ] `axon-rules` audit is clean for the changed files
+- [ ] `00-index.md` DB registry, status, changelog (new shared `TagPicker`, `TagPill`, `ManageTagsDialog`) and `axon-data-patterns.md` §10 are updated
+
+**Stop here. Show the result and wait for approval.**
+
+---
+
+## Data Model Summary (after all phases)
+
+```
+spaces 1 ── n tasks
+tasks  n ── n tags   (via task_tags)
+tags.space_id NULL ⇒ available in every space
+```
+
+### `tasks`
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | PK; `unique(id, user_id)` |
+| `space_id` | uuid | composite FK to spaces, cascade |
+| `title` | text | 1–300 |
+| `description` / `description_text` | jsonb / text | edited from 07 |
+| `status` | text | todo, in_progress, in_review, blocked, done, cancelled |
+| `priority` | text | none, low, medium, high, urgent |
+| `start_date` / `due_date` | date | start ≤ due |
+| `completed_at` | timestamptz | trigger-maintained |
+| `external_url` | text | MR / Jira link |
+| `position` | double | fractional ordering |
+| `pinned_at` | timestamptz | UI in 14 |
+| `deleted_at` | timestamptz | soft delete |
+| `search` | tsvector | generated; used from 12 |
+
+### `tags`
+| Column | Type | Notes |
+|---|---|---|
+| `space_id` | uuid | NULL = all spaces |
+| `name` | text | 1–40; unique per scope, case-insensitive |
+| `color` | text | colour key |
+
+### `task_tags`
+| Column | Type | Notes |
+|---|---|---|
+| `task_id`, `tag_id` | uuid | PK pair; composite FKs, cascade |
+
+## Out of Scope (All Phases)
+- Description, detail page, activity log: Feature 07
+- Checklist items: Feature 05
+- Recurring tasks: Feature 16
+- Pins UI: Feature 14
+- Assignees, estimates, sprints: never (single-user) or backlog

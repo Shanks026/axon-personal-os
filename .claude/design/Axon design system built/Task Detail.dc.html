@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600&amp;family=Geist+Mono:wght@400;500&amp;display=swap">
+<script src="./lucide-icon.js"></script>
+</helmet>
+<div style="width:100%;height:100%;display:flex;background:var(--bg);color:var(--fg);font-family:Geist,system-ui,sans-serif;font-size:13px;overflow:hidden">
+  <dc-import name="Sidebar" active="tasks" space="thmp" dark="{{ dark }}" hint-size="240px,100%"></dc-import>
+  <main style="flex:1;min-width:0;display:flex;flex-direction:column">
+    <header style="height:48px;flex-shrink:0;border-bottom:1px solid var(--border);display:flex;align-items:center;padding:0 20px;gap:8px">
+      <l-i n="panel-left" s="16" style="color:var(--mfg)"></l-i>
+      <div style="width:1px;height:16px;background:var(--border);margin:0 6px"></div>
+      <span style="color:var(--mfg)">THMP</span><l-i n="chevron-right" s="14" style="color:var(--faint)"></l-i><span style="color:var(--mfg)">Tasks</span><l-i n="chevron-right" s="14" style="color:var(--faint)"></l-i><span style="font-weight:500;white-space:nowrap">Buyer portal: fix RFQ table pagination…</span>
+      <div style="flex:1"></div>
+      <div style="display:flex;gap:4px;color:var(--mfg)"><div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center"><l-i n="chevron-up" s="15"></l-i></div><div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center"><l-i n="chevron-down" s="15"></l-i></div><div style="width:28px;height:28px;display:flex;align-items:center;justify-content:center"><l-i n="ellipsis" s="15"></l-i></div></div>
+    </header>
+    <div style="flex:1;min-height:0;display:flex">
+      <div style="flex:1;min-width:0;overflow:hidden;padding:40px 56px">
+        <div style="max-width:720px;margin:0 auto;display:flex;flex-direction:column">
+          <div style="font-size:26px;font-weight:600;letter-spacing:-0.025em;line-height:1.25;text-wrap:pretty">Buyer portal: fix RFQ table pagination reset on filter change</div>
+          <div style="font-size:14px;line-height:1.65;color:var(--fg);margin-top:16px;display:flex;flex-direction:column;gap:10px">
+            <p style="margin:0">Changing any filter on the RFQ list keeps the current page index, so users land on an empty page 7 of 2. Reset <code style="font-family:Geist Mono,monospace;font-size:12.5px;background:var(--muted);padding:1px 5px;border-radius:4px">page</code> to 1 whenever the filter hash changes, and keep the page in the URL.</p>
+            <p style="margin:0;color:var(--mfg)">Repro: filter by “Awaiting quote”, go to page 3, then add category “Packaging”.</p>
+          </div>
+
+          <div style="margin-top:36px;display:flex;align-items:center;gap:8px"><span style="font-weight:600;font-size:13px">Checklist</span><span style="font-family:Geist Mono,monospace;font-size:12px;color:var(--faint)">2/4</span><div style="flex:1;height:3px;border-radius:2px;background:var(--muted);margin-left:8px;max-width:120px;overflow:hidden"><div style="width:50%;height:100%;background:var(--accent)"></div></div></div>
+          <div style="margin-top:8px;display:flex;flex-direction:column">
+            <sc-for list="{{ checklist }}" as="c" hint-placeholder-count="4">
+              <div style="height:34px;display:flex;align-items:center;gap:10px;padding:0 4px;border-radius:7px">
+                <l-i n="grip-vertical" s="14" style="color:var(--faint);opacity:{{ c.grip }}"></l-i>
+                <div style="width:15px;height:15px;border-radius:5px;border:1.5px solid {{ c.bc }};background:{{ c.bg }};color:var(--pfg);display:flex;align-items:center;justify-content:center;box-sizing:border-box"><sc-if value="{{ c.done }}"><l-i n="check" s="11" w="3"></l-i></sc-if></div>
+                <span style="color:{{ c.fg }};text-decoration:{{ c.td }}">{{ c.t }}</span>
+              </div>
+            </sc-for>
+            <div style="height:34px;display:flex;align-items:center;gap:10px;padding:0 4px 0 28px;color:var(--faint)"><l-i n="plus" s="14"></l-i>Add item</div>
+          </div>
+
+          <div style="margin-top:32px;display:flex;align-items:center;gap:8px"><span style="font-weight:600">Linked notes</span><span style="font-family:Geist Mono,monospace;font-size:12px;color:var(--faint)">2</span><div style="flex:1"></div><span style="color:var(--mfg);display:flex;align-items:center;gap:6px"><l-i n="link-2" s="14"></l-i>Link note</span><span style="color:var(--mfg);display:flex;align-items:center;gap:6px;margin-left:12px"><l-i n="plus" s="14"></l-i>New linked note</span></div>
+          <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:10px">
+            <sc-for list="{{ notes }}" as="n" hint-placeholder-count="2">
+              <div style="border:1px solid var(--border);background:var(--card);border-radius:10px;padding:12px 14px">
+                <div style="display:flex;align-items:center;gap:8px;font-weight:500"><l-i n="file-text" s="14" style="color:var(--faint)"></l-i>{{ n.t }}</div>
+                <div style="color:var(--mfg);margin-top:6px;line-height:1.5;max-height:3.1em;overflow:hidden">{{ n.p }}</div>
+              </div>
+            </sc-for>
+          </div>
+
+          <div style="margin-top:36px;font-weight:600">Activity</div>
+          <div style="margin-top:12px;display:flex;flex-direction:column;position:relative">
+            <div style="position:absolute;left:7px;top:8px;bottom:56px;width:1px;background:var(--border)"></div>
+            <sc-for list="{{ activity }}" as="a" hint-placeholder-count="5">
+              <div style="display:flex;gap:14px;padding:7px 0;position:relative">
+                <div style="width:15px;height:15px;flex-shrink:0;border-radius:8px;background:var(--bg);display:flex;align-items:center;justify-content:center;color:{{ a.ic }};margin-top:1px"><l-i n="{{ a.icon }}" s="13"></l-i></div>
+                <sc-if value="{{ a.auto }}"><div style="flex:1;color:var(--mfg);display:flex;gap:6px;flex-wrap:wrap"><span>{{ a.t }}</span><span style="color:var(--faint);font-family:Geist Mono,monospace;font-size:11.5px">· {{ a.when }}</span></div></sc-if>
+                <sc-if value="{{ a.manual }}"><div style="flex:1;border:1px solid var(--border);background:var(--card);border-radius:10px;padding:10px 14px"><div style="display:flex;gap:8px;font-size:12px;color:var(--mfg)"><span style="font-weight:500;color:var(--fg)">Work log</span><span style="font-family:Geist Mono,monospace;font-size:11.5px;color:var(--faint)">{{ a.when }}</span></div><div style="margin-top:4px;line-height:1.55">{{ a.t }}</div></div></sc-if>
+              </div>
+            </sc-for>
+            <div style="margin-top:10px;margin-left:29px;border:1px solid var(--border2);background:var(--card);border-radius:10px;padding:10px 12px;display:flex;align-items:center;gap:10px;color:var(--faint)"><span style="flex:1">Log work or leave a note…</span><span style="font-family:Geist Mono,monospace;font-size:11px">⌘↵</span></div>
+          </div>
+        </div>
+      </div>
+      <aside style="width:300px;flex-shrink:0;border-left:1px solid var(--border);padding:20px 20px;display:flex;flex-direction:column;gap:2px;overflow:hidden">
+        <sc-for list="{{ meta }}" as="m" hint-placeholder-count="8">
+          <div style="min-height:34px;display:flex;align-items:center;gap:10px">
+            <span style="width:84px;flex-shrink:0;color:var(--mfg)">{{ m.k }}</span>
+            <div style="flex:1;min-width:0;height:28px;display:flex;align-items:center;gap:7px;padding:0 8px;border-radius:7px;margin-left:-8px;color:{{ m.fg }}"><sc-if value="{{ m.icon }}"><l-i n="{{ m.icon }}" s="14" style="color:{{ m.ic }}"></l-i></sc-if><span style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-family:{{ m.font }};font-size:{{ m.fs }}">{{ m.v }}</span></div>
+          </div>
+        </sc-for>
+        <div style="min-height:34px;display:flex;align-items:center;gap:10px"><span style="width:84px;color:var(--mfg)">Tags</span><div style="display:flex;gap:6px"><span style="height:22px;padding:0 8px;border-radius:6px;font-size:11.5px;font-weight:500;display:flex;align-items:center;white-space:nowrap;background:color-mix(in oklab, #007aff 14%, transparent);color:color-mix(in oklab, #007aff 72%, var(--fg))">buyer-portal</span><span style="height:22px;width:22px;border-radius:11px;border:1px dashed var(--border2);display:flex;align-items:center;justify-content:center;color:var(--faint)"><l-i n="plus" s="12"></l-i></span></div></div>
+        <div style="height:1px;background:var(--border);margin:14px 0"></div>
+        <div style="height:34px;display:flex;align-items:center;gap:10px;padding:0 10px;border-radius:8px;border:1px solid var(--border);background:var(--card)"><l-i n="gitlab" s="14" style="color:var(--mfg)"></l-i><span style="flex:1;font-family:Geist Mono,monospace;font-size:12px">!1431 · thmp/buyer-web</span><l-i n="arrow-up-right" s="14" style="color:var(--faint)"></l-i></div>
+        <div style="flex:1"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;border-top:1px solid var(--border);padding-top:10px">
+          <div style="height:32px;display:flex;align-items:center;gap:10px;color:var(--fg)"><l-i n="pin" s="14" style="color:var(--accent)"></l-i>Pinned<div style="flex:1"></div><div style="width:28px;height:16px;border-radius:8px;background:var(--accent);position:relative"><div style="position:absolute;right:2px;top:2px;width:12px;height:12px;border-radius:6px;background:#fff"></div></div></div>
+          <div style="height:32px;display:flex;align-items:center;gap:10px;color:var(--destr)"><l-i n="trash-2" s="14"></l-i>Move to Trash</div>
+        </div>
+      </aside>
+    </div>
+  </main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1440,&quot;height&quot;:1100},&quot;dark&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:false,&quot;tsType&quot;:&quot;boolean&quot;}}">
+class Component extends DCLogic {
+  renderVals() {
+    const dark = this.props.dark === true || this.props.dark === 'true';
+    const c = (t, done) => ({ t, done, grip: done ? 0 : 0.6, bc: done ? 'var(--accent)' : 'var(--border2)', bg: done ? 'var(--accent)' : 'transparent', fg: done ? 'var(--faint)' : 'var(--fg)', td: done ? 'line-through' : 'none' });
+    const mono = 'Geist Mono, monospace';
+    const m = (k, v, icon, ic, o = {}) => ({ k, v, icon: icon || '', ic: ic || 'var(--mfg)', fg: o.fg || 'var(--fg)', font: o.mono ? mono : 'inherit', fs: o.mono ? '12px' : '13px' });
+    return {
+      dark,
+      checklist: [c('Reset page index when filter hash changes', true), c('Sync page to ?page= query param', true), c('Address review: memoise filter hash', false), c('Add regression test for filter + page', false)],
+      notes: [{ t: 'Buyer portal: pagination bug RCA', p: 'Root cause: usePagination keeps local state that never observes the filter object. Moving page into URL state fixes back-button too.' }, { t: 'Sprint 42 planning', p: 'Committed: RFQ pagination, vendor form migration. Stretch: storefront image lazy-loading.' }],
+      activity: [
+        { auto: true, icon: 'plus', ic: 'var(--faint)', t: 'Created in THMP', when: '15 Sep' },
+        { auto: true, icon: 'circle-dot', ic: 'var(--warn)', t: 'Status: Todo → In progress', when: '19 Sep' },
+        { manual: true, icon: 'pencil', ic: 'var(--accent)', t: 'Found it — usePagination never observes the filter object. Moved page into URL state; back button now works as well.', when: 'Mon 22 Sep · 16:40' },
+        { auto: true, icon: 'circle-ellipsis', ic: 'var(--review)', t: 'Status: In progress → In review', when: '2h ago' },
+        { auto: true, icon: 'link-2', ic: 'var(--faint)', t: 'Linked MR !1431', when: '2h ago' }
+      ],
+      meta: [
+        m('Status', 'In review', 'circle-ellipsis', 'var(--review)'), m('Priority', 'High', 'signal-high', 'var(--fg)'),
+        m('Start', 'Fri 19 Sep', 'calendar', 'var(--mfg)', { mono: true }), m('Due', 'Today', 'calendar-clock', 'var(--warn)', { mono: true, fg: 'var(--warn)' }),
+        m('Space', 'THMP', 'briefcase', 'var(--accent)'), m('Created', '15 Sep 2026', '', '', { mono: true, fg: 'var(--mfg)' }), m('Completed', '—', '', '', { fg: 'var(--faint)' })
+      ]
+    };
+  }
+}
+</script>
+</body>
+</html>
