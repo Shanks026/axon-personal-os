@@ -19,7 +19,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 02 | Auth, Profile and Preferences (incl. fiscal year setting) | [02-auth-and-settings.md](02-auth-and-settings.md) | 01 | ✅ Complete |
 | 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | ✅ Complete |
 | **Wave 2: Capture** | | | | |
-| 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | 🟡 Phase 1 ✅ · Phase 2 next |
+| 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | 🟡 Phase 1 ✅ · Phase 2 ✅ · Phase 3 next |
 | 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | 🔵 Planned |
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | 🔵 Planned |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🔵 Planned |
@@ -111,6 +111,22 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-24: Feature 04 Phase 2: Board view
+- `?view=board` on `/s/:slug/tasks` (design 04c): five status columns (Cancelled is hidden), each a 270px muted well with a status pill, a count, `+` and "+ Add task".
+- **dnd-kit drag** within and across columns. The drop saves `{ status, position }` optimistically through the new `useMoveTask`, and rolls back with a toast on failure.
+  - Fractional positions, plus an automatic column renumber (`rebalanceTasks`) when neighbours can't be split.
+  - Keyboard dragging (Space, arrows, Space/Enter, Esc) with screen-reader announcements.
+  - The lifted card is a scale 1.01, rotate 1° overlay; the slot is a dashed accent box; the target column's border tints with the accent.
+- **Inline quick-add** in a space (Enter creates and stays open). In Global it opens the dialog with the column's status.
+- The view switch is now Grid · Board · List. There's a board skeleton, and the Done column shows "Last 30 days · Show all".
+- New pure helpers `boardStatuses` and `planBoardMove` (tested). No DB changes and no new shared components.
+- **Tests:** 178.
+
+### 2026-09-24: Sidebar background and width
+- The sidebar matches the page background: **white** in light mode (after trying `#fafafa` and `#fcfcfc`) and `#0b0b0b` in dark.
+- Width: **16rem** (it had been 16.5rem).
+- Recorded in `design-system.md` (the tokens and the Layout table) and in the `CLAUDE.md` UI digest.
 
 ### 2026-09-24: Tasks and Todos split into separate pages
 - **Reverses design delta G1** (user decision). Todos share almost none of the Tasks page's controls, so they get their own page.

@@ -14,8 +14,8 @@ import { useMyProfile } from '@/features/auth/api'
 import { useSpaces } from '@/features/spaces/api'
 import { splitSpaces } from '@/features/spaces/utils'
 
-// shadcn's standard is 16rem; the user asked for a touch wider (tuned to 16.5rem). Rail: shadcn's 3rem.
-const SIDEBAR_WIDTHS = { '--sidebar-width': '16.5rem', '--sidebar-width-icon': '3rem' }
+// Sidebar 16rem (shadcn's standard; the user tried 16.5 and 15.5 and settled here). Rail: shadcn's 3rem.
+const SIDEBAR_WIDTHS = { '--sidebar-width': '16rem', '--sidebar-width-icon': '3rem' }
 
 /**
  * The one persistent frame for every signed-in screen (/spaces, /settings, /s/*), modelled on

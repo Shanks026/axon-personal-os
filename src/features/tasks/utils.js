@@ -1,6 +1,12 @@
 import { addDays, endOfWeek } from 'date-fns'
 import { parseISODate, toISODate } from '@/lib/dates'
-import { CLOSED_STATUSES, TASK_STATUSES, TASK_TABS } from '@/features/tasks/constants'
+import { needsRebalance, positionBetween } from '@/lib/position'
+import {
+  BOARD_STATUSES,
+  CLOSED_STATUSES,
+  TASK_STATUSES,
+  TASK_TABS,
+} from '@/features/tasks/constants'
 
 /** Last day of the week containing `todayISO`, as yyyy-MM-dd (0 = Sunday start, 1 = Monday). */
 export function weekEndISO(todayISO, weekStartsOn = 1) {
@@ -29,6 +35,30 @@ export function filterTasks(tasks, { tab = 'all', status = [] } = {}) {
 /** Counts per tab for the tab bar. */
 export function tabCounts(tasks) {
   return Object.fromEntries(TASK_TABS.map((t) => [t.value, tasks.filter(t.match).length]))
+}
+
+/** Board columns for a tab and status filter: the tab's statuses, narrowed by the filter. */
+export function boardStatuses({ tab = 'all', status = [] } = {}) {
+  const tabDef = TASK_TABS.find((t) => t.value === tab) ?? TASK_TABS[0]
+  return BOARD_STATUSES.filter(
+    (s) => tabDef.match({ status: s }) && (!status.length || status.includes(s)),
+  )
+}
+
+/**
+ * Where a dropped task lands: `column` is the target column's tasks in their new order, with the
+ * moved task already in place. Returns its new position, and whether the column must be
+ * renumbered because the neighbours are too close (or equal) to split.
+ */
+export function planBoardMove(column, taskId) {
+  const i = column.findIndex((t) => t.id === taskId)
+  const prev = column[i - 1]?.position ?? null
+  const next = column[i + 1]?.position ?? null
+  const position = positionBetween(prev, next)
+  const rebalance =
+    (prev != null && needsRebalance(prev, position)) ||
+    (next != null && needsRebalance(position, next))
+  return { position, rebalance }
 }
 
 export const isClosed = (task) => CLOSED_STATUSES.includes(task.status)

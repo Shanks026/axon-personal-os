@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import { taskSchema } from '@/features/tasks/schemas'
 import {
+  boardStatuses,
   daysAgoISO,
   filterTasks,
   groupTasksByStatus,
   linkHost,
+  planBoardMove,
   tabCounts,
   textToDoc,
   weekEndISO,
@@ -114,5 +116,42 @@ describe('taskSchema', () => {
   it('rejects a bad link and an empty title', () => {
     expect(taskSchema.safeParse({ ...base, external_url: 'nope' }).success).toBe(false)
     expect(taskSchema.safeParse({ ...base, title: '  ' }).success).toBe(false)
+  })
+})
+
+describe('boardStatuses', () => {
+  it('shows five columns and never Cancelled', () => {
+    expect(boardStatuses()).toEqual(['todo', 'in_progress', 'in_review', 'blocked', 'done'])
+    expect(boardStatuses({ status: ['cancelled'] })).toEqual([])
+  })
+
+  it('narrows columns by tab and status filter', () => {
+    expect(boardStatuses({ tab: 'in_progress' })).toEqual(['in_progress', 'in_review'])
+    expect(boardStatuses({ tab: 'completed' })).toEqual(['done'])
+    expect(boardStatuses({ status: ['blocked', 'todo'] })).toEqual(['todo', 'blocked'])
+    expect(boardStatuses({ tab: 'in_progress', status: ['todo'] })).toEqual([])
+  })
+})
+
+describe('planBoardMove', () => {
+  it('places the card between its new neighbours', () => {
+    const column = [t('a', 'todo', 1000), t('x', 'todo', 9000), t('b', 'todo', 2000)]
+    expect(planBoardMove(column, 'x')).toEqual({ position: 1500, rebalance: false })
+  })
+
+  it('handles the top, the bottom and an empty column', () => {
+    expect(planBoardMove([t('x', 'todo', 5), t('a', 'todo', 1000)], 'x').position).toBe(0)
+    expect(planBoardMove([t('a', 'todo', 1000), t('x', 'todo', 5)], 'x').position).toBe(2000)
+    expect(planBoardMove([t('x', 'todo', 5)], 'x')).toEqual({ position: 1000, rebalance: false })
+  })
+
+  it('asks for a rebalance when neighbours are closer than 1e-9', () => {
+    const column = [t('a', 'todo', 1), t('x', 'todo', 0), t('b', 'todo', 1 + 1e-10)]
+    expect(planBoardMove(column, 'x').rebalance).toBe(true)
+  })
+
+  it('asks for a rebalance when neighbours share a position', () => {
+    const column = [t('a', 'todo', 0), t('x', 'todo', 0), t('b', 'todo', 0)]
+    expect(planBoardMove(column, 'x')).toEqual({ position: 0, rebalance: true })
   })
 })

@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { render, renderHook, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -8,9 +8,10 @@ import { PageHeaderProvider } from '@/components/layout/PageHeaderContext'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
+import { taskKeys, useMoveTask } from '@/features/tasks/api'
 import TasksPage from '@/features/tasks/pages/TasksPage'
 
-const db = vi.hoisted(() => ({ tasks: [], calls: [] }))
+const db = vi.hoisted(() => ({ tasks: [], calls: [], failUpdate: false }))
 
 vi.mock('@/context/AuthContext', () => ({
   AuthProvider: ({ children }) => children,
@@ -69,6 +70,7 @@ vi.mock('@/lib/supabase', () => {
         return result(row)
       }
       if (state.op === 'update') {
+        if (db.failUpdate) return Promise.resolve({ data: null, error: new Error('Network down') })
         db.calls.push(['update', state.id, state.patch])
         db.tasks = db.tasks.map((t) => (t.id === state.id ? { ...t, ...state.patch } : t))
         return result(db.tasks.find((t) => t.id === state.id))
@@ -140,6 +142,7 @@ function renderPage(path = '/s/thmp/tasks') {
 beforeEach(() => {
   localStorage.clear()
   db.calls = []
+  db.failUpdate = false
   db.tasks = [
     task('t1', 'Buyer portal: fix RFQ pagination', 'in_review', {
       priority: 'high',
@@ -264,5 +267,118 @@ describe('TasksPage', () => {
     renderPage()
     expect(await screen.findByText('No tasks yet')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /create your first task/i })).toBeInTheDocument()
+  })
+
+  it('shows the board with five columns and round-trips with the grid', async () => {
+    db.tasks.push(task('t5', 'Old spike', 'cancelled'))
+    const user = userEvent.setup()
+    const router = renderPage()
+    await screen.findByText('Storefront: lazy-load images')
+    await user.click(screen.getByRole('radio', { name: 'Board' }))
+    expect(router.state.location.search).toBe('?view=board')
+
+    const columns = await screen.findAllByRole('region', { name: / column$/ })
+    expect(columns.map((c) => c.getAttribute('aria-label'))).toEqual([
+      'To do column',
+      'In progress column',
+      'In review column',
+      'Blocked column',
+      'Completed column',
+    ])
+    expect(within(columns[2]).getByText('Buyer portal: fix RFQ pagination')).toBeInTheDocument()
+    expect(within(columns[3]).getByText('0')).toBeInTheDocument()
+    expect(screen.queryByText('Old spike')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('radio', { name: 'Grid' }))
+    expect(router.state.location.search).toBe('?view=grid')
+    expect(await screen.findByText('Old spike')).toBeInTheDocument()
+  })
+
+  it('narrows board columns by tab', async () => {
+    renderPage('/s/thmp/tasks?view=board&tab=in_progress')
+    const columns = await screen.findAllByRole('region', { name: / column$/ })
+    expect(columns).toHaveLength(2)
+  })
+
+  it('quick-adds a task at the bottom of a column', async () => {
+    const user = userEvent.setup()
+    renderPage('/s/thmp/tasks?view=board')
+    const blocked = await screen.findByRole('region', { name: 'Blocked column' })
+    await user.click(within(blocked).getByRole('button', { name: 'Add task' }))
+    await user.type(within(blocked).getByLabelText('New task in Blocked'), 'Waiting on API{Enter}')
+
+    await waitFor(() => expect(db.calls.some((c) => c[0] === 'insert')).toBe(true))
+    expect(db.calls.find((c) => c[0] === 'insert')[1]).toMatchObject({
+      title: 'Waiting on API',
+      status: 'blocked',
+      space_id: SPACE.id,
+      position: 1000,
+    })
+    // Stays open for the next one; Escape closes it.
+    const input = within(blocked).getByLabelText('New task in Blocked')
+    expect(input).toHaveValue('')
+    await user.keyboard('{Escape}')
+    expect(within(blocked).queryByLabelText('New task in Blocked')).not.toBeInTheDocument()
+  })
+
+  it('opens a board card in the edit dialog', async () => {
+    const user = userEvent.setup()
+    renderPage('/s/thmp/tasks?view=board')
+    const todo = await screen.findByRole('region', { name: 'To do column' })
+    await user.click(within(todo).getByRole('button', { name: 'Storefront: lazy-load images' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByLabelText('Task title')).toHaveValue('Storefront: lazy-load images')
+  })
+})
+
+describe('useMoveTask', () => {
+  function setup() {
+    const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
+    const key = taskKeys.list({ spaceIds: [SPACE.id] })
+    qc.setQueryData(key, [task('t1', 'A', 'todo'), task('t2', 'B', 'todo')])
+    const wrapper = ({ children }) => (
+      <QueryClientProvider client={qc}>{children}</QueryClientProvider>
+    )
+    const { result } = renderHook(() => useMoveTask(), { wrapper })
+    return { qc, key, result }
+  }
+
+  it('moves optimistically and saves status and position', async () => {
+    const { qc, key, result } = setup()
+    db.tasks = [task('t1', 'A', 'todo'), task('t2', 'B', 'todo')]
+    result.current.mutate({ id: 't1', patch: { status: 'done', position: 2500 } })
+    await waitFor(() =>
+      expect(qc.getQueryData(key).find((t) => t.id === 't1')).toMatchObject({
+        status: 'done',
+        position: 2500,
+      }),
+    )
+    await waitFor(() =>
+      expect(db.calls).toContainEqual(['update', 't1', { status: 'done', position: 2500 }]),
+    )
+  })
+
+  it('renumbers the column when asked', async () => {
+    const { result } = setup()
+    db.tasks = [task('t1', 'A', 'todo'), task('t2', 'B', 'todo')]
+    result.current.mutate({
+      id: 't2',
+      patch: { status: 'todo', position: 1000 },
+      rebalanceIds: ['t2', 't1'],
+    })
+    await waitFor(() => expect(result.current.isSuccess).toBe(true))
+    expect(db.calls).toContainEqual(['update', 't2', { position: 1000 }])
+    expect(db.calls).toContainEqual(['update', 't1', { position: 2000 }])
+  })
+
+  it('rolls the card back when the save fails', async () => {
+    db.failUpdate = true
+    const { qc, key, result } = setup()
+    result.current.mutate({ id: 't1', patch: { status: 'done', position: 2500 } })
+    await waitFor(() => expect(result.current.isError).toBe(true))
+    expect(qc.getQueryData(key).find((t) => t.id === 't1')).toMatchObject({
+      status: 'todo',
+      position: 1000,
+    })
   })
 })

@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/04-tasks.md`
-**Status**: 🟡 Phase 1 ✅ · Phase 2 next
+**Status**: 🟡 Phase 1 ✅ · Phase 2 ✅ · Phase 3 next
 **Depends on**: 03
 **Last Updated**: September 2026
 
@@ -280,7 +280,15 @@ src/components/shared/
 
 ---
 
-## Phase 2: Board View
+## Phase 2: Board View ✅ Complete
+
+### Design fold (delta 04/05 board items and screen 04c, folded on 2026-09-24). This overrides the spec below where they differ.
+- **Five columns:** To do, In progress, In review, Blocked, Completed. **Cancelled is never shown on the board.** The tab and status filter narrow which columns show.
+- **The view switch** is the existing toolbar `SegmentedControl`, now Grid · Board · List (lucide `Columns3`). No separate `ViewToggle` component.
+- **Columns** are 270px `bg-muted` wells (16px radius, 10px padding, 10px gap). The header has the filled status pill, a count and a `+` button; the footer has "+ Add task". The column under a dragged card gets an accent border.
+- **Board cards** (04c): a priority pill and an MR icon on top, the title (14/600), then a dashed footer with the space (Global only) on the left and the due label on the right. The `⋮` menu shows on hover.
+- **Drag:** the lifted card is scale 1.01, rotate 1°, `shadow-md`, grabbing cursor (design-system.md → Kanban drag). The drop slot is a **dashed accent box** with the soft accent fill.
+- **Loading:** five skeleton columns.
 
 ### Goal
 The user toggles List / Board (`?view=board`). The board shows one column per status with counts. Cards drag within and across columns; a drop updates status and position instantly and persists. Each column has a quick-add at the bottom. Dragging is fully keyboard accessible.
@@ -335,16 +343,25 @@ src/features/tasks/components/
 - Dragging between list groups: list stays status-grouped via the status popover
 
 ### 2.7 Checklist: Before Marking Complete
-- [ ] `?view=board` renders six columns with counts; the toggle round-trips with the list
-- [ ] Dragging within a column reorders and persists after reload
-- [ ] Dragging across columns changes status (and `completed_at` for Done) and persists
-- [ ] A failed move rolls the card back and shows an error toast
-- [ ] The keyboard alone can pick up, move and drop a card; announcements are read
-- [ ] Quick-add creates at the bottom of the column in a space, and opens the dialog in Global
-- [ ] Rebalance runs when neighbours are closer than `1e-9` (unit test on the helper that decides it)
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` status and changelog are updated
+- [x] `?view=board` renders **five** columns (Cancelled hidden, per the design fold) with counts; the toggle round-trips with the grid and list (test). The tab and status filter narrow the columns (test).
+- [x] Dragging within a column reorders it, and dragging across columns changes status. Both save `{ status, position }` through `useMoveTask` (hook test). `completed_at` comes from the existing trigger. **Browser check pending:** jsdom has no layout, so real pointer drags and persistence after reload are for the user to confirm.
+- [x] A failed move rolls the card back and shows an error toast (hook test)
+- [x] Keyboard: Space picks up, the arrow keys move, Space/Enter drops, Esc cancels, and Enter on a resting card opens it. Announcements and screen-reader instructions are wired. **Browser check pending** (same jsdom limit).
+- [x] Quick-add creates at the bottom of the column in a space and stays open for the next title (test); in Global it opens `TaskDialog` with `initialValues={{ status }}`
+- [x] Rebalance runs when neighbours are closer than `1e-9` or equal: `planBoardMove` unit tests, and a hook test for `rebalanceIds`
+- [x] `npm run lint`, `npm test` (178 tests) and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files (tooltips were added to the icon-only column `+` and the MR link)
+- [x] `00-index.md` status and changelog are updated
+
+### Implementation Notes (Phase 2)
+- **Files:** `TaskBoard` (DndContext, sensors, move logic, announcements, overlay), `BoardColumn` (a droppable well, SortableContext and a private `ColumnQuickAdd`), `BoardCard` (the card plus `SortableBoardCard`), and a board branch in `TasksSkeleton`. There's no `ViewToggle`: the toolbar's `SegmentedControl` gained Board. `TaskBoardSkeleton` also became a branch in `TasksSkeleton`.
+- **`useMoveTask`** shares one private `useOptimisticPatch` with `useQuickUpdateTask`. It takes `{ id, patch, rebalanceIds }` and renumbers the column after the move when `planBoardMove` says so. `rebalanceTasks(orderedIds)` is exported.
+- **No flicker on drop:** the board keeps its local column order after the drop until the `tasks` prop changes (the optimistic update), then goes back to deriving from props.
+- **The drop slot keeps the card's height,** not the design's fixed 96px. The lifted card's own node becomes the dashed accent slot, so dnd-kit's sort offsets stay correct. A fixed height made the other cards shift by the wrong amount.
+- **The Done column** shows "Last 30 days · Show all" while the closed-task window applies. Show all switches to the Completed tab.
+- **Empty states:** the page shows the first-run empty state only when there are no tasks at all. Filtered-empty boards still render their columns, so quick-add stays available.
+- **Keyboard codes:** Space starts a drag (not Enter), so Enter can open the card.
+- **Controls inside a card** (the MR link and the menu) stop pointer and key events, so they never start a drag.
 
 **Stop here. Show the result and wait for approval.**
 

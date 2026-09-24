@@ -101,7 +101,7 @@
   --input: #d4d4d4;
   --ring: var(--space-accent);
 
-  --sidebar: #f7f7f6;
+  --sidebar: #ffffff;
   --sidebar-foreground: #1d1d1f;
   --sidebar-primary: #1d1d1f;
   --sidebar-primary-foreground: #ffffff;
@@ -168,7 +168,7 @@
   --border: #2c2c2e;
   --input: #3a3a3c;
 
-  --sidebar: #131313;
+  --sidebar: #0b0b0b;
   --sidebar-foreground: #f5f5f7;
   --sidebar-primary: #f5f5f7;
   --sidebar-primary-foreground: #1d1d1f;

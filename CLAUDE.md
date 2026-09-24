@@ -19,18 +19,14 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
 | 01 Foundation | ✅ Complete |
 | 02 Auth, profile and settings (fiscal year) | ✅ Complete |
 | 03 Spaces gallery, app shell, Global | ✅ Complete |
-| 04 Tasks | Phase 1 (grid, list, dialog, filters) ✅. **Next: Phase 2, the board view**, then Phase 3, tags |
+| 04 Tasks | Phase 1 (grid, list, dialog, filters) ✅. Phase 2 (board) ✅. **Next: Phase 3, tags** |
 | 05–14 | Planned (docs in `.claude/features/`) |
 
 ### Resume here (session handoff)
 
-1. **Next step: Feature 04 Phase 2 (Board).**
-   - Run the `axon-feature` skill, Step 4.
-   - Re-read the Phase 2 section of `.claude/features/04-tasks.md`, then fold in the board items from `.claude/design/design-deltas.md` (04/05):
-     - 5 columns, with Cancelled hidden.
-     - 270px `bg-muted` columns with "+ Add task".
-     - A 96px dashed accent drop slot.
-   - Add a Board option to the existing Grid/List `SegmentedControl` in `TaskToolbar`.
+1. **Next step: Feature 04 Phase 3 (Tags)**, once the user approves the Phase 2 board.
+   - Run the `axon-feature` skill, Step 4, and re-read the Phase 3 section of `.claude/features/04-tasks.md`.
+   - Tasks and Todos are **separate pages** (design delta G1 was reversed on 2026-09-24). Feature 05 builds the standalone Todos page.
 2. **Workflow the user expects:**
    - Build one phase, verify it (lint, tests, build, the `axon-rules` audit), and update the feature doc, `00-index.md` and the patterns catalogue.
    - **Then commit and push to `main`** (github.com/Shanks026/axon-personal-os), and stop for approval.
@@ -46,7 +42,7 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
 5. **UI decisions made during the build** (all recorded in `.claude/rules/`):
    - Typography: Tailwind/shadcn default type (`text-sm` body).
    - Spaces: emoji identity shown bare (no tile); space images wait for Feature 15.
-   - Sidebar: 16.5rem wide, 3rem rail.
+   - Sidebar: 16rem wide, 3rem rail; same background as the page (white in light, `#0b0b0b` in dark), separated by the hairline border.
    - Shadows: very subtle everywhere.
    - Overlays: no backdrop blur (it caused frame drops); scaling dialogs get `will-change-transform`.
    - Shortcut hints: the `<Kbd>` component, with lucide Command icons.

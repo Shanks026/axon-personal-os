@@ -45,7 +45,7 @@ These use shadcn naming, plus Axon extras. `--ring` and the chart accent follow 
   --destructive: #ff3b30;
   --border: #e7e7e7;      --input: #d4d4d4;
   --ring: var(--space-accent);
-  --sidebar: #f7f7f6;     --sidebar-foreground: #1d1d1f;  --sidebar-border: #e7e7e7;
+  --sidebar: #ffffff;     --sidebar-foreground: #1d1d1f;  --sidebar-border: #e7e7e7;
   --sidebar-accent: #efefef; --sidebar-accent-foreground: #1d1d1f; --sidebar-ring: var(--space-accent);
   /* Axon extras */
   --faint: #aeaeb2;          /* hints, placeholders, disabled */
@@ -64,7 +64,7 @@ These use shadcn naming, plus Axon extras. `--ring` and the chart accent follow 
   --secondary: #222222;   --secondary-foreground: #f5f5f7;
   --destructive: #ff453a;
   --border: #2c2c2e;      --input: #3a3a3c;
-  --sidebar: #131313;     --sidebar-foreground: #f5f5f7;  --sidebar-border: #2c2c2e;
+  --sidebar: #0b0b0b;     --sidebar-foreground: #f5f5f7;  --sidebar-border: #2c2c2e;
   --sidebar-accent: #2c2c2e; --sidebar-accent-foreground: #f5f5f7;
   --faint: #636366;  --border-strong: #3a3a3c;
   --ok: #30d158;  --warn: #ff9f0a;  --review: #bf5af2;
@@ -229,7 +229,7 @@ Variants to export: `fadeIn`, `slideUp` (y 6), `listItem` (y 4 with height exit)
 
 | Item | Spec |
 |---|---|
-| Sidebar | **16.5rem (264px)** expanded (the user asked for a little wider than shadcn's 16rem), and shadcn's **3rem** rail. Nav items use the shadcn defaults (32px). `bg-sidebar`, with a hairline right border. |
+| Sidebar | **16rem (256px)** expanded (the user tried 16.5rem and 15.5rem, then settled on 16rem), and shadcn's **3rem** rail. Nav items use the shadcn defaults (32px). `bg-sidebar`, with a hairline right border. **The sidebar matches the page background**: white `#ffffff` in light and `#0b0b0b` in dark. The user tried light grays (`#fafafa`, `#fcfcfc`) on 2026-09-24 and settled on white. The hairline border does the separating. |
 | Header | 48px breadcrumb bar with page actions. A second 48px toolbar row appears only where there are filters or tabs. |
 | Page padding | 36–40px desktop, 16px mobile |
 | Grid | 12 columns, 20px gutters. Dashboard widgets split 7/5 and 6/6. |

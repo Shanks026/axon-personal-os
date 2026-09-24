@@ -37,6 +37,9 @@ export const TASK_STATUSES = [
 export const TASK_STATUS_MAP = Object.fromEntries(TASK_STATUSES.map((s) => [s.value, s]))
 export const CLOSED_STATUSES = ['done', 'cancelled']
 
+/** Board columns (design delta 04/05): Cancelled is never shown on the board. */
+export const BOARD_STATUSES = ['todo', 'in_progress', 'in_review', 'blocked', 'done']
+
 export const TASK_PRIORITIES = [
   { value: 'none', label: 'None', icon: Minus, tone: 'var(--faint)', rank: 0 },
   { value: 'low', label: 'Low', icon: SignalLow, tone: 'var(--faint)', rank: 1 },
@@ -64,7 +67,7 @@ export const TASK_TABS = [
   { value: 'completed', label: 'Completed', match: (t) => t.status === 'done' },
 ]
 
-export const TASK_VIEWS = ['grid', 'list']
+export const TASK_VIEWS = ['grid', 'board', 'list']
 
 /** Closed tasks older than this are hidden unless the Completed tab or a status filter asks. */
 export const DONE_WINDOW_DAYS = 30

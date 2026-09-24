@@ -116,11 +116,16 @@ export function useUpdateTask() {
   })
 }
 
-/** Optimistic one-field changes from cards and rows: status, priority, due date. */
-export function useQuickUpdateTask() {
+/** Renumber a column to (i + 1) * 1000 when fractional positions can no longer be split. */
+export function rebalanceTasks(orderedIds) {
+  return Promise.all(orderedIds.map((id, i) => updateTask(id, { position: (i + 1) * 1000 })))
+}
+
+/** Patch every cached list optimistically; roll back with a toast on error. */
+function useOptimisticPatch(mutationFn, errorMessage) {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ id, patch }) => updateTask(id, patch),
+    mutationFn,
     onMutate: async ({ id, patch }) => {
       await qc.cancelQueries({ queryKey: taskKeys.lists() })
       const snapshots = qc.getQueriesData({ queryKey: taskKeys.lists() })
@@ -131,10 +136,27 @@ export function useQuickUpdateTask() {
     },
     onError: (err, _vars, ctx) => {
       ctx?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data))
-      toast.error(err.message ?? 'Could not update task')
+      toast.error(err.message ?? errorMessage)
     },
     onSettled: () => qc.invalidateQueries({ queryKey: taskKeys.lists() }),
   })
+}
+
+/** Optimistic one-field changes from cards and rows: status, priority, due date. */
+export function useQuickUpdateTask() {
+  return useOptimisticPatch(({ id, patch }) => updateTask(id, patch), 'Could not update task')
+}
+
+/**
+ * Board drop: `patch` is { status, position }. `rebalanceIds` (the column in its new order) is
+ * renumbered after the move when the neighbours were too close to split.
+ */
+export function useMoveTask() {
+  return useOptimisticPatch(async ({ id, patch, rebalanceIds }) => {
+    const row = await updateTask(id, patch)
+    if (rebalanceIds?.length) await rebalanceTasks(rebalanceIds)
+    return row
+  }, 'Could not move task')
 }
 
 function useRemoveFromLists() {
