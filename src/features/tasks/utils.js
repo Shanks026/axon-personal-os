@@ -1,4 +1,4 @@
-import { addDays, endOfWeek } from 'date-fns'
+import { endOfWeek } from 'date-fns'
 import { parseISODate, toISODate } from '@/lib/dates'
 import { needsRebalance, positionBetween } from '@/lib/position'
 import {
@@ -11,11 +11,6 @@ import {
 /** Last day of the week containing `todayISO`, as yyyy-MM-dd (0 = Sunday start, 1 = Monday). */
 export function weekEndISO(todayISO, weekStartsOn = 1) {
   return toISODate(endOfWeek(parseISODate(todayISO), { weekStartsOn }))
-}
-
-/** yyyy-MM-dd `days` before `todayISO`. */
-export function daysAgoISO(todayISO, days) {
-  return toISODate(addDays(parseISODate(todayISO), -days))
 }
 
 /** [{ status, tasks }] in TASK_STATUSES order, ordered by position within each group. */

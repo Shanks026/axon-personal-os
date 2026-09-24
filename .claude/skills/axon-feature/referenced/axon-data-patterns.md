@@ -201,6 +201,7 @@ export function useTaskFilters() {
 | `SaveIndicator` | `components/shared/` | 02 (settings; later the editors) |
 | `TintPill`, `DotPill`, `DueLabel`, `PropertyChip`, `HeaderAlert`, `DatePicker`, `SpaceChipPicker` | `components/shared/` | 04 Phase 1 |
 | `TagPicker`, `TagPill`, `ManageTagsDialog` | `components/shared/` | 04 Phase 3 |
+| `useDefaultSpaceId` | `hooks/` | 04 Phase 1, moved here in 05 Phase 1 |
 | `RichTextEditor` | `components/editor/` | 06 |
 | `EntityLink` (task/note chip with hover preview) | `components/shared/` | 07 |
 

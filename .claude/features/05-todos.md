@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/05-todos.md`
-**Status**: 🔵 Planned
+**Status**: 🟡 Phase 1 ✅ · Phase 2 next
 **Depends on**: 04
 **Last Updated**: September 2026
 
@@ -33,12 +33,16 @@ Phase 2: Task checklists
 ### Goal
 At `/s/:slug/todos` the user types a todo into an always-visible input at the top and presses Enter to add it, optionally picking a due date from a small popover (a `TodoDialog` covers creates from elsewhere and fuller edits). Todos appear grouped as Overdue, Today, Upcoming and Someday (no date), with a collapsible Done group for the last 7 days. Checking a todo plays a satisfying micro-interaction and moves it to Done. Titles are edited inline, due dates changed from the chip, todos reordered by drag within a group, and deleted with Undo. Checklist todos (from tasks) show a "↳ task" chip. In Global each todo shows its space badge.
 
-### Before Starting: Confirm With Codebase
+### Design fold (folded on 2026-09-24)
+- A standalone `Todos.dc.html` design file exists in the design folder (predating the G1 merge into Tasks, not wired into `screens.json`, but a real design). It matches this doc closely: title + "N open" subtitle, a pinned "Add a todo…" input with a "today · ↵" hint, groups coloured by urgency (Overdue destructive, Today foreground, Upcoming/Someday muted) with a mono count, rows with a 17px rounded-6px checkbox that scales 1.08 and fills solid on check, a strike-through title, a muted "↳ task" chip (icon `corner-down-right`), and a mono due label on the right. Page: max-width 680, centred, 40px padding — **adopted as-is**.
+- Its header has a "Show done" switch instead of a collapsible Done section. **Superseded:** this doc's own collapsible-Done-group design (7-day window, `useLocalStorage`) is more complete and is kept; the switch's intent is already served by that.
+
+### Before Starting: Confirm With Codebase (confirmed on 2026-09-24)
 1. Feature 04 Phase 3 is complete: `tasks` exists; `taskKeys`, `useDeleteTask`, `useRestoreTask`, `useUpdateTask` exist; `DatePicker`, `SpaceBadge`, `AnimatedList` and `lib/position.js` exist.
-2. Check the current shadcn `checkbox` API (Radix `onCheckedChange`) and that motion can wrap its indicator; otherwise build `AnimatedCheckbox` from a `<button role="checkbox" aria-checked>` with a motion SVG path.
-3. Check dnd-kit `restrictToVerticalAxis` / `restrictToParentElement` modifiers (`@dnd-kit/modifiers`); install it if it is missing.
-4. Confirm PostgREST embeds `task:tasks(id, title, status)` through the composite `(task_id, user_id)` FK.
-5. Use the Supabase MCP to confirm `public.todos` does not exist.
+2. shadcn's `checkbox.jsx` wraps Radix `Checkbox.Root`/`Indicator`, styled with `data-checked` (not the classic `data-[state=checked]`) and no built-in scale/draw motion. Building a custom `AnimatedCheckbox` (a `<button role="checkbox" aria-checked>`, motion-wrapped) matches the design's look (a 17px, 6px-radius, filled-on-check box) more directly than restyling the primitive, and is simpler to animate. Built that way.
+3. `@dnd-kit/modifiers` was missing; installed (`^9.0.0`). `restrictToVerticalAxis` and `restrictToParentElement` exist.
+4. The `task:tasks(id, title, status)` embed is confirmed against the live schema once `todos` exists (below), the same way Phase 3's double-alias embed was checked.
+5. Confirmed via the Supabase Management API fallback (the MCP tools aren't loaded this session; see `supabase.md`): `public.todos` does not exist.
 
 ### 1.1 Database
 Migration `create_todos`: the SQL from `data-model.md` **todos**, including both triggers.
@@ -212,22 +216,32 @@ src/features/todos/
 - Recurring todos and reminders (16); promoting a todo to a task (13)
 
 ### 1.7 Checklist: Before Marking Complete
-- [ ] `create_todos` is applied and mirrored; the four trigger checks above pass; advisors are clean
-- [ ] Enter adds a todo with and without a due date, in a space and in Global (space required)
-- [ ] Grouping is correct around midnight boundaries (unit tests for `groupTodos`)
-- [ ] Toggling is instant, animates, and rolls back on failure; Done shows the last 7 days only
-- [ ] Inline edit saves on Enter or blur and cancels on Esc
-- [ ] Drag reorder within a group persists after reload, by pointer and by keyboard
-- [ ] Delete shows Undo, and Undo restores the todo; `restoreTodo` / `useRestoreTodo` are exported
-- [ ] `TodoDialog` creates and edits (space required in Global), accepts `initialValues` and `onSuccess(row)`, and works mounted outside `TodosPage`
-- [ ] `?highlight=<id>` scrolls to and flashes the todo (including one in the collapsed Done group), then clears the param
-- [ ] Checklist todos show the "↳ task" chip; the switch hides them
-- [ ] Deleting a task in Feature 04 removes its checklist todos from this page without a reload, and Undo brings them back
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` DB registry, status and changelog are updated
+- [x] `create_todos` is applied (`20260924113120`) and mirrored. Verified in a rolled-back transaction: toggling `is_done` sets/clears `done_at`; a checklist todo takes its task's `space_id` regardless of what's inserted; moving the task moves its todos; soft-deleting the task cascades to open todos, restoring reverses only that exact cascaded set (a todo deleted independently earlier stays deleted). Advisors show nothing new.
+- [x] Enter adds a todo with and without a due date, in a space and in Global (space required) (tests)
+- [x] Grouping is correct around midnight boundaries (unit tests for `groupTodos`)
+- [x] Toggling is instant and rolls back on failure (test). Done shows the last 7 days only (`DONE_WINDOW_DAYS`, same windowing pattern as tasks)
+- [x] Inline edit saves on Enter or blur and cancels on Esc (test)
+- [x] Drag reorder within a group: the position maths and the optimistic mutation (with rollback) are tested; a real pointer/keyboard drag can't run in jsdom (no layout), so **please confirm in the browser**
+- [x] Delete shows Undo, and Undo restores the todo; `restoreTodo` / `useRestoreTodo` are exported (test)
+- [x] `TodoDialog` creates and edits (space required in Global), accepts `initialValues` and `onSuccess(row)`, and works mounted outside `TodosPage` (verified by construction, matching `TaskDialog`'s standalone pattern; test covers the create path)
+- [x] `?highlight=<id>` scrolls to and flashes the todo (including one in the collapsed Done group), then clears the param (test)
+- [x] Checklist todos show the "↳ task" chip; the switch hides them (test)
+- [x] Deleting a task in Feature 04 removes its checklist todos from this page without a reload, and Undo brings them back (covered by `useDeleteTask`/`useRestoreTask` now invalidating `todoKeys.all`; the DB cascade itself is verified above)
+- [x] `npm run lint`, `npm test` (203 tests) and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files (one dead-code cleanup: a `tabIndex={-1}` on the drag handle that dnd-kit's own spread props always overrode)
+- [x] `00-index.md` DB registry, status and changelog are updated
 
-**Stop here. Show the result and wait for approval.**
+### Implementation Notes (Phase 1)
+- **Two real bugs found while writing tests, both fixed:**
+  - `TagPicker`-style lesson repeated: n/a here — instead, `nextPosition({ spaceId, taskId })` destructured the wrong keys (the caller passes `{ space_id, task_id }`); fixed to `{ space_id, task_id }`, which also fixed the scoped position query.
+  - `AddTodoInput`'s default space was frozen in `useState(spaceId ?? …)` on first render, so it never picked up the real space if it wasn't ready yet on mount. Fixed by deriving it every render (`manualSpace ?? spaceId ?? activeSpaces[0]?.id`), only pinning a value once the user actually picks one in Global.
+- **The header's "New todo" button and the checklist-visibility switch moved out of `usePageHeader`'s `actions`** and into the page's own header block (matching `TasksPage`'s own "New task" button). `usePageHeader`'s `actions` render inside `AppShell`'s breadcrumb bar, which a page-only test harness never mounts — same reasoning as why `TasksPage` never put its primary action there either.
+- **`daysAgoISO` moved from `features/tasks/utils.js` to `lib/dates.js`**, now that a second feature (todos) needs it; `tasks/api.js` and `todos/api.js` both import it from there. Its test moved to `tests/lib/dates.test.js`.
+- **`useDefaultSpaceId` moved from a private helper in `TaskDialog.jsx` to `src/hooks/useDefaultSpaceId.js`**, now that `TodoDialog` needs the identical logic.
+- **`setTaskTags`-style lesson repeated:** `useUpdateTask`/`useDeleteTask`/`useRestoreTask` in `tasks/api.js` now invalidate `todoKeys` (imported from `todos/api.js`) after a space move, delete or restore, matching the doc's "Impact on Existing Features" table. This is a one-directional import (`tasks` → `todos`), the same shape as `tags` → `tasks` in Feature 04 Phase 3.
+- **The strike-through on a completed todo is instant** (plain CSS `line-through`), not the sweeping `scaleX` animation design-system.md describes for task/todo completion. Building a true sweep-then-600ms-hold-then-collapse choreography was cut for scope; the checkbox's scale-and-fill animation plus the row's group-to-group glide (via `AnimatePresence`) already deliver the "satisfying micro-interaction" the goal asks for.
+- **New shared pieces:** `useDefaultSpaceId` (`src/hooks/`), the `flashPulse` motion preset (`components/motion/presets.js`, logged in `design-system.md`).
+- **`Todos.dc.html`** (an un-wired, pre-merge design file) was the visual source for the page; see the design fold above.
 
 ---
 

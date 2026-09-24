@@ -82,3 +82,12 @@ export function staggerItem(stagger = 0.02, { max = 8 } = {}) {
     exit: { opacity: 0, transition: exit() },
   }
 }
+
+/** One-shot background pulse for a `?highlight=<id>` target (search results, inbox triage). */
+export const flashPulse = {
+  initial: { opacity: 0 },
+  animate: {
+    opacity: [0, 0.4, 0],
+    transition: { duration: durations.slow * 2, times: [0, 0.3, 1], ease: easings.standard },
+  },
+}

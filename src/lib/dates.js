@@ -1,4 +1,5 @@
 import {
+  addDays,
   differenceInCalendarDays,
   differenceInHours,
   differenceInMinutes,
@@ -24,6 +25,11 @@ export function parseISODate(value) {
 export function toISODate(value) {
   const d = toDate(value)
   return d ? format(d, 'yyyy-MM-dd') : null
+}
+
+/** 'yyyy-MM-dd' `days` before `todayISO` (windowed "done" queries: tasks, todos). */
+export function daysAgoISO(todayISO, days) {
+  return toISODate(addDays(parseISODate(todayISO), -days))
 }
 
 /** "23 Sep 2026" */

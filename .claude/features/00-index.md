@@ -20,7 +20,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | ✅ Complete |
 | **Wave 2: Capture** | | | | |
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | ✅ Complete |
-| 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | 🔵 Planned |
+| 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | 🟡 Phase 1 ✅ · Phase 2 next |
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | 🔵 Planned |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🔵 Planned |
 | **Wave 3: Time** | | | | |
@@ -82,7 +82,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `spaces` | 03 | ✅ | `unique(user_id, slug)`; slug `global` reserved. Migration `20260923171644`, plus the `profiles.last_space_id` FK. `icon` is an emoji (`20260923180401`) |
 | `tasks` (+ completed_at trigger) | 04 | ✅ | Six statuses, five priorities, fractional `position`. Migration `20260923181804` |
 | `tags`, `task_tags` | 04 | ✅ | Tag `space_id` NULL means available in all spaces |
-| `todos` (+ cascade triggers) | 05 | ⬜ | `task_id` set means a checklist item |
+| `todos` (+ cascade triggers) | 05 | ✅ | `task_id` set means a checklist item |
 | `notes`, `note_tags` | 06 | ⬜ | Tiptap JSON plus `content_text`; generated `excerpt` (280 characters) for list cards |
 | `task_activity` (+ log trigger) | 07 | ⬜ | Auto history plus manual work-log comments |
 | `note_task_links` + `sync_note_mentions()` | 07 | ⬜ | Sources: manual or mention |
@@ -111,6 +111,19 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-24: Feature 05 Phase 1: Todos page
+- **Migration `20260924113120_create_todos`:** the `todos` table (standalone or a task's checklist item via `task_id`), with two triggers: `todos_before_write` (maintains `done_at`; a checklist item's `space_id` always follows its task) and `tasks_cascade_to_todos` (a task's space move or soft delete/restore cascades to its open checklist items). Owner RLS. Verified in a rolled-back transaction; advisors clean.
+- **`/s/:slug/todos`, built to the (previously unused) `Todos.dc.html` design:** an always-visible "Add a todo…" input, groups (Overdue, Today, Upcoming, Someday, a collapsible 7-day Done), inline title edit, a due-date chip, drag reorder within a group, delete with Undo, a "New todo" dialog, and a "Show task checklist items" switch that shows/hides checklist-item todos (with a "↳ task" chip linking to the task).
+- **`?highlight=<id>`** scrolls to and flashes a todo (expanding Done first if needed), for future search and inbox-triage links.
+- **New `src/features/todos/`:** `api.js`, `constants.js`, `schemas.js`, `utils.js` (`groupTodos`), hooks (`useTodoFilters`, `useHighlightTodo`) and components (`AddTodoInput`, `TodoDialog`, `TodoGroup`, `SortableTodoList`, `TodoItem`, `AnimatedCheckbox`, `TodoDueChip`, `TaskChip`, `TodoListSkeleton`).
+- **New shared `useDefaultSpaceId`** (`src/hooks/`, lifted out of `TaskDialog` now that `TodoDialog` needs it too) and the `flashPulse` motion preset.
+- **`daysAgoISO` moved** from `features/tasks/utils.js` to `lib/dates.js` (now shared by tasks and todos).
+- **Feature 04 impact:** `useUpdateTask`, `useDeleteTask` and `useRestoreTask` now also invalidate `todoKeys`, so a task's space move, delete or restore updates its checklist todos on screen without a reload.
+- **New dependency:** `@dnd-kit/modifiers` (`^9.0.0`).
+- **Deferred to Phase 2:** `TodoChecklist` (mounted in `TaskDialog` and the task detail page), checklist progress badges on task rows and board cards.
+- **Tests:** 203.
+- **Manual check for you:** drag reorder (by pointer and by keyboard) can't be simulated in the test environment (no real layout); please confirm it in the browser.
 
 ### 2026-09-24: Feature 04 Phase 3: Tags — Feature 04 complete
 - **Migration `20260924063708_create_tags_and_task_tags`:** the `tags` table (`space_id` NULL = every space, unique per scope case-insensitively) and `task_tags`. Both owner-RLS, hard delete (no soft delete for tags). Verified in a rolled-back transaction; advisors clean.

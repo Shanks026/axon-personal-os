@@ -1,9 +1,10 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { daysAgoISO } from '@/lib/dates'
 import { positionAfterLast } from '@/lib/position'
 import { DONE_WINDOW_DAYS } from '@/features/tasks/constants'
-import { daysAgoISO } from '@/features/tasks/utils'
+import { todoKeys } from '@/features/todos/api'
 
 export const taskKeys = {
   all: ['tasks'],
@@ -126,9 +127,11 @@ export function useUpdateTask() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, patch }) => updateTask(id, patch),
-    onSuccess: (row) => {
+    onSuccess: (row, { patch }) => {
       qc.invalidateQueries({ queryKey: taskKeys.lists() })
       qc.setQueryData(taskKeys.detail(row.id), row)
+      // A space move cascades to checklist todos (tasks_cascade_to_todos).
+      if ('space_id' in patch) qc.invalidateQueries({ queryKey: todoKeys.all })
     },
     onError: (err) => toast.error(err.message ?? 'Could not save task'),
   })
@@ -198,7 +201,11 @@ export function useDeleteTask() {
       ctx?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data))
       toast.error(err.message ?? 'Could not delete task')
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: taskKeys.all }),
+    // The trigger soft-deletes checklist todos along with the task.
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: taskKeys.all })
+      qc.invalidateQueries({ queryKey: todoKeys.all })
+    },
   })
 }
 
@@ -206,7 +213,10 @@ export function useRestoreTask() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: restoreTask,
-    onSettled: () => qc.invalidateQueries({ queryKey: taskKeys.all }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: taskKeys.all })
+      qc.invalidateQueries({ queryKey: todoKeys.all })
+    },
     onError: (err) => toast.error(err.message ?? 'Could not restore task'),
   })
 }

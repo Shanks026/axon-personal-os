@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  daysAgoISO,
   dueTone,
   formatDate,
   formatDateShort,
@@ -62,5 +63,11 @@ describe('due dates', () => {
     expect(dueTone(undefined, now)).toBe('none')
     expect(isOverdue('2026-09-22', now)).toBe(true)
     expect(isOverdue('2026-09-23', now)).toBe(false)
+  })
+})
+
+describe('daysAgoISO', () => {
+  it('crosses month boundaries', () => {
+    expect(daysAgoISO('2026-10-05', 30)).toBe('2026-09-05')
   })
 })

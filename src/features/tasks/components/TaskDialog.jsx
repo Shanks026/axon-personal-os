@@ -3,14 +3,13 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { CalendarArrowUp, CalendarDays, ChevronRight, X } from 'lucide-react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
-import { useSpace } from '@/context/SpaceContext'
+import { useDefaultSpaceId } from '@/hooks/useDefaultSpaceId'
 import { Kbd } from '@/components/shared/Kbd'
 import { PropertyChip } from '@/components/shared/PropertyChip'
 import { SpaceChipPicker } from '@/components/shared/SpaceChipPicker'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
-import { useMyProfile } from '@/features/auth/api'
 import { usePreferences } from '@/features/settings/api'
 import { useSetTaskTags, useTags } from '@/features/tags/api'
 import { useCreateTask, useUpdateTask } from '@/features/tasks/api'
@@ -37,13 +36,6 @@ export function TaskDialog({ open, onOpenChange, task, initialValues, onSuccess 
       </DialogContent>
     </Dialog>
   )
-}
-
-function useDefaultSpaceId(initial) {
-  const { space, activeSpaces } = useSpace()
-  const { data: profile } = useMyProfile()
-  const lastActive = activeSpaces.find((s) => s.id === profile?.last_space_id)?.id
-  return initial ?? space?.id ?? lastActive ?? activeSpaces[0]?.id ?? ''
 }
 
 function TaskForm({ task, initialValues, onClose, onSuccess }) {

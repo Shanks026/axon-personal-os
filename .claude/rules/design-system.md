@@ -223,7 +223,7 @@ Mirror the durations and easings as CSS variables (`--dur-fast`, `--ease-standar
 | Skeleton | A muted block with a hover-tone gradient sweeping left to right. Content replaces it with a 120ms fade. Skeletons match row heights exactly, so nothing jumps. | 1400 linear ∞ | static block |
 | Hover lift | Cards: y −1px, `shadow-xs`, `border-strong`. Rows: background change only. | 120 standard | background only |
 
-Variants to export: `fadeIn`, `slideUp` (y 6), `listItem` (y 4 with height exit), `scaleIn` (dialog), `popIn` (palette), `pageTransition`, `staggerItem(0.02, { max: 8 })`. For `staggerItem`, pass each item's index as `custom={i}`; only the first 8 items are delayed.
+Variants to export: `fadeIn`, `slideUp` (y 6), `listItem` (y 4 with height exit), `scaleIn` (dialog), `popIn` (palette), `pageTransition`, `staggerItem(0.02, { max: 8 })`, `flashPulse` (added in Feature 05: a one-shot 0→0.4→0 opacity pulse, `durations.slow * 2`, for a `?highlight=<id>` target). For `staggerItem`, pass each item's index as `custom={i}`; only the first 8 items are delayed.
 
 ## Layout
 

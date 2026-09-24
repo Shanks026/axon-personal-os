@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest'
 import { taskSchema } from '@/features/tasks/schemas'
 import {
   boardStatuses,
-  daysAgoISO,
   filterTasks,
   groupTasksByStatus,
   linkHost,
@@ -24,12 +23,6 @@ describe('weekEndISO', () => {
   })
   it('handles the last day of the week itself', () => {
     expect(weekEndISO('2026-09-27', 1)).toBe('2026-09-27')
-  })
-})
-
-describe('daysAgoISO', () => {
-  it('crosses month boundaries', () => {
-    expect(daysAgoISO('2026-10-05', 30)).toBe('2026-09-05')
   })
 })
 
