@@ -63,7 +63,7 @@ describe('tabs', () => {
   })
 
   it('counts every tab', () => {
-    expect(tabCounts(tasks)).toEqual({ all: 5, tasks: 5, in_progress: 2, completed: 1 })
+    expect(tabCounts(tasks)).toEqual({ all: 5, in_progress: 2, completed: 1 })
   })
 })
 

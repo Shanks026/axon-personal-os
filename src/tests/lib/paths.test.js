@@ -31,11 +31,9 @@ describe('paths', () => {
     )
   })
 
-  it('points todos at the Tasks & Todos module', () => {
-    expect(paths.space('thmp').todos()).toBe('/s/thmp/tasks?tab=todos')
-    expect(paths.space('thmp').todos({ highlight: 't1' })).toBe(
-      '/s/thmp/tasks?tab=todos&highlight=t1',
-    )
+  it('builds the todos page URL', () => {
+    expect(paths.space('thmp').todos()).toBe('/s/thmp/todos')
+    expect(paths.space('thmp').todos({ highlight: 't1' })).toBe('/s/thmp/todos?highlight=t1')
   })
 
   it('uses the reserved global slug', () => {

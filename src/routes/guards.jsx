@@ -82,9 +82,3 @@ export function SpaceBoundary() {
 
   return <Outlet />
 }
-
-/** `/s/:spaceSlug/todos` → the Todos tab of the Tasks & Todos module (design delta G1). */
-export function TodosRedirect() {
-  const { spaceSlug } = useSpace()
-  return <Navigate to={paths.space(spaceSlug).todos()} replace />
-}

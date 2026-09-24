@@ -112,12 +112,12 @@ describe('sectionFromPath', () => {
   it('keeps the section and drops detail segments', () => {
     expect(sectionFromPath('/s/thmp/tasks')).toBe('tasks')
     expect(sectionFromPath('/s/thmp/tasks/abc')).toBe('tasks')
+    expect(sectionFromPath('/s/thmp/todos')).toBe('todos')
     expect(sectionFromPath('/s/global/journal/2026-09-23')).toBe('journal')
   })
 
   it('falls back to the dashboard', () => {
     expect(sectionFromPath('/s/thmp')).toBe('dashboard')
     expect(sectionFromPath('/spaces')).toBe('dashboard')
-    expect(sectionFromPath('/s/thmp/todos')).toBe('dashboard')
   })
 })

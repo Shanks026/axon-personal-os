@@ -18,7 +18,7 @@ import { useTaskActions } from '@/features/tasks/hooks/useTaskActions'
 import { useTaskFilters } from '@/features/tasks/hooks/useTaskFilters'
 import { filterTasks, isClosed, tabCounts, weekEndISO } from '@/features/tasks/utils'
 
-/** Tasks & Todos (design 04a–04e). Todos join this page in Feature 05. */
+/** Tasks (design 04a–04e). Todos have their own page (Feature 05). */
 export default function TasksPage() {
   const { space, isGlobal, activeSpaces, scopeSpaceIds } = useSpace()
   const { weekStartsOn } = usePreferences()
@@ -59,7 +59,7 @@ export default function TasksPage() {
       ) : null,
     [overdue, filters.due, setFilter],
   )
-  usePageHeader({ title: 'Tasks & Todos', actions: headerActions })
+  usePageHeader({ title: 'Tasks', actions: headerActions })
 
   const subtitle = isGlobal
     ? `Everything across ${activeSpaces.map((s) => s.name).join(', ')}`
@@ -70,7 +70,7 @@ export default function TasksPage() {
       <div className="flex flex-wrap items-start gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex items-baseline gap-3">
-            <h2 className="text-3xl font-semibold tracking-tight">Tasks &amp; Todos</h2>
+            <h2 className="text-3xl font-semibold tracking-tight">Tasks</h2>
             <span className="text-2xl font-light text-faint tabular-nums">{visible.length}</span>
           </div>
           <p className="mt-1.5 truncate text-muted-foreground">{subtitle}</p>

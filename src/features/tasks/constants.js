@@ -53,10 +53,9 @@ export const DUE_FILTERS = [
   { value: 'none', label: 'No due date' },
 ]
 
-/** Tabs of the Tasks & Todos module (design delta G1). Todos joins with Feature 05. */
+/** Tabs of the Tasks page. Todos have their own page (Feature 05). */
 export const TASK_TABS = [
   { value: 'all', label: 'All', match: () => true },
-  { value: 'tasks', label: 'Tasks', match: () => true },
   {
     value: 'in_progress',
     label: 'In progress',

@@ -16,8 +16,7 @@ function spacePaths(slug) {
     inbox: () => `${root}/inbox`,
     tasks: (params) => withQuery(`${root}/tasks`, params),
     task: (id) => `${root}/tasks/${id}`,
-    // Todos live inside the Tasks & Todos module (design delta G1).
-    todos: (params) => withQuery(`${root}/tasks`, { tab: 'todos', ...params }),
+    todos: (params) => withQuery(`${root}/todos`, params),
     notes: (params) => withQuery(`${root}/notes`, params),
     note: (id) => `${root}/notes/${id}`,
     journal: (date) => (date ? `${root}/journal/${date}` : `${root}/journal`),

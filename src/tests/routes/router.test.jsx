@@ -64,7 +64,8 @@ describe('router (signed in)', () => {
     ['/spaces', 'Your spaces'],
     ['/s/thmp/dashboard', 'Dashboard'],
     ['/s/thmp/inbox', 'Inbox'],
-    ['/s/thmp/tasks', 'Tasks & Todos'],
+    ['/s/thmp/tasks', 'Tasks'],
+    ['/s/thmp/todos', 'Todos'],
     ['/s/thmp/tasks/t1', 'Task'],
     ['/s/global/notes', 'Notes'],
     ['/s/thmp/notes/n1', 'Note'],
@@ -105,10 +106,7 @@ describe('router (signed in)', () => {
   it('renders the shell: switcher, sections and breadcrumb', async () => {
     renderAt('/s/thmp/notes')
     expect(await screen.findByRole('heading', { name: 'Notes' })).toBeInTheDocument()
-    expect(screen.getByRole('link', { name: 'Tasks & Todos' })).toHaveAttribute(
-      'href',
-      '/s/thmp/tasks',
-    )
+    expect(screen.getByRole('link', { name: 'Tasks' })).toHaveAttribute('href', '/s/thmp/tasks')
     expect(screen.getByRole('link', { name: 'Notes' })).toHaveAttribute('data-active', 'true')
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toHaveTextContent('THMP')
     expect(localStorage.getItem('axon:lastSpaceSlug')).toBe('"thmp"')
@@ -147,15 +145,6 @@ describe('router (signed in)', () => {
     const router = renderAt('/s/thmp')
     expect(await screen.findByRole('heading', { name: 'Dashboard' })).toBeInTheDocument()
     expect(router.state.location.pathname).toBe('/s/thmp/dashboard')
-  })
-
-  it('redirects todos to the Todos tab of Tasks & Todos', async () => {
-    const router = renderAt('/s/thmp/todos')
-    expect(
-      await screen.findByRole('heading', { level: 1, name: 'Tasks & Todos' }),
-    ).toBeInTheDocument()
-    expect(router.state.location.pathname).toBe('/s/thmp/tasks')
-    expect(router.state.location.search).toBe('?tab=todos')
   })
 
   it.each(['/login', '/signup', '/forgot-password'])(

@@ -120,7 +120,7 @@ The app runs at **http://localhost:6420**. Supabase Auth's Site URL and Redirect
   - Create dialogs in Global require picking a space.
   - Reports and inbox items may have `space_id = NULL`, meaning global.
 - **Scope.** `useSpace()` exposes `scopeSpaceIds`: `[currentSpace.id]`, or every active space id in Global. Every space-scoped query takes `spaceIds` and filters with `.in('space_id', spaceIds)`. This one mechanism makes Global work everywhere.
-- **Tasks vs todos.** They are separate tables but share one UI module, **Tasks & Todos** (`/tasks`, with tabs).
+- **Tasks vs todos.** They are separate tables and separate pages: **Tasks** (`/tasks`) and **Todos** (`/todos`). The design merged them into one module; that was reversed on 2026-09-24 because todos share almost none of the Tasks page's controls.
   - A task is tracked work with a status, priority, dates, tags, a rich description, linked notes and an activity log.
   - A todo is a quick checkbox. It either stands alone or sits on a task as a checklist item (`todos.task_id`).
 - **Notes ↔ tasks.** Links are many-to-many (`note_task_links`) and come from two sources:

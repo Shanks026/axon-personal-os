@@ -16,7 +16,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
 
 | # | Delta | Resolution |
 |---|---|---|
-| G1 | **Tasks & Todos are one module.** The nav item is "Tasks & Todos", with tabs All · Tasks · Todos · In progress · Completed. There is no standalone Todos page on desktop. | **Adopt.** `/s/:slug/todos` redirects to `tasks?tab=todos`. Feature 05 becomes "Todos inside the Tasks module" (the data, the components and the tab). The mobile design still shows a separate Todos screen; on mobile, use the same Tasks module with its tabs. |
+| G1 | **Tasks & Todos are one module.** The nav item is "Tasks & Todos", with tabs All · Tasks · Todos · In progress · Completed. There is no standalone Todos page on desktop. | ~~Adopt.~~ **Reversed on 2026-09-24 (user decision): Tasks and Todos are separate pages.** Todos share almost nothing with the Tasks page (no status, board, priority or status tabs) and want a fast checkbox list with date buckets. Sidebar: **Tasks** and **Todos**. `/s/:slug/todos` is a real page (Feature 05, as originally planned). Tasks tabs are All · In progress · Completed. The Dashboard's Today still mixes both, and the mobile design already shows a separate Todos screen. |
 | G2 | **The task views** are a card **grid** (default), **board** and **list**, switched with a three-way segmented control. Cards show a description preview, a filled status pill, priority, tags, checklist progress, due date and an MR icon. In Global, the space goes in the card footer. Todos appear as cards, with "↳ parent" when they're checklist items. | **Adopt.** The list view stays as the dense option. The grid needs `description_text` (first 140 characters) in the list select. |
 | G3 | "Done" is labelled **"Completed"** for tasks. Todos use "Todo" / "Done". | **Adopt** (labels only; DB values unchanged). |
 | G4 | Two header heights: 56px (Dashboard, Tasks, Calendar) and 48px with a sidebar toggle (everything else). | **Standardise on 48px with a `panel-left` toggle.** Page-level alerts (e.g. "2 overdue · Review") go in the header actions slot. |
@@ -68,7 +68,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
 - **Adopt (delete dialog):** 440px, with **six count tiles** (tasks, notes, todos, events, journal days, reports). Counts for tables that don't exist yet are omitted.
 - **Adopt (sidebar):**
   - Search ⌘K and Quick capture ⌘J buttons sit under the switcher. They're stubs until Features 12 and 13.
-  - Nav: Dashboard, Inbox (with a badge), Tasks & Todos, Notes, Journal, Calendar, Reports.
+  - Nav: Dashboard, Inbox (with a badge), Tasks, Todos, Notes, Journal, Calendar, Reports (Tasks and Todos split per G1, reversed).
   - Then Pinned, then a footer with Trash, Settings, and a user row (initials, name, theme icon).
 - **Gallery layout:** max-width 1040, 3 columns, gap 16, cards min-height 176.
 
@@ -86,9 +86,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
   - A **"Create more"** switch, and ⌘↵ to submit.
 - **Adopt:** loading uses skeleton cards 208px tall. The empty state says "Press C".
 - **Doc changes:**
-  - 05 no longer builds `TodosPage`. It builds `TodosTab` inside `TasksPage`, plus `TodoCard` and `TodoDialog`, and keeps the `TodoChecklist` phase.
-  - `?highlight=` becomes `tasks?tab=todos&highlight=<id>`.
-  - Todo groups (Overdue, Today, Upcoming, Someday) apply in list view within the Todos tab.
+  - ~~05 builds a `TodosTab` inside `TasksPage`.~~ Superseded by the G1 reversal: 05 builds its own `TodosPage` at `/s/:slug/todos` as its doc already describes, with `?highlight=<id>` and the Overdue / Today / Upcoming / Someday groups. The header's **New todo** button lives on the Todos page, not on Tasks.
 
 ### 06 Notes
 - **Adopt (list):**
@@ -151,7 +149,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
   - Header actions: **"Write today's log"** and **New task**. This replaces the Journal prompt widget.
   - **4 tinted stat tiles:** Overdue ("oldest 3d"), Due today, In progress, and Completed · Q2 ("+4 vs Q1").
   - **Global:** the per-space breakdown cards sit **above Today**. Each has open/overdue/done pills and a progress bar.
-  - **Today** is a 3-column `ItemCard` grid, with a link to "All tasks & todos".
+  - **Today** is a 3-column `ItemCard` grid, with links to Tasks and Todos.
   - **Quarter progress** (W1–W13, with the current week faded) and **Upcoming** (date column plus time pill) share a 7/5 row.
   - **Recent notes** are 4 muted cards with a tag and no snippet.
   - **Remove** the In progress widget; the tile links to the filtered tasks instead.

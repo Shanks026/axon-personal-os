@@ -19,14 +19,9 @@ import NotFoundPage from '@/features/system/pages/NotFoundPage'
 import RouteErrorPage from '@/features/system/pages/RouteErrorPage'
 import TaskDetailPage from '@/features/tasks/pages/TaskDetailPage'
 import TasksPage from '@/features/tasks/pages/TasksPage'
+import TodosPage from '@/features/todos/pages/TodosPage'
 import TrashPage from '@/features/trash/pages/TrashPage'
-import {
-  PublicOnly,
-  RequireAuth,
-  RootRedirect,
-  SpaceBoundary,
-  TodosRedirect,
-} from '@/routes/guards'
+import { PublicOnly, RequireAuth, RootRedirect, SpaceBoundary } from '@/routes/guards'
 
 // Route tree: .claude/rules/routing.md. Build URLs with @/lib/paths, never by hand.
 // Pages are imported eagerly (like Tercero): lazy chunks made the old screen linger, or a
@@ -66,7 +61,7 @@ export const routes = [
                   { path: 'inbox', element: <InboxPage /> },
                   { path: 'tasks', element: <TasksPage /> },
                   { path: 'tasks/:taskId', element: <TaskDetailPage /> },
-                  { path: 'todos', element: <TodosRedirect /> },
+                  { path: 'todos', element: <TodosPage /> },
                   { path: 'notes', element: <NotesPage /> },
                   { path: 'notes/:noteId', element: <NoteEditorPage /> },
                   { path: 'journal', element: <JournalPage /> },

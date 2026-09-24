@@ -34,11 +34,11 @@ Phase 3: Tags
 ## Phase 1: Core (grid and list) ✅ Complete
 
 ### Design fold (deltas G1–G3 and 04/05, folded on 2026-09-23). This overrides the spec below where they differ.
-- **Page = "Tasks & Todos"** (G1).
+- **Page = "Tasks"** (G1 was reversed on 2026-09-24: Todos have their own page in Feature 05).
   - The header shows the title with a weight-300 count, and a subtitle (the space description, or "Everything across …" in Global).
-  - Header actions: **New task**. **New todo** arrives with Feature 05.
+  - Header actions: **New task**.
   - `HeaderAlert` in the page header: "N overdue · Review" applies `due=overdue`.
-- **Tabs** (`?tab=`): **All · Tasks · In progress · Completed**, each with a count. The **Todos** tab arrives with 05.
+- **Tabs** (`?tab=`): **All · In progress · Completed**, each with a count. (A "Tasks" tab existed only to sit beside a Todos tab; it was removed with the split.)
   - All: every task.
   - In progress: `in_progress` and `in_review`.
   - Completed: `done`.
@@ -259,7 +259,7 @@ src/components/shared/
 - [x] `00-index.md` DB registry, status and changelog are updated; `axon-data-patterns.md` §10 lists the new shared components
 
 ### Implementation Notes (Phase 1)
-- **The design fold above replaced the list-first plan.** The grid is the default, the list is the dense option, and the board is still Phase 2. The Todos tab and New todo arrive with 05.
+- **The design fold above replaced the list-first plan.** The grid is the default, the list is the dense option, and the board is still Phase 2. Todos get their own page in 05 (the G1 merge was reversed on 2026-09-24).
 - **Filtering is split** between server and client:
   - The server handles priority, due window, search and the closed-task window.
   - The client handles the tab and status filter, over the same result. This keeps every tab count live without extra queries, which is fine at personal scale.

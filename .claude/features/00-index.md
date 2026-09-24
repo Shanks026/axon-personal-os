@@ -20,7 +20,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | ✅ Complete |
 | **Wave 2: Capture** | | | | |
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | 🟡 Phase 1 ✅ · Phase 2 next |
-| 05 | Todos: tab inside the Tasks & Todos module, plus task checklists | [05-todos.md](05-todos.md) | 04 | 🔵 Planned (restructure per delta G1 before building) |
+| 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | 🔵 Planned |
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | 🔵 Planned |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🔵 Planned |
 | **Wave 3: Time** | | | | |
@@ -111,6 +111,13 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-24: Tasks and Todos split into separate pages
+- **Reverses design delta G1** (user decision). Todos share almost none of the Tasks page's controls, so they get their own page.
+- Sidebar: **Tasks** and **Todos** (lucide `ListChecks`). The Tasks page title is "Tasks".
+- Tasks tabs are now **All · In progress · Completed**; the duplicate "Tasks" tab is gone.
+- `/s/:slug/todos` renders a placeholder `TodosPage` (new folder `src/features/todos/`) instead of redirecting; `TodosRedirect` is removed. `paths.space(slug).todos()` points at `/todos`, and `sectionFromPath` knows `todos`.
+- Docs: `design-deltas.md` (G1, 03 nav, 04/05, 10), `04-tasks.md`, `routing.md`, `CLAUDE.md`. The 05 doc already planned a standalone page, so it needed no change.
 
 ### 2026-09-24: Session handoff
 - `CLAUDE.md` **Status** now has a feature table and a **"Resume here"** section covering:
