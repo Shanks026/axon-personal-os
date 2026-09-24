@@ -112,6 +112,15 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-24: Session handoff
+- `CLAUDE.md` **Status** now has a feature table and a **"Resume here"** section covering:
+  - The next step: Feature 04 Phase 2 (Board).
+  - The phase workflow (verify, docs, commit and push, stop).
+  - The database access fallback.
+  - Environment gotchas: port 6420, and backticks in `node -e`.
+  - A digest of the UI decisions made during the build.
+- There are no code changes in this entry.
+
 ### 2026-09-23: Feature 04 Phase 1: Tasks & Todos page (grid and list)
 - **Migration `20260923181804_create_tasks`:**
   - The `tasks` table, with statuses, priorities, dates, link, position, soft delete and a tsvector column.

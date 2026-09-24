@@ -12,7 +12,47 @@ Guidance for Claude Code when working in this repository.
 
 ## Status
 
-Planning is complete; nothing is built yet. See `.claude/features/00-index.md` for the roadmap, the build status and the changelog.
+See `.claude/features/00-index.md` for the roadmap, the build status and the changelog. As of 2026-09-24:
+
+| Feature | State |
+|---|---|
+| 01 Foundation | ✅ Complete |
+| 02 Auth, profile and settings (fiscal year) | ✅ Complete |
+| 03 Spaces gallery, app shell, Global | ✅ Complete |
+| 04 Tasks | Phase 1 (grid, list, dialog, filters) ✅. **Next: Phase 2, the board view**, then Phase 3, tags |
+| 05–14 | Planned (docs in `.claude/features/`) |
+
+### Resume here (session handoff)
+
+1. **Next step: Feature 04 Phase 2 (Board).**
+   - Run the `axon-feature` skill, Step 4.
+   - Re-read the Phase 2 section of `.claude/features/04-tasks.md`, then fold in the board items from `.claude/design/design-deltas.md` (04/05):
+     - 5 columns, with Cancelled hidden.
+     - 270px `bg-muted` columns with "+ Add task".
+     - A 96px dashed accent drop slot.
+   - Add a Board option to the existing Grid/List `SegmentedControl` in `TaskToolbar`.
+2. **Workflow the user expects:**
+   - Build one phase, verify it (lint, tests, build, the `axon-rules` audit), and update the feature doc, `00-index.md` and the patterns catalogue.
+   - **Then commit and push to `main`** (github.com/Shanks026/axon-personal-os), and stop for approval.
+   - The user tests in the browser and reports UI issues. Fix them promptly and record each preference in the rules.
+3. **Database access:**
+   - Use the Supabase MCP tools (they load at session start).
+   - If they're missing, use the Management API fallback in `.claude/rules/supabase.md`. The token is in `~/.claude.json` under this project's `mcpServers.supabase.env`. Never print it.
+   - Verify with rolled-back transactions, and mirror every migration in `supabase/migrations/` using the server version.
+4. **Environment:**
+   - The dev server runs at http://localhost:6420 (`DEV_PORT`).
+   - It's Windows, with Git Bash and PowerShell.
+   - With `node -e` inside bash double quotes, **backticks run as shell commands**. Use the Edit/Write tools for any text containing backticks.
+5. **UI decisions made during the build** (all recorded in `.claude/rules/`):
+   - Typography: Tailwind/shadcn default type (`text-sm` body).
+   - Spaces: emoji identity shown bare (no tile); space images wait for Feature 15.
+   - Sidebar: 16.5rem wide, 3rem rail.
+   - Shadows: very subtle everywhere.
+   - Overlays: no backdrop blur (it caused frame drops); scaling dialogs get `will-change-transform`.
+   - Shortcut hints: the `<Kbd>` component, with lucide Command icons.
+   - Destructive actions: always the shadcn `destructive` variant.
+   - Pages: eager, inside one persistent `AppShell` whose content column is the only scroll container; no route-loading splash.
+   - Signup has a confirm-password field, the password minimum is 10, and email confirmation is off in Supabase.
 
 - **Design system v1 is set.** It comes from Claude Design, and its source files are in `.claude/design/Axon design system built/`.
   - `.claude/rules/design-system.md` holds the tokens, motion and component specs. It will be refined as the build goes on.
