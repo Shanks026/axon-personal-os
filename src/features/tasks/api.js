@@ -8,30 +8,48 @@ import { daysAgoISO } from '@/features/tasks/utils'
 export const taskKeys = {
   all: ['tasks'],
   lists: () => [...taskKeys.all, 'list'],
-  list: (params) => [...taskKeys.lists(), params], // { spaceIds, priority, due, q, today, weekEnd, allClosed }
+  list: (params) => [...taskKeys.lists(), params], // { spaceIds, priority, due, q, tag, today, weekEnd, allClosed }
   details: () => [...taskKeys.all, 'detail'],
   detail: (id) => [...taskKeys.details(), id],
 }
 
 const LIST_COLUMNS =
-  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, external_url, position, pinned_at, created_at, updated_at'
+  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, external_url, position, pinned_at, created_at, updated_at, tag_ids:task_tags(tag_id)'
 
 const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
 
+/** Flattens the embedded `task_tags(tag_id)` rows into a plain `tag_ids: string[]`. */
+function mapTagIds(row) {
+  return { ...row, tag_ids: row.tag_ids?.map((t) => t.tag_id) ?? [] }
+}
+
 /**
  * Scoped task list. Tab and status filtering happen on the client (so tab counts stay live);
- * priority, due window and search run here. Closed tasks older than DONE_WINDOW_DAYS are left
- * out unless `allClosed` (Completed tab or an explicit status filter).
+ * priority, due window, tag and search run here. Closed tasks older than DONE_WINDOW_DAYS are
+ * left out unless `allClosed` (Completed tab or an explicit status filter).
+ *
+ * `tag` (any-of) joins `task_tags` a second time under its own alias, so the filter doesn't trim
+ * the `tag_ids` a task actually has (an inner-joined single alias would).
  */
-export async function fetchTasks({ spaceIds, priority = [], due, q, today, weekEnd, allClosed }) {
+export async function fetchTasks({
+  spaceIds,
+  priority = [],
+  due,
+  q,
+  tag = [],
+  today,
+  weekEnd,
+  allClosed,
+}) {
   let query = supabase
     .from('tasks')
-    .select(LIST_COLUMNS)
+    .select(tag.length ? `${LIST_COLUMNS}, tag_match:task_tags!inner(tag_id)` : LIST_COLUMNS)
     .in('space_id', spaceIds)
     .is('deleted_at', null)
     .order('position', { ascending: true })
 
   if (priority.length) query = query.in('priority', priority)
+  if (tag.length) query = query.in('tag_match.tag_id', tag)
   if (due === 'overdue') query = query.lt('due_date', today).not('status', 'in', '(done,cancelled)')
   if (due === 'today') query = query.eq('due_date', today)
   if (due === 'week') query = query.gte('due_date', today).lte('due_date', weekEnd)
@@ -45,7 +63,7 @@ export async function fetchTasks({ spaceIds, priority = [], due, q, today, weekE
 
   const { data, error } = await query
   if (error) throw error
-  return data
+  return data.map(mapTagIds)
 }
 
 async function nextPosition(spaceId) {
@@ -68,7 +86,7 @@ export async function createTask(values) {
     .select(LIST_COLUMNS)
     .single()
   if (error) throw error
-  return data
+  return mapTagIds(data)
 }
 
 export async function updateTask(id, patch) {
@@ -79,7 +97,7 @@ export async function updateTask(id, patch) {
     .select(LIST_COLUMNS)
     .single()
   if (error) throw error
-  return data
+  return mapTagIds(data)
 }
 
 export const softDeleteTask = (id) => updateTask(id, { deleted_at: new Date().toISOString() })

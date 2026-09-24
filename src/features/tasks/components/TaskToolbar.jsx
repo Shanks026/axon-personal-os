@@ -12,7 +12,9 @@ import {
 } from 'lucide-react'
 import { useDebouncedCallback } from 'use-debounce'
 import { cn } from '@/lib/utils'
+import { useSpace } from '@/context/SpaceContext'
 import { SegmentedControl } from '@/components/shared/SegmentedControl'
+import { TagPicker } from '@/components/shared/TagPicker'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -56,8 +58,9 @@ function FilterButton({ icon: Icon, label, count, active, children }) {
 
 const toggle = (list, v) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
 
-/** Search on the left; Status / Priority / Due filters and the view switch on the right. */
+/** Search on the left; Status / Priority / Tags / Due filters and the view switch on the right. */
 export function TaskToolbar({ filters, setFilter, clear, hasFilters }) {
+  const { scopeSpaceIds } = useSpace()
   // Local text so typing stays instant; the URL updates after a short pause.
   const [text, setText] = useState(filters.q)
   const pushQuery = useDebouncedCallback((v) => setFilter('q', v), 250)
@@ -146,6 +149,13 @@ export function TaskToolbar({ filters, setFilter, clear, hasFilters }) {
           </DropdownMenuCheckboxItem>
         ))}
       </FilterButton>
+
+      <TagPicker
+        mode="filter"
+        value={filters.tag}
+        onChange={(ids) => setFilter('tag', ids)}
+        spaceIds={scopeSpaceIds}
+      />
 
       <FilterButton icon={CalendarDays} label={dueLabel ?? 'Due'} active={!!filters.due}>
         <DropdownMenuLabel className="text-xs text-faint">Due</DropdownMenuLabel>

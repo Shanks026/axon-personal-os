@@ -1,26 +1,24 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CalendarArrowUp, CalendarDays, ChevronRight, Link2, X } from 'lucide-react'
+import { CalendarArrowUp, CalendarDays, ChevronRight, X } from 'lucide-react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
-import { formatDateShort } from '@/lib/dates'
 import { useSpace } from '@/context/SpaceContext'
-import { DatePicker } from '@/components/shared/DatePicker'
 import { Kbd } from '@/components/shared/Kbd'
 import { PropertyChip } from '@/components/shared/PropertyChip'
 import { SpaceChipPicker } from '@/components/shared/SpaceChipPicker'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { Switch } from '@/components/ui/switch'
 import { useMyProfile } from '@/features/auth/api'
 import { usePreferences } from '@/features/settings/api'
+import { useSetTaskTags, useTags } from '@/features/tags/api'
 import { useCreateTask, useUpdateTask } from '@/features/tasks/api'
+import { DateChip, LinkChip, TagsChip } from '@/features/tasks/components/TaskDialogChips'
 import { PriorityMenu, StatusMenu } from '@/features/tasks/components/TaskMenus'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP } from '@/features/tasks/constants'
 import { taskSchema } from '@/features/tasks/schemas'
-import { linkHost, textToDoc } from '@/features/tasks/utils'
+import { textToDoc } from '@/features/tasks/utils'
 
 /**
  * Create (no `task`) or edit a task (design 04f, Linear-style). Mountable standalone:
@@ -52,9 +50,11 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
   const isEdit = !!task
   const create = useCreateTask()
   const update = useUpdateTask()
+  const setTaskTags = useSetTaskTags()
   const { weekStartsOn } = usePreferences()
   const defaultSpace = useDefaultSpaceId(initialValues?.space_id)
   const [createMore, setCreateMore] = useState(false)
+  const [tagIds, setTagIds] = useState(task?.tag_ids ?? initialValues?.tag_ids ?? [])
 
   const blank = {
     space_id: defaultSpace,
@@ -81,21 +81,32 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
         }
       : { ...blank, ...initialValues, space_id: defaultSpace },
   })
-  const [status, priority, externalUrl] = useWatch({
+  const [status, priority, externalUrl, spaceId] = useWatch({
     control: form.control,
-    name: ['status', 'priority', 'external_url'],
+    name: ['status', 'priority', 'external_url', 'space_id'],
   })
   const errors = form.formState.errors
   const pending = create.isPending || update.isPending
 
+  // Changing the space (Global only) drops tags scoped to a different space.
+  const { data: spaceTags = [] } = useTags({ spaceIds: spaceId ? [spaceId] : [] })
+  const prevSpaceId = useRef(spaceId)
+  useEffect(() => {
+    if (spaceId === prevSpaceId.current) return
+    prevSpaceId.current = spaceId
+    setTagIds((ids) => ids.filter((id) => spaceTags.some((t) => t.id === id)))
+  }, [spaceId, spaceTags])
+
   const onSubmit = form.handleSubmit((values) => {
     const payload = { ...values, description: textToDoc(values.description_text) }
     const done = (row) => {
+      setTaskTags.mutate({ taskId: row.id, tagIds })
       onSuccess?.(row)
       if (!isEdit && createMore) {
         toast.success('Task created', { description: row.title })
         form.reset({ ...values, title: '', description_text: '' })
         form.setFocus('title')
+        setTagIds([])
         return
       }
       if (!isEdit) toast.success('Task created')
@@ -196,6 +207,7 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
           icon={CalendarDays}
           weekStartsOn={weekStartsOn}
         />
+        <TagsChip spaceId={spaceId} tags={spaceTags} value={tagIds} onChange={setTagIds} />
         <LinkChip form={form} value={externalUrl} />
       </div>
       {(errors.due_date || errors.external_url || errors.space_id) && (
@@ -218,51 +230,5 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
         </Button>
       </div>
     </form>
-  )
-}
-
-function DateChip({ form, name, label, icon, weekStartsOn }) {
-  return (
-    <Controller
-      name={name}
-      control={form.control}
-      render={({ field }) => (
-        <DatePicker value={field.value} onChange={field.onChange} weekStartsOn={weekStartsOn}>
-          <PropertyChip icon={icon} empty={!field.value}>
-            {field.value ? `${label} ${formatDateShort(field.value)}` : label}
-          </PropertyChip>
-        </DatePicker>
-      )}
-    />
-  )
-}
-
-function LinkChip({ form, value }) {
-  const [open, setOpen] = useState(false)
-  return (
-    <Popover open={open} onOpenChange={setOpen}>
-      <PopoverTrigger asChild>
-        <PropertyChip icon={Link2} empty={!value}>
-          {value ? linkHost(value) : 'Link'}
-        </PropertyChip>
-      </PopoverTrigger>
-      <PopoverContent align="start" className="w-80 p-3">
-        <label className="mb-1.5 block text-xs font-medium" htmlFor="task-link">
-          MR, ticket or doc link
-        </label>
-        <Input
-          id="task-link"
-          {...form.register('external_url')}
-          placeholder="https://gitlab.com/…/merge_requests/1431"
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              setOpen(false)
-            }
-          }}
-          autoFocus
-        />
-      </PopoverContent>
-    </Popover>
   )
 }

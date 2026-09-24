@@ -11,32 +11,58 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import { taskKeys, useMoveTask } from '@/features/tasks/api'
 import TasksPage from '@/features/tasks/pages/TasksPage'
 
-const db = vi.hoisted(() => ({ tasks: [], calls: [], failUpdate: false }))
+const db = vi.hoisted(() => ({
+  tasks: [],
+  tags: [],
+  taskTags: [],
+  calls: [],
+  failUpdate: false,
+}))
 
 vi.mock('@/context/AuthContext', () => ({
   AuthProvider: ({ children }) => children,
   useAuth: () => ({ session: {}, user: { id: 'u1' }, loading: false, signOut: async () => {} }),
 }))
 
-// Chainable in-memory stand-in for supabase.from(...). Filters are ignored except space scoping.
+// Chainable in-memory stand-in for supabase.from(...). Space and column filters are ignored
+// (fixtures are already scoped), except the tag filter, which `runTasks` honours so the tag
+// filter tests mean something.
 vi.mock('@/lib/supabase', () => {
   const result = (data) => Promise.resolve({ data, error: null })
+  const attachTagIds = (row) => ({
+    ...row,
+    tag_ids: db.taskTags.filter((tt) => tt.task_id === row.id).map((tt) => ({ tag_id: tt.tag_id })),
+  })
+
   function builder(table) {
-    const state = { op: 'select', patch: null, id: null, single: false }
+    const state = { op: 'select', patch: null, id: null, taskId: null, single: false, filters: [] }
     const b = {
       select: () => b,
-      in: () => b,
-      is: () => b,
+      in: (col, vals) => {
+        state.filters.push({ col, vals })
+        return b
+      },
+      is: (col, val) => {
+        state.filters.push({ col: `is:${col}`, vals: val })
+        return b
+      },
       order: () => b,
       lt: () => b,
       lte: () => b,
       gte: () => b,
-      not: () => b,
+      not: (col, op, val) => {
+        state.filters.push({ col: `not:${col}`, vals: val })
+        return b
+      },
       ilike: () => b,
-      or: () => b,
+      or: (expr) => {
+        state.filters.push({ col: 'or', vals: expr })
+        return b
+      },
       limit: () => b,
       eq: (col, val) => {
         if (col === 'id') state.id = val
+        if (col === 'task_id') state.taskId = val
         return b
       },
       insert: (values) => {
@@ -49,14 +75,23 @@ vi.mock('@/lib/supabase', () => {
         state.patch = patch
         return b
       },
+      upsert: (rows) => {
+        state.op = 'upsert'
+        state.patch = rows
+        return b
+      },
+      delete: () => {
+        state.op = 'delete'
+        return b
+      },
       single: () => ((state.single = true), b),
       maybeSingle: () => ((state.single = true), b),
       then: (resolve, reject) => run().then(resolve, reject),
     }
-    function run() {
-      if (table === 'profiles') return result({ id: 'u1', last_space_id: null, week_starts_on: 1 })
+
+    function runTasks() {
       if (state.op === 'insert') {
-        const row = {
+        const row = attachTagIds({
           id: `t${db.tasks.length + 1}`,
           completed_at: null,
           pinned_at: null,
@@ -64,7 +99,7 @@ vi.mock('@/lib/supabase', () => {
           created_at: '2026-09-23T10:00:00Z',
           updated_at: '2026-09-23T10:00:00Z',
           ...state.patch,
-        }
+        })
         db.calls.push(['insert', row])
         db.tasks.push(row)
         return result(row)
@@ -73,10 +108,92 @@ vi.mock('@/lib/supabase', () => {
         if (db.failUpdate) return Promise.resolve({ data: null, error: new Error('Network down') })
         db.calls.push(['update', state.id, state.patch])
         db.tasks = db.tasks.map((t) => (t.id === state.id ? { ...t, ...state.patch } : t))
-        return result(db.tasks.find((t) => t.id === state.id))
+        return result(attachTagIds(db.tasks.find((t) => t.id === state.id)))
       }
-      const live = db.tasks.filter((t) => !t.deleted_at)
+      let live = db.tasks.filter((t) => !t.deleted_at)
+      const tagFilter = state.filters.find((f) => f.col === 'tag_match.tag_id')
+      if (tagFilter) {
+        live = live.filter((t) =>
+          db.taskTags.some((tt) => tt.task_id === t.id && tagFilter.vals.includes(tt.tag_id)),
+        )
+      }
+      live = live.map(attachTagIds)
       return result(state.single ? (live.at(-1) ?? null) : live)
+    }
+
+    function runTags() {
+      const scopeKey = (t) => `${t.space_id ?? 'null'}|${t.name.toLowerCase()}`
+      if (state.op === 'insert') {
+        if (db.tags.some((t) => scopeKey(t) === scopeKey(state.patch))) {
+          return Promise.resolve({ data: null, error: { code: '23505', message: 'duplicate' } })
+        }
+        const row = {
+          id: `tag${db.tags.length + 1}`,
+          color: 'slate',
+          created_at: '2026-09-24T10:00:00Z',
+          updated_at: '2026-09-24T10:00:00Z',
+          ...state.patch,
+        }
+        db.calls.push(['insert:tags', row])
+        db.tags.push(row)
+        return result(row)
+      }
+      if (state.op === 'update') {
+        db.calls.push(['update:tags', state.id, state.patch])
+        db.tags = db.tags.map((t) => (t.id === state.id ? { ...t, ...state.patch } : t))
+        return result(db.tags.find((t) => t.id === state.id))
+      }
+      if (state.op === 'delete') {
+        db.calls.push(['delete:tags', state.id])
+        db.tags = db.tags.filter((t) => t.id !== state.id)
+        db.taskTags = db.taskTags.filter((tt) => tt.tag_id !== state.id)
+        return result(null)
+      }
+      // Mirrors fetchTags: global tags (space_id null) plus tags scoped to a requested space.
+      const orFilter = state.filters.find((f) => f.col === 'or')
+      const isNullFilter = state.filters.find((f) => f.col === 'is:space_id')
+      let inScope = db.tags
+      if (orFilter) {
+        const m = orFilter.vals.match(/space_id\.in\.\(([^)]*)\)/)
+        const ids = m ? m[1].split(',') : []
+        inScope = db.tags.filter((t) => t.space_id == null || ids.includes(t.space_id))
+      } else if (isNullFilter) {
+        inScope = db.tags.filter((t) => t.space_id == null)
+      }
+      const withCounts = inScope.map((t) => ({
+        ...t,
+        task_tags: [{ count: db.taskTags.filter((tt) => tt.tag_id === t.id).length }],
+      }))
+      return result(withCounts)
+    }
+
+    function runTaskTags() {
+      if (state.op === 'delete') {
+        const notIn = state.filters.find((f) => f.col === 'not:tag_id')
+        const keepIds = notIn ? notIn.vals.replace(/[()]/g, '').split(',') : []
+        db.calls.push(['delete:task_tags', state.taskId, keepIds])
+        db.taskTags = db.taskTags.filter(
+          (tt) => tt.task_id !== state.taskId || keepIds.includes(tt.tag_id),
+        )
+        return result(null)
+      }
+      if (state.op === 'upsert') {
+        db.calls.push(['upsert:task_tags', state.patch])
+        state.patch.forEach((r) => {
+          if (!db.taskTags.some((tt) => tt.task_id === r.task_id && tt.tag_id === r.tag_id)) {
+            db.taskTags.push(r)
+          }
+        })
+        return result(state.patch)
+      }
+      return result(db.taskTags)
+    }
+
+    function run() {
+      if (table === 'profiles') return result({ id: 'u1', last_space_id: null, week_starts_on: 1 })
+      if (table === 'tags') return runTags()
+      if (table === 'task_tags') return runTaskTags()
+      return runTasks()
     }
     return b
   }
@@ -143,6 +260,8 @@ beforeEach(() => {
   localStorage.clear()
   db.calls = []
   db.failUpdate = false
+  db.tags = []
+  db.taskTags = []
   db.tasks = [
     task('t1', 'Buyer portal: fix RFQ pagination', 'in_review', {
       priority: 'high',
@@ -328,6 +447,138 @@ describe('TasksPage', () => {
     await user.click(within(todo).getByRole('button', { name: 'Storefront: lazy-load images' }))
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByLabelText('Task title')).toHaveValue('Storefront: lazy-load images')
+  })
+})
+
+// The command list re-renders the same tag name that's already showing on a task's pill (a
+// card, a row, another popover), so every tag query is scoped to the open popover's own content.
+async function tagPopover(user, buttonScope = document.body) {
+  await user.click(within(buttonScope).getByRole('button', { name: 'Tags' }))
+  const input = await screen.findByPlaceholderText('Search tags…')
+  return within(input.closest('[data-slot="popover-content"]'))
+}
+
+describe('Tags (Phase 3)', () => {
+  beforeEach(() => {
+    db.tags = [{ id: 'tag1', space_id: null, name: 'frontend', color: 'blue' }]
+    db.taskTags = [{ task_id: 't1', tag_id: 'tag1', user_id: 'u1' }]
+  })
+
+  it('shows tag pills on a card and a row', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const card = (await screen.findByText('Buyer portal: fix RFQ pagination')).closest('article')
+    expect(within(card).getByText('frontend')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('radio', { name: 'List' }))
+    const row = (await screen.findByText('Buyer portal: fix RFQ pagination')).closest('div')
+    expect(within(row).getByText('frontend')).toBeInTheDocument()
+  })
+
+  it('filters by tag through the URL', async () => {
+    const user = userEvent.setup()
+    const router = renderPage()
+    await screen.findByText('Storefront: lazy-load images')
+    const popover = await tagPopover(user)
+    await user.click(popover.getByText('frontend'))
+    await waitFor(() => expect(router.state.location.search).toBe('?tag=tag1'))
+    // The tagged task's own pill stays visible on the (now single) filtered result.
+    expect(await screen.findByText('Buyer portal: fix RFQ pagination')).toBeInTheDocument()
+  })
+
+  it('creates a tag inline from the task dialog and assigns it', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Storefront: lazy-load images')
+    await user.click(screen.getByRole('button', { name: 'New task' }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByLabelText('Task title'), 'Admin: role-based menu')
+    const popover = await tagPopover(user, dialog)
+    await user.type(popover.getByPlaceholderText('Search tags…'), 'backend')
+    await user.click(await popover.findByText('Create tag “backend”'))
+    await user.keyboard('{Escape}')
+    await user.click(within(dialog).getByRole('button', { name: /create task/i }))
+
+    await waitFor(() => expect(db.calls.some((c) => c[0] === 'upsert:task_tags')).toBe(true))
+    const createdTag = db.calls.find((c) => c[0] === 'insert:tags')[1]
+    // The dialog defaults to the current space, so the new tag is scoped to it, not global.
+    expect(createdTag).toMatchObject({ name: 'backend', space_id: SPACE.id })
+    const createdTask = db.calls.find((c) => c[0] === 'insert')[1]
+    const linked = db.calls.find((c) => c[0] === 'upsert:task_tags')[1]
+    expect(linked).toEqual([{ task_id: createdTask.id, tag_id: createdTag.id }])
+  })
+
+  it('shows a friendly error for a duplicate tag name', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Storefront: lazy-load images')
+    await user.click(screen.getByRole('button', { name: 'New task' }))
+    const dialog = await screen.findByRole('dialog')
+    const popover = await tagPopover(user, dialog)
+    await user.type(popover.getByPlaceholderText('Search tags…'), 'Frontend')
+    // Exact (case-insensitive) match: no "Create" offer, the existing tag is offered instead.
+    expect(popover.queryByText('Create tag “Frontend”')).not.toBeInTheDocument()
+    expect(popover.getByText('frontend')).toBeInTheDocument()
+  })
+
+  it('offers a global tag everywhere but a space tag only in its own space', async () => {
+    db.tags.push({ id: 'tag2', space_id: 'other-space', name: 'backend', color: 'green' })
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Storefront: lazy-load images')
+    await user.click(screen.getByRole('button', { name: 'New task' }))
+    const dialog = await screen.findByRole('dialog')
+    const popover = await tagPopover(user, dialog)
+    expect(popover.getByText('frontend')).toBeInTheDocument()
+    expect(popover.queryByText('backend')).not.toBeInTheDocument()
+  })
+})
+
+describe('ManageTagsDialog', () => {
+  beforeEach(() => {
+    db.tags = [{ id: 'tag1', space_id: null, name: 'frontend', color: 'blue' }]
+    db.taskTags = [{ task_id: 't1', tag_id: 'tag1', user_id: 'u1' }]
+  })
+
+  async function openManage(user) {
+    renderPage()
+    await screen.findByText('Storefront: lazy-load images')
+    const popover = await tagPopover(user)
+    await user.click(await popover.findByText('Manage tags…'))
+    return screen.findByRole('dialog', { name: 'Manage tags' })
+  }
+
+  it('renames a tag on blur', async () => {
+    const user = userEvent.setup()
+    const dialog = await openManage(user)
+    const input = within(dialog).getByLabelText('Rename frontend')
+    await user.clear(input)
+    await user.type(input, 'ui')
+    await user.tab()
+    await waitFor(() => expect(db.calls).toContainEqual(['update:tags', 'tag1', { name: 'ui' }]))
+  })
+
+  it('warns when narrowing a used tag to one space', async () => {
+    const user = userEvent.setup()
+    const dialog = await openManage(user)
+    await user.click(within(dialog).getByLabelText('Scope of frontend'))
+    const listbox = within(await screen.findByRole('listbox'))
+    await user.click(await listbox.findByText('THMP'))
+    await waitFor(() =>
+      expect(db.calls).toContainEqual(['update:tags', 'tag1', { space_id: SPACE.id }]),
+    )
+    expect(
+      await within(dialog).findByText(/Items in other spaces keep this tag/),
+    ).toBeInTheDocument()
+  })
+
+  it('deletes a tag after confirming, with the usage count in the prompt', async () => {
+    const user = userEvent.setup()
+    const dialog = await openManage(user)
+    await user.click(within(dialog).getByLabelText('Delete frontend'))
+    expect(await screen.findByText('It will be removed from 1 task.')).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Delete' }))
+    await waitFor(() => expect(db.calls).toContainEqual(['delete:tags', 'tag1']))
   })
 })
 

@@ -49,7 +49,16 @@ function columnIds(tasks, statuses) {
  * that state is kept after the drop until the task list itself changes, so the card never
  * flickers back to where it was.
  */
-export function TaskBoard({ tasks, statuses, actions, onEdit, onCreate, windowed, onShowAll }) {
+export function TaskBoard({
+  tasks,
+  statuses,
+  actions,
+  tagsById,
+  onEdit,
+  onCreate,
+  windowed,
+  onShowAll,
+}) {
   const { isGlobal, space, spaceById } = useSpace()
   const move = useMoveTask()
   const create = useCreateTask()
@@ -170,6 +179,7 @@ export function TaskBoard({ tasks, statuses, actions, onEdit, onCreate, windowed
   const cardProps = (task) => ({
     space: spaceById.get(task.space_id),
     showSpace: isGlobal,
+    tags: task.tag_ids?.map((id) => tagsById.get(id)).filter(Boolean),
     onEdit,
     onDelete: actions.remove,
   })
@@ -231,6 +241,7 @@ export function TaskBoard({ tasks, statuses, actions, onEdit, onCreate, windowed
               task={active}
               space={spaceById.get(active.space_id)}
               showSpace={isGlobal}
+              tags={active.tag_ids?.map((id) => tagsById.get(id)).filter(Boolean)}
               overlay
             />
           </motion.div>

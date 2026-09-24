@@ -3,7 +3,8 @@ import { cn } from '@/lib/utils'
 
 /**
  * Small space label for items shown in Global (design: square-ish 5px radius, muted fill,
- * accent dot), deliberately a different shape from round tag pills.
+ * accent dot). `TagPill` (Feature 04 Phase 3) uses the same `--radius-sm` shape, matching the
+ * source design's board card tags; both read as "labels", distinct from the round status pills.
  */
 export function SpaceBadge({ space, className }) {
   if (!space) return null

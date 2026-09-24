@@ -2,16 +2,18 @@ import { GitPullRequestArrow } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DueLabel } from '@/components/shared/DueLabel'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
+import { TagPillGroup } from '@/components/shared/TagPill'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PriorityMenu, StatusMenu, TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
 import { TaskPriorityPill, TaskStatusPill } from '@/features/tasks/components/TaskPills'
 import { isClosed, linkHost } from '@/features/tasks/utils'
 
 /**
- * Grid card (design 04a): status + priority pills, MR chip and menu on top; title; a 2-line
- * description; a dashed footer with the space and the due label. The card body opens `onEdit`.
+ * Grid card (design 04a/G2): status + priority pills, MR chip and menu on top; title; a 2-line
+ * description; tags; a dashed footer with the space and the due label. The card body opens
+ * `onEdit`.
  */
-export function TaskCard({ task, space, onEdit, onSetField, onDelete }) {
+export function TaskCard({ task, space, tags, onEdit, onSetField, onDelete }) {
   const closed = isClosed(task)
   return (
     <article
@@ -84,6 +86,9 @@ export function TaskCard({ task, space, onEdit, onSetField, onDelete }) {
         <p className="pointer-events-none relative mt-1.5 line-clamp-2 leading-relaxed text-muted-foreground">
           {task.description_text}
         </p>
+      )}
+      {tags?.length > 0 && (
+        <TagPillGroup tags={tags} className="pointer-events-none relative mt-2.5 flex-wrap" />
       )}
       <div className="flex-1" />
 

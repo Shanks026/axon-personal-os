@@ -2,6 +2,7 @@ import { GitPullRequestArrow } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DueLabel } from '@/components/shared/DueLabel'
 import { SpaceBadge } from '@/components/shared/SpaceBadge'
+import { TagPillGroup } from '@/components/shared/TagPill'
 import { Button } from '@/components/ui/button'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PriorityMenu, StatusMenu, TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
@@ -9,8 +10,8 @@ import { TaskPriorityIcon, TaskStatusIcon } from '@/features/tasks/components/Ta
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP } from '@/features/tasks/constants'
 import { isClosed, linkHost } from '@/features/tasks/utils'
 
-/** Dense list row (design Foundations → task row): priority, status, title, meta, due. */
-export function TaskRow({ task, space, showSpace, onEdit, onSetField, onDelete }) {
+/** Dense list row (design Foundations → task row): priority, status, title, tags, meta, due. */
+export function TaskRow({ task, space, showSpace, tags, onEdit, onSetField, onDelete }) {
   const closed = isClosed(task)
   return (
     <div className="group flex h-11 items-center gap-2.5 border-b px-3 transition-colors hover:bg-muted">
@@ -42,6 +43,7 @@ export function TaskRow({ task, space, showSpace, onEdit, onSetField, onDelete }
       >
         {task.title}
       </button>
+      <TagPillGroup tags={tags} max={2} />
       {showSpace && <SpaceBadge space={space} />}
       {task.external_url && (
         <Tooltip>

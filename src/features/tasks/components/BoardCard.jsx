@@ -4,6 +4,7 @@ import { GitPullRequestArrow } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DueLabel } from '@/components/shared/DueLabel'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
+import { TagPillGroup } from '@/components/shared/TagPill'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
 import { TaskPriorityPill } from '@/features/tasks/components/TaskPills'
@@ -16,10 +17,11 @@ const stopDrag = {
 }
 
 /**
- * Board card (design 04c): priority pill and MR icon on top, the title, then a dashed footer
- * with the space (Global only), the due label and a hover menu. `overlay` is the lifted copy.
+ * Board card (design 04c): priority pill and MR icon on top, the title, tags, then a dashed
+ * footer with the space (Global only), the due label and a hover menu. `overlay` is the lifted
+ * copy.
  */
-export function BoardCard({ task, space, showSpace, onEdit, onDelete, overlay = false }) {
+export function BoardCard({ task, space, showSpace, tags, onEdit, onDelete, overlay = false }) {
   const closed = isClosed(task)
   const hasTop = task.priority !== 'none' || task.external_url
   return (
@@ -62,6 +64,7 @@ export function BoardCard({ task, space, showSpace, onEdit, onDelete, overlay = 
       >
         {task.title}
       </h3>
+      {tags?.length > 0 && <TagPillGroup tags={tags} className="flex-wrap" />}
 
       <footer className="box-content flex h-6 items-center gap-2 border-t border-dashed border-border-strong pt-2.5">
         {showSpace && (

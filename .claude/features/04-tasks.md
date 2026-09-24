@@ -367,16 +367,16 @@ src/features/tasks/components/
 
 ---
 
-## Phase 3: Tags
+## Phase 3: Tags ✅ Complete
 
 ### Goal
 The user can create tags inline while tagging a task, see tag pills on rows and cards, filter tasks by tag, and manage tags (rename, recolour, delete, and change scope between one space and all spaces). Tags are shared with notes in Feature 06.
 
-### Before Starting: Confirm Phase 2 Is Approved
+### Before Starting: Confirm Phase 2 Is Approved (all confirmed on 2026-09-24)
 1. Phase 2 is `✅ Complete`.
-2. Check PostgREST embedding and aliasing: `tag_ids:task_tags(tag_id)` on a list select, and a second inner-joined alias `tag_match:task_tags!inner(tag_id)` filtered with `.in('tag_match.tag_id', ids)`, so filtering does not trim the displayed tags. If aliasing the same relation twice fails, filter by tag on the client and note it.
-3. Confirm the `or` filter syntax for `space_id.is.null,space_id.in.(…)`.
-4. `TAG_COLORS` reuses the same placeholder colour keys as `SPACE_COLORS` (design system pending).
+2. The double-aliased embed (`tag_ids:task_tags(tag_id)` plus a filtered `tag_match:task_tags!inner(tag_id)`) **works**, confirmed with an anonymous request against the live schema (RLS returned zero rows, but the query parsed and ran).
+3. The `or` filter syntax for `space_id.is.null,space_id.in.(…)` works as documented.
+4. **Deviation:** the design system was finalised by the time this phase was built, so `TAG_COLORS` reuses `HUE_KEYS` from `lib/tint.js` directly (the same list `SPACE_COLORS` uses) instead of a separate placeholder.
 
 ### 3.1 Database
 Migration `create_tags_and_task_tags`:
@@ -484,14 +484,26 @@ None beyond the component changes above.
 - Note tags (06)
 
 ### 3.7 Checklist: Before Marking Complete
-- [ ] `create_tags_and_task_tags` is applied and mirrored; uniqueness and cascade checks are verified; advisors are clean
-- [ ] Creating a tag inline from `TaskDialog` works and selects it; duplicates show the friendly error
-- [ ] A space tag is not offered in another space; a global tag is offered everywhere
-- [ ] Row and card pills render; the tag filter lives in the URL and keeps all pills visible on filtered rows
-- [ ] Rename, recolour, scope change and delete work from `ManageTagsDialog`; delete confirms with the usage count
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` DB registry, status, changelog (new shared `TagPicker`, `TagPill`, `ManageTagsDialog`) and `axon-data-patterns.md` §10 are updated
+- [x] `create_tags_and_task_tags` is applied (`20260924063708`) and mirrored. Verified in a rolled-back transaction:
+  - A duplicate name (case-insensitive) in the same scope is rejected.
+  - The same name in a space and globally is allowed.
+  - Deleting a tag cascades its `task_tags`.
+  - Advisors show nothing new from the migration.
+- [x] Creating a tag inline from `TaskDialog` works and selects it; duplicates show the friendly error (tests)
+- [x] A space tag is not offered in another space; a global tag is offered everywhere (test)
+- [x] Row and card pills render (`TagPillGroup`, up to 3 + "+n"); the tag filter lives in the URL and keeps all pills visible on filtered rows (the double-alias embed)
+- [x] Rename, recolour, scope change and delete work from `ManageTagsDialog`; delete confirms with the usage count (tests)
+- [x] `npm run lint`, `npm test` (188 tests) and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files. Two should-fix items were applied (a Tooltip on `ManageTagsDialog`'s icon-only colour swatch and delete button; `TaskDialog`'s chip sub-components were split into `TaskDialogChips.jsx` to stay under the 200-line guideline).
+- [x] `00-index.md` DB registry, status and changelog are updated; `axon-data-patterns.md` §10 lists `TagPicker`, `TagPill` (and `TagPillGroup`), `ManageTagsDialog`
+
+### Implementation Notes (Phase 3)
+- **`setTaskTags` / `useSetTaskTags` live in `features/tags/api.js`,** not `features/tasks/api.js` as planned. `tags/api.js` already imports `taskKeys` from `tasks/api.js` to invalidate task lists after a tag edit; putting `setTaskTags` in `tasks/api.js` too would have made the two `api.js` modules import each other. Everything else (the SQL, the components, the integration points) matches the plan.
+- **`TagsChip`, `DateChip` and `LinkChip`** moved out of `TaskDialog.jsx` into `TaskDialogChips.jsx` (a should-fix from the rules audit, not planned up front).
+- **Tag pills also appear on the grid `TaskCard`,** not just `TaskRow` and `BoardCard`. The design (G2) shows tags on cards too; the Phase 3 plan's component list just didn't call it out.
+- **Radix `asChild` gotcha:** `TagPicker`'s default trigger button didn't forward the props Radix's `PopoverTrigger asChild` clones onto it (`onClick`, `aria-expanded`, `ref`, …), so the popover silently never opened. Fixed by forwarding `ref` and spreading `...props`. Worth remembering for any future custom trigger component.
+- **Changing the space in Global** drops tag ids that are scoped to a different space, via a small effect in `TaskForm` that compares the previous and current `space_id` (not a fetch, and not deriving render state — it prunes local selection state in response to a value change).
+- **Tag pill shape:** the design file's actual board-card tags use a 5px radius (`--radius-sm`), the same as `SpaceBadge`, not the 6px `design-system.md` said. Corrected the doc to match the source design; see its changelog note.
 
 **Stop here. Show the result and wait for approval.**
 

@@ -19,7 +19,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 02 | Auth, Profile and Preferences (incl. fiscal year setting) | [02-auth-and-settings.md](02-auth-and-settings.md) | 01 | ✅ Complete |
 | 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | ✅ Complete |
 | **Wave 2: Capture** | | | | |
-| 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | 🟡 Phase 1 ✅ · Phase 2 ✅ · Phase 3 next |
+| 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | ✅ Complete |
 | 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | 🔵 Planned |
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | 🔵 Planned |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🔵 Planned |
@@ -81,7 +81,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `profiles` + `handle_new_user()` trigger | 02 | ✅ | 1:1 with auth.users; `fy_start_month` default 4. Migration `20260923164417`; `handle_new_user` execute revoked |
 | `spaces` | 03 | ✅ | `unique(user_id, slug)`; slug `global` reserved. Migration `20260923171644`, plus the `profiles.last_space_id` FK. `icon` is an emoji (`20260923180401`) |
 | `tasks` (+ completed_at trigger) | 04 | ✅ | Six statuses, five priorities, fractional `position`. Migration `20260923181804` |
-| `tags`, `task_tags` | 04 | ⬜ | Tag `space_id` NULL means available in all spaces |
+| `tags`, `task_tags` | 04 | ✅ | Tag `space_id` NULL means available in all spaces |
 | `todos` (+ cascade triggers) | 05 | ⬜ | `task_id` set means a checklist item |
 | `notes`, `note_tags` | 06 | ⬜ | Tiptap JSON plus `content_text`; generated `excerpt` (280 characters) for list cards |
 | `task_activity` (+ log trigger) | 07 | ⬜ | Auto history plus manual work-log comments |
@@ -111,6 +111,15 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-24: Feature 04 Phase 3: Tags — Feature 04 complete
+- **Migration `20260924063708_create_tags_and_task_tags`:** the `tags` table (`space_id` NULL = every space, unique per scope case-insensitively) and `task_tags`. Both owner-RLS, hard delete (no soft delete for tags). Verified in a rolled-back transaction; advisors clean.
+- **`src/features/tags/`:** `api.js` (`fetchTags`, `createTag`, `updateTag`, `deleteTag`, `setTaskTags` and their hooks) and `constants.js` (`TAG_COLORS`, reusing `HUE_KEYS`).
+- **New shared components:** `TagPill` (plus `TagPillGroup`, up to 3 + "+n"), `TagPicker` (Popover + Command, inline creation, filter mode), `ManageTagsDialog` (rename, recolour, rescope with a warning, delete with a usage-count confirm).
+- **Tasks integration:** `LIST_COLUMNS` gains `tag_ids`; `fetchTasks` takes `tag` (any-of, via a double-aliased `task_tags` embed so filtering doesn't trim the shown pills); `TaskDialog` gets a Tags chip; `TaskCard`, `TaskRow` and `BoardCard` show pills; `TaskToolbar` gets a Tags filter (`?tag=`).
+- **Deviations:** `setTaskTags`/`useSetTaskTags` live in `tags/api.js`, not `tasks/api.js` (avoids a circular import between the two `api.js` files). `TaskDialog.jsx` was split: `TaskDialogChips.jsx` now holds `DateChip`, `LinkChip` and `TagsChip`.
+- **Design correction:** tag pills use `--radius-sm` (5px, matching the source design's board-card tags and `SpaceBadge`), not the 6px `design-system.md` previously said; the doc is corrected.
+- **Tests:** 188.
 
 ### 2026-09-24: Feature 04 Phase 2: Board view
 - `?view=board` on `/s/:slug/tasks` (design 04c): five status columns (Cancelled is hidden), each a 270px muted well with a status pill, a count, `+` and "+ Add task".

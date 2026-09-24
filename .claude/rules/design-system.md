@@ -177,7 +177,7 @@ Row heights in the layout table assume 14px text. If a row looks cramped, add he
 | `--radius-xl` | 12px | widgets, note cards, toasts |
 | `--radius-2xl` | 14px | dialogs, palette |
 
-  Tag pills use a 6px radius and space badges 5px. The different shapes keep them from being read as the same kind of thing.
+  **Corrected 2026-09-24 (Feature 04 Phase 3):** tag pills use `--radius-sm` (5px), the same as space badges, matching the source design's board card tags — not the 6px this file previously said. Both are deliberately square-ish, distinct from the fully round status/priority pills.
 - **Elevation:**
 
 | Token | Value | Use |

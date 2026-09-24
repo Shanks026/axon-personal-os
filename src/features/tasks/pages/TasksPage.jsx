@@ -8,6 +8,7 @@ import { ErrorState } from '@/components/shared/ErrorState'
 import { HeaderAlert } from '@/components/shared/HeaderAlert'
 import { Button } from '@/components/ui/button'
 import { usePreferences } from '@/features/settings/api'
+import { useTags } from '@/features/tags/api'
 import { useTasks } from '@/features/tasks/api'
 import { TaskBoard } from '@/features/tasks/components/TaskBoard'
 import { TaskDialog } from '@/features/tasks/components/TaskDialog'
@@ -34,12 +35,15 @@ export default function TasksPage() {
   const { data, isLoading, error, refetch } = useTasks({
     spaceIds: scopeSpaceIds,
     priority: filters.priority,
+    tag: filters.tag,
     due: filters.due,
     q: filters.q,
     today,
     weekEnd: weekEndISO(today, weekStartsOn),
     allClosed,
   })
+  const { data: tags = [] } = useTags({ spaceIds: scopeSpaceIds })
+  const tagsById = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags])
 
   const tasks = useMemo(() => data ?? [], [data])
   const visible = useMemo(
@@ -91,10 +95,10 @@ export default function TasksPage() {
         </Button>
       </div>
 
-      <div className="mt-6">
+      <div className="mt-4">
         <TaskTabs value={filters.tab} counts={counts} onChange={(v) => setFilter('tab', v)} />
       </div>
-      <div className="mt-5">
+      <div className="mt-4">
         <TaskToolbar
           filters={filters}
           setFilter={setFilter}
@@ -103,7 +107,7 @@ export default function TasksPage() {
         />
       </div>
 
-      <div className="mt-5">
+      <div className="mt-4">
         {isLoading ? (
           <TasksSkeleton view={filters.view} />
         ) : error ? (
@@ -113,6 +117,7 @@ export default function TasksPage() {
             tasks={boardTasks}
             statuses={columns}
             actions={actions}
+            tagsById={tagsById}
             onEdit={openEdit}
             onCreate={(status) => openCreate({ status })}
             windowed={!allClosed}
@@ -149,12 +154,13 @@ export default function TasksPage() {
           <TaskList
             tasks={visible}
             actions={actions}
+            tagsById={tagsById}
             onEdit={openEdit}
             windowed={!allClosed}
             onShowAllCompleted={() => setFilter('tab', 'completed')}
           />
         ) : (
-          <TaskGrid tasks={visible} actions={actions} onEdit={openEdit} />
+          <TaskGrid tasks={visible} actions={actions} tagsById={tagsById} onEdit={openEdit} />
         )}
       </div>
 
