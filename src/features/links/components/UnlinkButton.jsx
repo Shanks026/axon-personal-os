@@ -5,8 +5,8 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 
 /**
  * The unlink control on a linked note or task. A manual link gets a hover ✕ ("Unlink"). A
- * mention link gets a "Mentioned" badge instead: it follows the note's text, so it can't be
- * removed here ("Remove the mention in the note").
+ * mention link gets a small @ instead (no word, the user's request): it follows the note's text,
+ * so it can't be removed here; the tooltip says so.
  */
 export function UnlinkButton({ source, label, onUnlink, className }) {
   if (source === 'mention') {
@@ -15,16 +15,17 @@ export function UnlinkButton({ source, label, onUnlink, className }) {
         <TooltipTrigger asChild>
           <span
             tabIndex={0}
+            role="img"
+            aria-label="Mentioned in the note"
             className={cn(
-              'pointer-events-auto inline-flex h-5 shrink-0 items-center gap-0.5 rounded-sm bg-muted px-1.5 text-xs text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring',
+              'pointer-events-auto inline-flex size-6 shrink-0 items-center justify-center rounded-md text-faint outline-none hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring',
               className,
             )}
           >
-            <AtSign className="size-3" aria-hidden />
-            Mentioned
+            <AtSign className="size-3.5" aria-hidden />
           </span>
         </TooltipTrigger>
-        <TooltipContent>Remove the mention in the note to unlink</TooltipContent>
+        <TooltipContent>Mentioned in the note · remove the mention to unlink</TooltipContent>
       </Tooltip>
     )
   }

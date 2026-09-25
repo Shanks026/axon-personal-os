@@ -270,7 +270,7 @@ Each of these maps to a shadcn primitive.
   - **Closed tasks** (Completed or Cancelled) keep a normal, full-contrast title on cards, board cards and table rows, with no muted strike-through (the user found it hard to read, 2026-09-25). Todos keep their strike-through.
   - **Rows** are 44px or taller with the default shadcn hover. Only the title is a button (it opens the task); the row itself isn't clickable.
   - There's no row selection or pagination yet; add them when bulk actions arrive.
-- **Entity chip** (HoverCard). An inline pill 24px high with a 6px radius. Task chips use `space-soft` with an accent border and a status icon; note chips use `bg-muted` with a `file-text` icon. The hover card is 300px wide and shows status · priority · due, then the title.
+- **Entity chip** (HoverCard). An inline pill 24px high with a 6px radius, a status icon (tasks) or a `file-text` icon (notes). **Corrected 2026-09-26 (the user's request): never the space accent.** Inline `[[task]]` mentions in a note use the literal **blue badge** (`badgeClasses('blue')`). Linked lists (the note rail's Linked tasks) have **no fill**: an icon and the title, underlined on hover. In linked lists, a mention link shows just a faint **@** icon (a tooltip explains it; no "Mentioned" word). The hover card is 300px wide and shows status · priority · due, then the title.
 - **Grid task card** (revised 2026-09-25, the user's layout), from top to bottom:
   1. Status and priority pills, then the links button and ⋮.
   2. The title.

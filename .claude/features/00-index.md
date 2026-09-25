@@ -117,6 +117,10 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-26: Link and mention chip colours
+- Inline `[[task]]` mention chips use the blue badge, and the note rail's linked tasks have no fill; neither uses the space accent (the user's request). `EntityLink` gains `tone` (`plain` | `blue`).
+- In linked lists, a mention link shows a small @ icon with a tooltip instead of the word "Mentioned".
+
 ### 2026-09-26: Feature 07 Phase 3: [[task]] mentions (Feature 07 complete)
 - **Database:** the `sync_note_mentions(p_note_id, p_task_ids)` RPC (security invoker) reconciles a note's `mention` links; manual links are never touched. Migration `20260925184644`.
 - **Note editor:**

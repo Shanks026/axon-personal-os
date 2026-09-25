@@ -1,7 +1,7 @@
 import { FileText } from 'lucide-react'
 import { Link } from 'react-router'
 import { paths } from '@/lib/paths'
-import { textClasses } from '@/lib/tint'
+import { badgeClasses, textClasses } from '@/lib/tint'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { EntityPreviewCard } from '@/components/shared/EntityPreviewCard'
@@ -13,8 +13,10 @@ import { TASK_STATUS_MAP } from '@/features/tasks/constants'
  * task or a file icon for a note, then the label. It goes to the entity's own space URL (links can
  * cross spaces). With `preview`, hovering shows `EntityPreviewCard` (the chip itself is a normal
  * link, so keyboards and screen readers lose nothing). A `deleted` target renders muted and
- * struck through, and isn't a link.
- * @param {{ kind: 'task' | 'note', id: string, spaceId: string, label: string, status?: string, deleted?: boolean, preview?: boolean, className?: string }} props
+ * struck through, and isn't a link. `tone`: `plain` (no fill: linked lists) or `blue` (the
+ * literal blue badge: inline `[[task]]` mentions). Never the space accent (the user's request,
+ * 2026-09-26).
+ * @param {{ kind: 'task' | 'note', id: string, spaceId: string, label: string, status?: string, deleted?: boolean, preview?: boolean, tone?: 'plain' | 'blue', className?: string }} props
  */
 export function EntityLink({
   kind,
@@ -24,6 +26,7 @@ export function EntityLink({
   status,
   deleted = false,
   preview = true,
+  tone = 'plain',
   className,
 }) {
   const { spaceById } = useSpace()
@@ -31,7 +34,7 @@ export function EntityLink({
   const Icon = s ? s.icon : FileText
   const chip = cn(
     'inline-flex h-6 max-w-full min-w-0 items-center gap-1.5 rounded-md px-2 align-middle text-sm leading-none',
-    kind === 'task' ? 'border border-transparent bg-space-soft' : 'bg-muted',
+    tone === 'blue' ? badgeClasses('blue') : 'px-1',
     className,
   )
   const body = (
@@ -59,7 +62,7 @@ export function EntityLink({
       to={to}
       className={cn(
         chip,
-        'outline-none hover:border-border-strong hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring',
+        'outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring',
       )}
     >
       {body}
