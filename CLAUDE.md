@@ -12,45 +12,63 @@ Guidance for Claude Code when working in this repository.
 
 ## Status
 
-See `.claude/features/00-index.md` for the roadmap, the build status and the changelog. As of 2026-09-24:
+See `.claude/features/00-index.md` for the roadmap, the build status and the changelog. As of 2026-09-25:
 
 | Feature | State |
 |---|---|
 | 01 Foundation | ✅ Complete |
 | 02 Auth, profile and settings (fiscal year) | ✅ Complete |
 | 03 Spaces gallery, app shell, Global | ✅ Complete |
-| 04 Tasks | ✅ Complete (list, board and tags) |
+| 04 Tasks | ✅ Complete, plus many browser-feedback follow-ups on 2026-09-25 (see the changelog) |
 | 05 Todos | ✅ Complete (page, groups, reorder, task checklists) |
-| 06–14 | Planned (docs in `.claude/features/`) |
+| 06 Notes | 🔵 Planned and approved; design deltas folded; **Phase 1 is next** |
+| 07–14 | Planned (docs in `.claude/features/`) |
 
 ### Resume here (session handoff)
 
-1. **Next step: Feature 06 (Notes)**, once the user approves Feature 05.
-   - Run the `axon-feature` skill; Feature 06 doesn't have a doc yet, so Step 2 (clarify and analyse) runs before Step 3 writes `.claude/features/06-notes.md`.
-   - The checkbox-invisible bug (user-reported 2026-09-25) and the checkbox spring-animation crash are both fixed; please re-check.
-   - **Please confirm in the browser:** todo drag reorder (by pointer and by keyboard), on the Todos page and in a task's checklist — the test environment can't simulate a real drag.
+1. **Next step: Feature 06 Phase 1 (Editor and Notes).**
+   - Run the `axon-feature` skill, Step 4, on `.claude/features/06-notes.md`.
+   - Read the phase's **"Design fold"** block first. It overrides the older spec text below it:
+     - No sort control; notes are always ordered `updated_at desc`.
+     - Two sections, Pinned then All notes. Pinning ships now.
+     - The sidebar auto-collapses on the editor route; the editor has a 280px rail (Created, Updated, Words).
+     - The bubble menu gains the highlight mark, and the slash menu has a new order.
+   - Two decisions are already made:
+     - **A:** the second notes view is a **Table** (TanStack v9, the same pattern as `TaskTable`).
+     - **B:** "New note" in **Global** creates the note in the default space silently (`useDefaultSpaceId`), so there's **no** `NewNoteSpacePicker`.
+   - Phase 3 (added) turns the task dialog's description into a compact `RichTextEditor`.
+   - Tiptap v3 APIs must be checked against the installed packages before use. Popups inside a modal Radix Dialog need care, since Radix blocks pointer events outside `DialogContent`.
+   - **Still to confirm in the browser:** todo drag reorder (pointer and keyboard).
 2. **Workflow the user expects:**
    - Build one phase, verify it (lint, tests, build, the `axon-rules` audit), and update the feature doc, `00-index.md` and the patterns catalogue.
    - **Then commit and push to `main`** (github.com/Shanks026/axon-personal-os), and stop for approval.
-   - The user tests in the browser and reports UI issues. Fix them promptly and record each preference in the rules.
+   - The user tests in the browser and reports UI issues, often several at once, mid-turn. Fix them promptly and record each preference in `.claude/rules/`.
 3. **Database access:**
    - Use the Supabase MCP tools (they load at session start).
    - If they're missing, use the Management API fallback in `.claude/rules/supabase.md`. The token is in `~/.claude.json` under this project's `mcpServers.supabase.env`. Never print it.
-   - Verify with rolled-back transactions, and mirror every migration in `supabase/migrations/` using the server version.
+   - A small Node helper that reads the token and calls the API works well; write it to the scratchpad.
+     - **Git Bash rewrites an argument starting with `/` into a Windows path**, so pass API paths without the leading slash (`database/query`) and add it in the script.
+   - Verify with rolled-back transactions, and mirror every migration in `supabase/migrations/` using the server version (`select version from supabase_migrations.schema_migrations`).
 4. **Environment:**
    - The dev server runs at http://localhost:6420 (`DEV_PORT`).
-   - It's Windows, with Git Bash and PowerShell.
+   - It's Windows, with Git Bash and PowerShell. There's no `python`; use Node for scripted edits.
    - With `node -e` inside bash double quotes, **backticks run as shell commands**. Use the Edit/Write tools for any text containing backticks.
+   - **Tailwind silently drops invalid or template-built class names** (the `border-1.5` bug). After adding unusual classes, grep `dist/assets/index-*.css` to confirm they were generated.
 5. **UI decisions made during the build** (all recorded in `.claude/rules/`):
-   - Typography: Tailwind/shadcn default type (`text-sm` body).
+   - Typography: Tailwind/shadcn default type (`text-sm` body). Dialog headers use shadcn's default `DialogTitle`/`DialogDescription` with no extra classes.
    - Spaces: emoji identity shown bare (no tile); space images wait for Feature 15.
    - Sidebar: 16rem wide, 3rem rail; same background as the page (white in light, `#0b0b0b` in dark), separated by the hairline border.
-   - Shadows: very subtle everywhere.
-   - Overlays: no backdrop blur (it caused frame drops); scaling dialogs get `will-change-transform`.
+   - Shadows: very subtle everywhere. Scrollbars: thin and themed, app-wide (`index.css`).
+   - Overlays: no backdrop blur (it caused frame drops); scaling dialogs get `will-change-transform`. Tall dialogs use `max-h-dialog`, with pinned header and footer and a scrolling body.
    - Shortcut hints: the `<Kbd>` component, with lucide Command icons.
    - Destructive actions: always the shadcn `destructive` variant.
    - Pages: eager, inside one persistent `AppShell` whose content column is the only scroll container; no route-loading splash.
    - Signup has a confirm-password field, the password minimum is 10, and email confirmation is off in Supabase.
+   - **Badges and pills** (status, priority, tags) use literal Tailwind colour-scale classes from `lib/tint.js` (`bg-*-100 text-*-700`). Tags can use all 26 Tailwind palettes; spaces keep the CSS-variable accent.
+   - **Status colours:** To do slate, In progress blue, In review violet, Blocked pink, On hold amber, Completed emerald, Cancelled red. Priority is a plain dot.
+   - **No space pickers.** Tasks, tags and notes belong to the space they're created in; in Global they go to the default space.
+   - Menus opened on hover must be `modal={false}`. Hover popovers use `useHoverOpen` (dialog chips) or shadcn `HoverCard` (the tag "+n").
+   - Closed task titles keep full contrast (no strike-through); only todos strike through.
 
 - **Design system v1 is set.** It comes from Claude Design, and its source files are in `.claude/design/Axon design system built/`.
   - `.claude/rules/design-system.md` holds the tokens, motion and component specs. It will be refined as the build goes on.
