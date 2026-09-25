@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Link2, Loader2, Plus, X } from 'lucide-react'
+import { FileText, Link2, Loader2, Plus } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Link, useNavigate } from 'react-router'
 import { formatRelative } from '@/lib/dates'
@@ -9,15 +9,16 @@ import { listItem } from '@/components/motion/presets'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useLinkNoteTask, useNotesForTask, useUnlinkNoteTask } from '@/features/links/api'
 import { NotePickerDialog } from '@/features/links/components/NotePickerDialog'
+import { UnlinkButton } from '@/features/links/components/UnlinkButton'
 import { useCreateNote } from '@/features/notes/api'
 
 /**
  * "Linked notes" on the task detail page (design Task Detail): excerpt cards in two columns,
  * "Link note" (search picker, any space) and "New linked note" (created in the task's space with
- * the task's title, linked, then opened). A card opens its note; ✕ unlinks.
+ * the task's title, linked, then opened). A card opens its note; ✕ unlinks a manual link, and a
+ * note that mentions the task shows "Mentioned" instead.
  */
 export function LinkedNotesPanel({ task }) {
   const navigate = useNavigate()
@@ -74,7 +75,7 @@ export function LinkedNotesPanel({ task }) {
       ) : (
         <div className="grid gap-3 sm:grid-cols-2">
           <AnimatePresence initial={false}>
-            {links.map(({ note }) => {
+            {links.map(({ note, source }) => {
               const space = spaceById.get(note.space_id)
               return (
                 <motion.article
@@ -96,20 +97,12 @@ export function LinkedNotesPanel({ task }) {
                     <span className="min-w-0 flex-1 truncate font-medium">
                       {note.title || 'Untitled'}
                     </span>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon-xs"
-                          onClick={() => unlink.mutate({ noteId: note.id, taskId: task.id })}
-                          aria-label={`Unlink ${note.title || 'Untitled'}`}
-                          className="pointer-events-auto -my-1 text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-                        >
-                          <X />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>Unlink</TooltipContent>
-                    </Tooltip>
+                    <UnlinkButton
+                      source={source}
+                      label={note.title || 'Untitled'}
+                      onUnlink={() => unlink.mutate({ noteId: note.id, taskId: task.id })}
+                      className="-my-1"
+                    />
                   </div>
                   {note.excerpt && (
                     <p className="pointer-events-none relative mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">

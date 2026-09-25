@@ -204,6 +204,7 @@ export function useUpdateTask() {
       }))
       if ('versions' in patch) qc.invalidateQueries({ queryKey: [...taskKeys.all, 'versions'] })
       qc.invalidateQueries({ queryKey: taskKeys.activity(row.id) })
+      qc.invalidateQueries({ queryKey: taskKeys.summary(row.id) }) // mention chips
       // A space move cascades to checklist todos (tasks_cascade_to_todos).
       if ('space_id' in patch) qc.invalidateQueries({ queryKey: todoKeys.all })
     },
@@ -245,6 +246,7 @@ function useOptimisticPatch(mutationFn, errorMessage) {
       qc.invalidateQueries({ queryKey: taskKeys.lists() })
       qc.invalidateQueries({ queryKey: taskKeys.detail(id) })
       qc.invalidateQueries({ queryKey: taskKeys.activity(id) })
+      qc.invalidateQueries({ queryKey: taskKeys.summary(id) }) // mention chips: live status
     },
   })
 }

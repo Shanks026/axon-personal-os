@@ -8,6 +8,7 @@ import { ImageBlock } from '@/components/editor/extensions/ImageBlock'
 import { ImageUpload } from '@/components/editor/extensions/ImageUpload'
 import { KeyboardShortcuts } from '@/components/editor/extensions/KeyboardShortcuts'
 import { SlashCommand } from '@/components/editor/extensions/SlashCommand'
+import { TaskMention } from '@/components/editor/extensions/TaskMention'
 
 /**
  * The editor's extension list. StarterKit (v3) already bundles Link, Underline, ListKeymap and
@@ -19,7 +20,8 @@ import { SlashCommand } from '@/components/editor/extensions/SlashCommand'
  *   Mod-Enter left to the dialog's submit).
  * - `images` (Feature 15): upload and URL handlers. Image nodes always render (existing images
  *   show anywhere); paste, drop and "/ Image" need the handlers (set via `setImageHandlers`).
- * Feature 07 adds `taskMentions`.
+ * - `taskMentions` (Feature 07): `{ search, create, NodeView }` for `[[` mentions and "Make task".
+ *   The node itself is always registered, so docs with mentions open (as chips) anywhere.
  */
 export function buildExtensions({ placeholder, features = {} }) {
   const highlight = features.codeHighlight !== false
@@ -39,6 +41,7 @@ export function buildExtensions({ placeholder, features = {} }) {
     TableHeader,
     TableCell,
     ImageBlock,
+    TaskMention.configure({ config: features.taskMentions ?? null }),
     ImageUpload.configure({ handlers: features.images ?? null }),
     // Mod-s save (via editor storage), Mod-k link, and Mod-Enter for dialogs.
     KeyboardShortcuts.configure({ swallowModEnter: !!features.compact }),

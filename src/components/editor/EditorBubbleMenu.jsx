@@ -17,11 +17,14 @@ import {
   ListChecks,
   ListOrdered,
   Pilcrow,
+  SquareCheckBig,
   Strikethrough,
   TextQuote,
 } from 'lucide-react'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { EDIT_LINK_EVENT } from '@/components/editor/extensions/KeyboardShortcuts'
+import { mentionNode } from '@/components/editor/extensions/TaskMention'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -140,7 +143,9 @@ function LinkField({ editor, onDone }) {
 
 /**
  * Selection toolbar (design 07b): bold, italic, strike, code, link, H2 and highlight, then a
- * "Turn into" menu. Underline stays on Mod+U; Mod+K opens the link field. Buttons keep the editor's focus (mousedown is
+ * "Turn into" menu, and "Make task" when the editor has task mentions (design D2): the selected
+ * text becomes a new task and is replaced by its mention chip. Underline stays on Mod+U; Mod+K
+ * opens the link field. Buttons keep the editor's focus (mousedown is
  * prevented), and the menu re-reads the active marks through `useEditorState`, since the editor
  * doesn't re-render on every transaction.
  */
@@ -175,6 +180,20 @@ export function EditorBubbleMenu({ editor, compact = false }) {
   }, [editor])
 
   const run = (fn) => fn(editor.chain().focus()).run()
+  const mentions = editor.storage.taskMention?.config
+  const makeTask = () => {
+    const { from, to } = editor.state.selection
+    const title = editor.state.doc
+      .textBetween(from, to, ' ')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 300)
+    if (!title) return
+    mentions.create(title).then(
+      (task) => editor.chain().focus().insertContentAt({ from, to }, mentionNode(task)).run(),
+      (err) => toast.error(err?.message ?? 'Couldn’t create the task'),
+    )
+  }
   // The compact editor (task descriptions) has no Heading 1.
   const turnInto = compact ? TURN_INTO.filter((b) => b.id !== 'h1') : TURN_INTO
   const block = turnInto.find((b) => b.id === active.block) ?? turnInto[0]
@@ -240,6 +259,20 @@ export function EditorBubbleMenu({ editor, compact = false }) {
               ))}
             </DropdownMenuContent>
           </DropdownMenu>
+          {mentions && (
+            <>
+              <span aria-hidden className="mx-0.5 h-4 w-px bg-border" />
+              <button
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={makeTask}
+                className="flex h-7 items-center gap-1.5 rounded-md px-2 whitespace-nowrap outline-none hover:bg-accent focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <SquareCheckBig className="size-3.5" aria-hidden />
+                Make task
+              </button>
+            </>
+          )}
         </>
       )}
     </BubbleMenu>

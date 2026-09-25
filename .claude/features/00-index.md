@@ -22,7 +22,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | ✅ Complete |
 | 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | ✅ Complete |
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | ✅ Complete |
-| 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🟡 In progress (Phases 1–2 ✅; Phase 3 next) |
+| 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | ✅ Complete (UI refinements pending) |
 | **Wave 3: Time** | | | | |
 | 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | 🔵 Planned |
 | 09 | Daily Journal / Work Log | [09-journal.md](09-journal.md) | 06, 07 | 🔵 Planned |
@@ -90,7 +90,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | Storage bucket `attachments` + owner-only `storage.objects` policies | 15 | ✅ | Private; `{user_id}/{space_id}/{uuid}.{ext}`; images only (10 MB) in Phase 1. Migration `20260925123002` |
 | `task_activity` (+ log trigger) | 07 | ✅ | Auto history plus manual work-log comments. Migration `20260925130331` (15 backfilled `created` rows) |
 | `note_task_links` (+ activity log trigger) | 07 | ✅ | Sources: manual or mention. Migration `20260925180253` |
-| `sync_note_mentions()` | 07 | ⬜ | Phase 3 |
+| `sync_note_mentions()` | 07 | ✅ | RPC, security invoker; migration `20260925184644` |
 | `events` | 08 | ⬜ | Optional `task_id` / `note_id` |
 | `notes.kind`, `notes.journal_date` | 09 | ⬜ | One journal entry per space per day |
 | `week_start_of()`, `dashboard_summary()` | 10 | ⬜ | RPCs; they read the profile's time zone and week start |
@@ -116,6 +116,18 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-26: Feature 07 Phase 3: [[task]] mentions (Feature 07 complete)
+- **Database:** the `sync_note_mentions(p_note_id, p_task_ids)` RPC (security invoker) reconciles a note's `mention` links; manual links are never touched. Migration `20260925184644`.
+- **Note editor:**
+  - Type `[[` to search tasks (spaces allowed): pick one to insert a live chip, or "Create task '…'".
+  - Select text and click **Make task** in the toolbar: it becomes a new task and is replaced by its chip.
+  - Saving syncs mention links, and removing a chip unlinks it on the next save.
+- **Task page and note rail:** mention links show a **Mentioned** badge (unlink disabled, with a tooltip); manual links keep ✕.
+- **Chips** show live status and title (`useTaskSummary`, now invalidated by task updates).
+- **New:** `components/editor/extensions/TaskMention.js`, `components/editor/MentionList.jsx`, `features/links/components/TaskMentionChip.jsx` and `UnlinkButton.jsx`, `features/links/hooks/useTaskMentionsConfig.js`, `features/links/utils.js` (tested), and `syncNoteMentions` / `useSyncNoteMentions`.
+- **Pending:** the user's UI refinements for linking, planned right after this phase.
+- **Manual steps for you:** none.
 
 ### 2026-09-26: Feature 07 Phase 2: Manual note ↔ task links
 - **Database:** `note_task_links` (manual now, mention in Phase 3) with a trigger logging "Linked note / Unlinked note" into the task's activity. Migration `20260925180253`.

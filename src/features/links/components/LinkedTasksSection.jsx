@@ -1,11 +1,12 @@
 import { useState } from 'react'
-import { Link2, Plus, X } from 'lucide-react'
+import { Link2, Plus } from 'lucide-react'
 import { DueLabel } from '@/components/shared/DueLabel'
 import { EntityLink } from '@/components/shared/EntityLink'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useLinkNoteTask, useTasksForNote, useUnlinkNoteTask } from '@/features/links/api'
 import { TaskPickerDialog } from '@/features/links/components/TaskPickerDialog'
+import { UnlinkButton } from '@/features/links/components/UnlinkButton'
 import { useCreateTask } from '@/features/tasks/api'
 
 /**
@@ -46,7 +47,7 @@ export function LinkedTasksSection({ note }) {
       ) : links.length === 0 ? (
         <p className="text-muted-foreground">Not linked to any task.</p>
       ) : (
-        links.map(({ task }) => (
+        links.map(({ task, source }) => (
           <div key={task.id} className="group flex min-h-8 items-center gap-1.5">
             <EntityLink
               kind="task"
@@ -62,15 +63,11 @@ export function LinkedTasksSection({ note }) {
               closed={task.status === 'done' || task.status === 'cancelled'}
               showEmpty={false}
             />
-            <Button
-              variant="ghost"
-              size="icon-xs"
-              onClick={() => unlink.mutate({ noteId: note.id, taskId: task.id })}
-              aria-label={`Unlink ${task.title}`}
-              className="text-faint opacity-0 group-hover:opacity-100 focus-visible:opacity-100"
-            >
-              <X />
-            </Button>
+            <UnlinkButton
+              source={source}
+              label={task.title}
+              onUnlink={() => unlink.mutate({ noteId: note.id, taskId: task.id })}
+            />
           </div>
         ))
       )}

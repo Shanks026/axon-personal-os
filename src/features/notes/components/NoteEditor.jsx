@@ -23,7 +23,9 @@ import {
 } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useImageHandlers } from '@/features/attachments/api'
-import { useTasksForNote } from '@/features/links/api'
+import { useSyncNoteMentions, useTasksForNote } from '@/features/links/api'
+import { useTaskMentionsConfig } from '@/features/links/hooks/useTaskMentionsConfig'
+import { collectTaskMentionIds, sameIds } from '@/features/links/utils'
 import { useDiscardNote, useUpdateNote } from '@/features/notes/api'
 import { NoteActionsMenu } from '@/features/notes/components/NoteActionsMenu'
 import { NoteMetaRail } from '@/features/notes/components/NoteMetaRail'
@@ -95,8 +97,24 @@ export function NoteEditor({ note }) {
   }, [note.tag_ids, note.versions, linkCount])
   const mountedRef = useRef(false)
 
+  // [[task]] mentions (Feature 07 Phase 3): after a content save, reconcile the note's mention
+  // links when the set of mentioned tasks changed since the last sync.
+  const taskMentions = useTaskMentionsConfig(note)
+  const syncMentions = useSyncNoteMentions()
+  const [initialMentions] = useState(() => collectTaskMentionIds(note.content))
+  const lastSyncedMentions = useRef(initialMentions)
   const { schedule, flush, status } = useAutosave({
-    save: (patch) => update.mutateAsync({ id: note.id, patch }),
+    save: async (patch) => {
+      const row = await update.mutateAsync({ id: note.id, patch })
+      if ('content' in patch) {
+        const ids = collectTaskMentionIds(patch.content)
+        if (!sameIds(ids, lastSyncedMentions.current)) {
+          await syncMentions.mutateAsync({ noteId: note.id, taskIds: ids })
+          lastSyncedMentions.current = ids
+        }
+      }
+      return row
+    },
     delay: NOTE_AUTOSAVE_DELAY,
   })
 
@@ -223,7 +241,7 @@ export function NoteEditor({ note }) {
             value={note.content}
             onChange={changeContent}
             onEditorReady={handleReady}
-            features={{ slash: true, onSave: flush, images }}
+            features={{ slash: true, onSave: flush, images, taskMentions }}
             label="Note body"
             className="mt-7 text-base leading-7"
           />

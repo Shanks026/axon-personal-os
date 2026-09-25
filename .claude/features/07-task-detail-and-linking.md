@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/07-task-detail-and-linking.md`
-**Status**: 🟡 In progress (Phases 1–2 ✅ 2026-09-26; Phase 3 next)
+**Status**: ✅ Complete (Phases 1–3, 2026-09-26; UI refinements pending from the user)
 **Depends on**: 05, 06
 **Last Updated**: September 2026
 
@@ -389,7 +389,11 @@ Pickers list results with `SpaceBadge` (links may cross spaces), keyboard-first,
 
 ---
 
-## Phase 3: Mentions
+## Phase 3: Mentions ✅ Complete (2026-09-26)
+
+### Design fold
+- **D2 "Make task"** (from the notes plan) ships here: the note editor's selection toolbar gets **Make task**. It creates a task from the selected text in the note's space and replaces the selection with its mention chip.
+- The mention list follows design 07b "Link a task": status icon + title rows, then "Create task '…'".
 
 ### Goal
 In a note, typing `[[` opens a task search. Picking a task inserts a live chip showing its current status and title; "Create task '…'" creates one in the note's space and inserts it. When the note saves, mentioned tasks become `mention` links, and removed mentions unlink. The task's linked-notes panel shows mention backlinks with a "Mentioned" badge.
@@ -466,16 +470,31 @@ src/features/links/hooks/useTaskMentionsConfig.js   # builds the features.taskMe
 - Converting pasted `[[text]]` into mention nodes: backlog
 
 ### 3.7 Checklist: Before Marking Complete
-- [ ] `create_sync_note_mentions` is applied and mirrored; the three RPC checks pass; advisors are clean
-- [ ] `[[` opens the search, filters as you type (including spaces), and inserts a chip on Enter or click
-- [ ] "Create task '…'" creates the task in the note's space and inserts its chip
-- [ ] Chips show the live status after the task changes elsewhere
-- [ ] Saving adds `mention` links; deleting a chip and saving removes only that link; manual links are untouched
-- [ ] Task panels show "Mentioned" badges with the unlink disabled and the tooltip
-- [ ] `collectTaskMentionIds` and `sameIds` have unit tests
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` DB registry, status and changelog are updated
+- [x] `create_sync_note_mentions` is applied and mirrored; the three RPC checks pass; advisors are clean
+- [x] `[[` opens the search, filters as you type (including spaces), and inserts a chip on Enter or click
+- [x] "Create task '…'" creates the task in the note's space and inserts its chip
+- [x] Chips show the live status after the task changes elsewhere
+- [x] Saving adds `mention` links; deleting a chip and saving removes only that link; manual links are untouched
+- [x] Task panels show "Mentioned" badges with the unlink disabled and the tooltip
+- [x] `collectTaskMentionIds` and `sameIds` have unit tests
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` DB registry, status and changelog are updated
+
+### 3.8 Implementation Notes
+- **Trigger:** `@tiptap/suggestion` 3.31 accepts a multi-character `char` (it escapes it for the regex and slices the query by its length), so `char: '[['` with `allowSpaces: true` works directly. There's no custom `findSuggestionMatch` fallback.
+  - `allowedPrefixes: null` (a mention can follow any character); `allow` excludes code blocks.
+- **A custom `Node` (`TaskMention`) instead of `@tiptap/extension-mention`** (no new dependency): an inline atom `{ id, label }`, with `renderText`/`renderMarkdown` giving `[[label]]`, HTML `span[data-task-mention]`, and the node view from `config.NodeView`.
+  - The node is **always registered** (with `config: null` it's inert), so docs with mentions open anywhere and Markdown export works. The suggestion and "Make task" need `features.taskMentions`.
+- **Editor contract:** `features.taskMentions = { search(query) → [{ id, label, icon, iconClassName, hint }], create(title) → { id, label }, NodeView }`. The feature supplies each result's status icon and, in Global, the space name as a hint, so the editor imports no task code.
+  - `editor.storage.taskMention.config` lets the bubble menu reuse `create` for "Make task".
+- **`useTaskMentionsConfig(note)`** searches the note's space (every active space in Global) through `qc.fetchQuery(taskKeys.search)`, open tasks first. `create` calls `createTask` and invalidates the task lists and searches.
+- **`TaskMentionChip`** is an `EntityLink` with the live title and status from `useTaskSummary`. Task mutations now invalidate `taskKeys.summary(id)`, so chips follow changes made elsewhere. It shows the saved label while loading, and reads muted and struck through for a gone or trashed task.
+- **Sync:** the note editor's autosave `save` wraps `useUpdateNote`. After a content save it compares `collectTaskMentionIds(patch.content)` with the last-synced ids (initialised from the loaded doc) and calls `sync_note_mentions` only when they differ.
+  - Verified in SQL: mentioning adds a `mention` link and skips an unknown id; an empty array removes only mention links; a manual link survives both. Migration `20260925184644`.
+- **Backlinks:** a shared `UnlinkButton` (`features/links/components`) shows ✕ for manual links, and a focusable "Mentioned" badge with the tooltip "Remove the mention in the note to unlink" for mention links, in both panels.
+- **Tests:** `collectTaskMentionIds` / `sameIds`; the editor `[[` flow (search with spaces, pick → chip, "Create task" → chip) with a stand-in config; Markdown `[[label]]`; and the note editor calling `sync_note_mentions` after a save.
+- **Deferred:** the user's UI refinements for Phases 2–3 ("needs a few UI refinements, let's do it after the next phase").
 
 **Stop here. Show the result and wait for approval.**
 

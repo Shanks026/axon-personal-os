@@ -106,3 +106,21 @@ export function useUnlinkNoteTask() {
     onError: (err) => toast.error(err.message ?? 'Could not unlink'),
   })
 }
+
+/** Reconciles a note's `mention` links with the tasks its text mentions (manual links untouched). */
+export async function syncNoteMentions({ noteId, taskIds }) {
+  const { error } = await supabase.rpc('sync_note_mentions', {
+    p_note_id: noteId,
+    p_task_ids: taskIds,
+  })
+  if (error) throw error
+}
+
+export function useSyncNoteMentions() {
+  const invalidate = useInvalidateLinks()
+  return useMutation({
+    mutationFn: syncNoteMentions,
+    onSuccess: invalidate,
+    onError: (err) => toast.error(err.message ?? 'Could not update the note’s task links'),
+  })
+}

@@ -215,7 +215,7 @@ export function useTaskFilters() {
 | `EntityLink` + `EntityPreviewCard` (task/note chip with hover preview; deleted targets muted) | `components/shared/` | 07 Phase 2 |
 | Link pickers `NotePickerDialog` / `TaskPickerDialog` (CommandDialog, debounced, cross-space) | `features/links/components/` | 07 Phase 2 |
 
-| Mention-id collector (`collectTaskMentionIds`) | `components/editor/` | 07/09 |
+| `[[task]]` mentions: `TaskMention` node (always registered) + `MentionList`; `features.taskMentions` from `useTaskMentionsConfig(note)`; `collectTaskMentionIds` / `sameIds` (`features/links/utils.js`) + `useSyncNoteMentions` after content saves | `components/editor/`, `features/links/` | 07 Phase 3 (09 journal reuses) |
 | `useNow` | `hooks/` | 08 |
 | `StatTile` | `components/shared/` | 11 (moved from dashboard) |
 | `GlobalDialogs` (`?new=task\|todo\|note\|event\|capture`) + `useGlobalDialog` | `components/layout/` | 12 |

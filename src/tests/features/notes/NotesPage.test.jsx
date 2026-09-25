@@ -1,6 +1,6 @@
 import { StrictMode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { act, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -90,7 +90,11 @@ vi.mock('@/lib/supabase', () => {
     }
     return b
   }
-  return { supabase: { from: builder } }
+  const rpc = (name, args) => {
+    db.calls.push(['rpc', name, args])
+    return result(null)
+  }
+  return { supabase: { from: builder, rpc } }
 })
 
 const SPACE = {
@@ -383,5 +387,26 @@ describe('NoteEditor (Phase 2)', () => {
     ).toHaveAttribute('href', '/s/thmp/tasks/t9')
     await user.click(within(section).getByRole('button', { name: 'Unlink Fix RFQ pagination' }))
     await waitFor(() => expect(db.calls).toContainEqual(['unlink']))
+  })
+
+  it('syncs mention links after saving a note that mentions a task', async () => {
+    renderApp('/s/thmp/notes/n1')
+    const body = await screen.findByLabelText('Note body')
+    act(() => {
+      body.editor.commands.focus('end')
+      body.editor.commands.insertContent({
+        type: 'taskMention',
+        attrs: { id: 't5', label: 'Fix RFQ pagination' },
+      })
+    })
+    await waitFor(
+      () =>
+        expect(db.calls).toContainEqual([
+          'rpc',
+          'sync_note_mentions',
+          { p_note_id: 'n1', p_task_ids: ['t5'] },
+        ]),
+      { timeout: 5000 },
+    )
   })
 })
