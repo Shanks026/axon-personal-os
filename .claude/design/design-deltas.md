@@ -95,7 +95,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
   - Sections are "Pinned", then "All notes". Cards show a linked-task count.
   - The grid is 3 columns, with cards min-height 148.
 - **Adopt (editor):**
-  - The sidebar **auto-collapses to the rail** on the editor route.
+  - The sidebar **auto-collapses to the rail** on the editor route. **Rejected 2026-09-25** after browser review: the user keeps the sidebar as is and collapses it manually.
   - The header has the save state, a pin button and a `panel-right` rail toggle.
   - The tags row has "+ Tag" and "Edited 2h ago".
   - Max-width 680, a 36px title, a 15/1.7 body and a 280px rail.

@@ -48,7 +48,7 @@ Phase 3: Rich task descriptions (added 2026-09-25, pulled forward from 07)
   - Tags **pinned above the footer**: `TagPillGroup max={3}` with the "+n" hover card.
   - A dashed footer in the **normal font** with "Updated 2d ago". In Global, the space's emoji goes before it; there's no space name.
 - **Editor page** (`Note Editor.dc.html`):
-  - The sidebar **auto-collapses to the rail** on `notes/:noteId` and restores on leave.
+  - ~~The sidebar auto-collapses to the rail on `notes/:noteId`.~~ **Reversed 2026-09-25 (the user's request):** the sidebar keeps its usual state on the editor, and the user collapses it if they want.
   - The header holds the save state, a pin button and a `panel-right` rail toggle.
   - The reading column is 680px wide. The title uses the display style (`text-4xl font-semibold tracking-tight`), and the body is `text-base leading-7`.
   - The tags row has the pills, a "+ Tag" TagPicker trigger and "Edited 2h ago".
@@ -271,7 +271,7 @@ src/features/notes/
 - **Autosave errors** show in the header ("Couldn't save · Retry" via the new `SaveIndicator onRetry`), not as toasts. `useUpdateNote` has no `onError` toast.
 - **Search** uses `.or('title.ilike."*q*",search.wfts(english)."q"')` with quoted values. `sanitizeSearch` strips `, ( ) " ' * \`.
 - **Rail:** the Details toggle flips the 280px rail at `lg` and up (remembered as `axon:notes:rail`) and opens a Sheet below `lg`. The rail also shows the note's **Space**, which matters because a Global "New note" goes to the default space silently.
-- **Sidebar auto-collapse** lives in `AppShell`: on `notes/:noteId` the sidebar uses a separate in-memory open state (starting collapsed), so the persisted `axon:sidebar-open` preference is untouched and returns on leave.
+- **Sidebar auto-collapse** was built, then removed after browser review (the user's request, 2026-09-25): the editor leaves the sidebar as it is. `AppShell` is unchanged from before Phase 1.
 - **Tags:** `setNoteTags` and `useSetNoteTags` (optimistic on the note detail) live in `features/tags/api.js` next to `setTaskTags`, so that module can invalidate `noteKeys` without an import cycle (`notes/api.js` doesn't import tags).
 - **Bundle:** Tiptap and ProseMirror go to a cached `editor` chunk (`vite.config.js`), about 490 kB raw and 154 kB gzip.
 - **Deferred:**

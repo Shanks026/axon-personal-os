@@ -114,6 +114,10 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Note editor keeps the sidebar as is
+- The editor no longer auto-collapses the sidebar (the user's request after browser testing: "the user can collapse if they want"). `AppShell` is back to its pre-06 state; `design-system.md`, `design-deltas.md` and `06-notes.md` record the reversal.
+- **Dev note:** the blank app after this phase was Vite's stale pre-bundle ("504 Outdated Optimize Dep") after new dependencies. Fixed by deleting `node_modules/.vite` and restarting with `vite --force`.
+
 ### 2026-09-25: Feature 06 Phase 1: Editor and notes
 - **Database:** migration `create_notes_and_note_tags` (`20260925100223`), applied through the Management API because the Supabase MCP tools didn't load this session. Verified in a rolled-back transaction: `excerpt` follows `content_text` (capped at 280), and deleting a tag removes its `note_tags`. Advisors show no new warnings.
 - **New shared editor** (`src/components/editor/`), on Tiptap **3.31**:
