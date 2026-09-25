@@ -1,14 +1,13 @@
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GitPullRequestArrow } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DueLabel } from '@/components/shared/DueLabel'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import { TagPillGroup } from '@/components/shared/TagPill'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
+import { TaskLinksButton } from '@/features/tasks/components/TaskLinksButton'
 import { TaskPriorityPill } from '@/features/tasks/components/TaskPills'
-import { isClosed, linkHost } from '@/features/tasks/utils'
+import { isClosed } from '@/features/tasks/utils'
 import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
 
 // Controls inside a draggable card: keep their pointer and key presses from starting a drag.
@@ -33,7 +32,7 @@ export function BoardCard({
   overlay = false,
 }) {
   const closed = isClosed(task)
-  const hasTop = task.priority !== 'none' || task.external_url
+  const hasTop = task.priority !== 'none' || task.links?.length > 0
   return (
     <article
       className={cn(
@@ -45,24 +44,12 @@ export function BoardCard({
         <div className="flex h-5.5 items-center gap-1.5">
           <TaskPriorityPill priority={task.priority} className="h-5.5" />
           <div className="flex-1" />
-          {task.external_url && (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <a
-                  href={task.external_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  {...stopDrag}
-                  className="flex size-5.5 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
-                  aria-label={`Open link (${linkHost(task.external_url)})`}
-                >
-                  <GitPullRequestArrow className="size-3.25" />
-                </a>
-              </TooltipTrigger>
-              <TooltipContent>{linkHost(task.external_url)}</TooltipContent>
-            </Tooltip>
-          )}
+          <TaskLinksButton
+            links={task.links}
+            size="size-5.5"
+            className="rounded-md bg-transparent"
+            triggerProps={{ onClick: (e) => e.stopPropagation(), ...stopDrag }}
+          />
         </div>
       )}
 

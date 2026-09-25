@@ -119,7 +119,6 @@ const task = (id, title, extra = {}) => ({
   start_date: null,
   due_date: null,
   completed_at: null,
-  external_url: null,
   position: 1000,
   pinned_at: null,
   deleted_at: null,

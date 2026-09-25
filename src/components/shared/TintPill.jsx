@@ -1,13 +1,15 @@
 import { forwardRef } from 'react'
+import { badgeClasses, dotClasses } from '@/lib/tint'
 import { cn } from '@/lib/utils'
 
 /**
- * Filled pill in the tint recipe (design-system.md): 14% hue fill, 72% hue text, a leading dot.
- * Used for task/todo status. `tone` is any CSS colour (e.g. 'var(--warn)'). Renders a <button>
- * when `onClick` or `asButton` is given, so it can open a menu.
+ * Filled pill: a Tailwind colour-scale badge (`bg-{color}-100 text-{color}-700`, with a dark
+ * variant), plus a solid dot in the same colour (the user's request, 2026-09-25 — no CSS colour
+ * variables for badges). `color` is a colour key (e.g. 'blue'); see `lib/tint.js`. Renders a
+ * <button> when `onClick` or `asButton` is given, so it can open a menu.
  */
 export const TintPill = forwardRef(function TintPill(
-  { tone, children, className, asButton, ...props },
+  { color, children, className, asButton, ...props },
   ref,
 ) {
   const Comp = asButton || props.onClick ? 'button' : 'span'
@@ -16,23 +18,23 @@ export const TintPill = forwardRef(function TintPill(
       ref={ref}
       type={Comp === 'button' ? 'button' : undefined}
       className={cn(
-        'inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full tint px-2.25 text-xs font-medium whitespace-nowrap',
+        'inline-flex h-6 shrink-0 items-center gap-1.5 rounded-full px-2.25 text-xs font-medium whitespace-nowrap',
+        badgeClasses(color),
         Comp === 'button' &&
           'transition-opacity outline-none hover:opacity-85 focus-visible:ring-2 focus-visible:ring-ring',
         className,
       )}
-      style={{ '--tint': tone }}
       {...props}
     >
-      <span className="size-1.5 shrink-0 rounded-full" style={{ background: tone }} aria-hidden />
+      <span className={cn('size-1.5 shrink-0 rounded-full', dotClasses(color))} aria-hidden />
       {children}
     </Comp>
   )
 })
 
-/** Outlined pill with a coloured dot (design: priority). */
+/** Outlined pill with a coloured dot (design: priority). Same `color` key as `TintPill`. */
 export const DotPill = forwardRef(function DotPill(
-  { tone, children, className, asButton, ...props },
+  { color, children, className, asButton, ...props },
   ref,
 ) {
   const Comp = asButton || props.onClick ? 'button' : 'span'
@@ -48,7 +50,7 @@ export const DotPill = forwardRef(function DotPill(
       )}
       {...props}
     >
-      <span className="size-1.5 shrink-0 rounded-full" style={{ background: tone }} aria-hidden />
+      <span className={cn('size-1.5 shrink-0 rounded-full', dotClasses(color))} aria-hidden />
       {children}
     </Comp>
   )

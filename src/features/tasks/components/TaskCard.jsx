@@ -1,12 +1,11 @@
-import { GitPullRequestArrow } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DueLabel } from '@/components/shared/DueLabel'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import { TagPillGroup } from '@/components/shared/TagPill'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PriorityMenu, StatusMenu, TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
+import { TaskLinksButton } from '@/features/tasks/components/TaskLinksButton'
 import { TaskPriorityPill, TaskStatusPill } from '@/features/tasks/components/TaskPills'
-import { isClosed, linkHost } from '@/features/tasks/utils'
+import { isClosed } from '@/features/tasks/utils'
 import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
 
 /**
@@ -50,22 +49,9 @@ export function TaskCard({ task, space, tags, progress, onEdit, onSetField, onDe
           </PriorityMenu>
         )}
         <div className="flex-1" />
-        {task.external_url && (
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <a
-                href={task.external_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="pointer-events-auto flex size-6.5 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:text-foreground"
-                aria-label={`Open link (${linkHost(task.external_url)})`}
-              >
-                <GitPullRequestArrow className="size-3.25" />
-              </a>
-            </TooltipTrigger>
-            <TooltipContent>{linkHost(task.external_url)}</TooltipContent>
-          </Tooltip>
-        )}
+        <span className="pointer-events-auto">
+          <TaskLinksButton links={task.links} />
+        </span>
         <span className="pointer-events-auto">
           <TaskActionsMenu
             task={task}

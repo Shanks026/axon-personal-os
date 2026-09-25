@@ -13,6 +13,7 @@ auth.users
       ├── tasks (1:n)                    status, priority, start/due date, description (tiptap), position
       │    ├── todos (1:n, checklist)    todos.task_id
       │    ├── task_activity (1:n)       auto-logged history + manual log comments
+      │    ├── task_links (1:n)          MR/ticket/doc links, ordered by position
       │    ├── task_tags  ─┐
       │    └── note_task_links ──┐
       ├── todos (standalone)     │
@@ -146,13 +147,12 @@ create table public.tasks (
   description       jsonb,                              -- tiptap doc (edited from Feature 07)
   description_text  text not null default '',
   status            text not null default 'todo'
-                    check (status in ('todo','in_progress','in_review','blocked','done','cancelled')),
+                    check (status in ('todo','in_progress','in_review','blocked','on_hold','done','cancelled')),
   priority          text not null default 'none'
                     check (priority in ('none','low','medium','high','urgent')),
   start_date        date,
   due_date          date,
   completed_at      timestamptz,
-  external_url      text,                               -- e.g. GitLab MR / Jira link
   position          double precision not null default 0,
   pinned_at         timestamptz,
   deleted_at        timestamptz,
@@ -187,6 +187,27 @@ end;
 $$;
 create trigger tasks_completed_at before insert or update of status on public.tasks
   for each row execute function public.tasks_set_completed_at();
+-- + updated_at trigger, RLS owner policy
+```
+
+## task_links (Feature 04 follow-up)
+
+A task can carry any number of links (MR, ticket, doc); replaces the single `tasks.external_url` column.
+
+```sql
+create table public.task_links (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  task_id     uuid not null,
+  url         text not null check (char_length(btrim(url)) between 1 and 2000),
+  label       text,
+  position    double precision not null default 0,
+  created_at  timestamptz not null default now(),
+  updated_at  timestamptz not null default now(),
+  unique (id, user_id),
+  foreign key (task_id, user_id) references public.tasks(id, user_id) on delete cascade
+);
+create index task_links_task_idx on public.task_links (task_id, position);
 -- + updated_at trigger, RLS owner policy
 ```
 

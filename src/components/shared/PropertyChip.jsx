@@ -6,7 +6,16 @@ import { cn } from '@/lib/utils'
  * `empty` renders the label in faint text (e.g. "Due date" before one is picked).
  */
 export const PropertyChip = forwardRef(function PropertyChip(
-  { icon: Icon, iconStyle, children, empty = false, className, ...props },
+  {
+    icon: Icon,
+    iconStyle,
+    iconClassName,
+    iconProps,
+    children,
+    empty = false,
+    className,
+    ...props
+  },
   ref,
 ) {
   return (
@@ -20,7 +29,14 @@ export const PropertyChip = forwardRef(function PropertyChip(
       )}
       {...props}
     >
-      {Icon && <Icon className="size-3.5 shrink-0" style={iconStyle} aria-hidden />}
+      {Icon && (
+        <Icon
+          className={cn('size-3.5 shrink-0', iconClassName)}
+          style={iconStyle}
+          aria-hidden
+          {...iconProps}
+        />
+      )}
       <span className="truncate">{children}</span>
     </button>
   )

@@ -1,22 +1,22 @@
 import { X } from 'lucide-react'
-import { hueVar } from '@/lib/tint'
+import { badgeClasses } from '@/lib/tint'
 import { cn } from '@/lib/utils'
 
 /**
  * Tag pill (design: tag rows and cards, board card tags). `--radius-sm`, the same square-ish
  * shape as `SpaceBadge`, so both read as "labels" distinct from the fully round status pills.
- * `onRemove` adds a labelled ✕; otherwise it's a plain read-only chip.
+ * A plain Tailwind colour-scale badge (the user's request, 2026-09-25), not the CSS-variable tint
+ * recipe. `onRemove` adds a labelled ✕; otherwise it's a plain read-only chip.
  */
 export function TagPill({ tag, size = 'sm', onRemove, className }) {
-  const color = hueVar(tag.color)
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center gap-1 rounded-sm tint px-1.75 font-medium whitespace-nowrap',
+        'inline-flex shrink-0 items-center gap-1 rounded-sm px-1.75 font-medium whitespace-nowrap',
+        badgeClasses(tag.color),
         size === 'sm' ? 'h-5 text-xs' : 'h-6 text-xs',
         className,
       )}
-      style={{ '--tint': color }}
     >
       {tag.name}
       {onRemove && (

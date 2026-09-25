@@ -41,7 +41,9 @@ paths:
   - Group related fields with `FieldGroup` / `FieldSet`, and use `FieldDescription` for hints.
 - The submit button shows a pending state from `mutation.isPending`, and the dialog closes in the mutation's `onSuccess`.
 - In Global scope, every create dialog includes a required **SpacePicker** field. Inside a space, the space is implied and the picker is hidden.
+  - **Exception: the task dialog** (the user's decision, 2026-09-25). A task's space is fixed at creation — there is no picker anywhere, including Global. It's resolved via `useDefaultSpaceId` (the initial value, the current space, the last active space, or the first active space) and shown read-only as an icon + name under the title.
 - `Ctrl/Cmd+Enter` submits any dialog form. `Esc` closes it (shadcn handles that).
+- **Hover-to-open property chips** (the task dialog's status, priority, due date, tags and links chips, 2026-09-25): a `useHoverOpen()` hook (`src/hooks/`) opens the trigger's Popover/DropdownMenu on hover as well as on click, so a pointer user can preview and change a property with fewer clicks. Pass its `hoverProps` to both the trigger and the content (so moving the pointer between them doesn't flicker-close), and only opt a component into this via a `hoverOpen` prop — row, card and board menus stay click-only, so scanning a list doesn't pop menus open unexpectedly.
 
 ## Destructive actions
 

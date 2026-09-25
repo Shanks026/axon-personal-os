@@ -11,6 +11,7 @@ import {
   X,
 } from 'lucide-react'
 import { useDebouncedCallback } from 'use-debounce'
+import { textClasses } from '@/lib/tint'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { SegmentedControl } from '@/components/shared/SegmentedControl'
@@ -124,7 +125,7 @@ export function TaskToolbar({ filters, setFilter, clear, hasFilters }) {
             onCheckedChange={() => setFilter('status', toggle(filters.status, s.value))}
             onSelect={(e) => e.preventDefault()}
           >
-            <s.icon style={{ color: s.iconTone ?? s.tone }} />
+            <s.icon className={textClasses(s.color)} />
             {s.label}
           </DropdownMenuCheckboxItem>
         ))}
@@ -144,7 +145,7 @@ export function TaskToolbar({ filters, setFilter, clear, hasFilters }) {
             onCheckedChange={() => setFilter('priority', toggle(filters.priority, p.value))}
             onSelect={(e) => e.preventDefault()}
           >
-            <p.icon style={{ color: p.tone }} />
+            <p.icon color={p.color} />
             {p.label}
           </DropdownMenuCheckboxItem>
         ))}

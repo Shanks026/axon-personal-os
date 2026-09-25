@@ -15,6 +15,9 @@ const QUICK = [
 /**
  * Date popover (design Foundations → Date picker): quick chips, then a month calendar.
  * `value` / `onChange` use 'yyyy-MM-dd' strings (or null). `children` is the trigger element.
+ * `open`/`onOpenChange` make it controllable (e.g. hover-to-open); omit them for the default
+ * internal (click-to-open) state. `contentProps` passes extra props to the popover content,
+ * such as hover handlers that keep it open while the pointer is over it.
  */
 export function DatePicker({
   value,
@@ -23,8 +26,13 @@ export function DatePicker({
   clearable = true,
   align = 'start',
   weekStartsOn = 1,
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
+  contentProps,
 }) {
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = openProp ?? internalOpen
+  const setOpen = onOpenChangeProp ?? setInternalOpen
   const selected = parseISODate(value) ?? undefined
 
   function pick(date) {
@@ -35,7 +43,7 @@ export function DatePicker({
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>{children}</PopoverTrigger>
-      <PopoverContent align={align} className="w-auto p-3">
+      <PopoverContent align={align} className="w-auto p-3" {...contentProps}>
         <div className="mb-2 flex flex-wrap gap-1.5">
           {QUICK.map((q) => (
             <Button

@@ -1,14 +1,13 @@
-import { GitPullRequestArrow } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { DueLabel } from '@/components/shared/DueLabel'
 import { SpaceBadge } from '@/components/shared/SpaceBadge'
 import { TagPillGroup } from '@/components/shared/TagPill'
 import { Button } from '@/components/ui/button'
-import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { PriorityMenu, StatusMenu, TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
+import { TaskLinksButton } from '@/features/tasks/components/TaskLinksButton'
 import { TaskPriorityIcon, TaskStatusIcon } from '@/features/tasks/components/TaskPills'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP } from '@/features/tasks/constants'
-import { isClosed, linkHost } from '@/features/tasks/utils'
+import { isClosed } from '@/features/tasks/utils'
 import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
 
 /** Dense list row (design Foundations → task row): priority, status, title, tags, meta, due. */
@@ -47,22 +46,7 @@ export function TaskRow({ task, space, showSpace, tags, progress, onEdit, onSetF
       <TagPillGroup tags={tags} max={2} />
       <ChecklistProgressBadge progress={progress} />
       {showSpace && <SpaceBadge space={space} />}
-      {task.external_url && (
-        <Tooltip>
-          <TooltipTrigger asChild>
-            <a
-              href={task.external_url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-muted-foreground hover:text-foreground"
-              aria-label={`Open link (${linkHost(task.external_url)})`}
-            >
-              <GitPullRequestArrow className="size-3.5" />
-            </a>
-          </TooltipTrigger>
-          <TooltipContent>{linkHost(task.external_url)}</TooltipContent>
-        </Tooltip>
-      )}
+      <TaskLinksButton links={task.links} size="size-6" iconSize="size-3.5" className="bg-transparent" />
       <DueLabel
         date={task.due_date}
         completedAt={task.completed_at}

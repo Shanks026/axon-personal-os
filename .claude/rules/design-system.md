@@ -108,27 +108,43 @@ Components store a **key** (`spaces.color`, `tags.color`) and never a hex value.
 
 Database values stay as they are (`.claude/docs/data-model.md`). Only the labels and visuals are defined here. They live in `features/tasks/constants.js`.
 
-| status (db) | Label | Icon (lucide) | Colour |
+**Corrected 2026-09-25 (the user's own colour scheme, and "just a circle fill" for priority):** status and priority no longer use the tint recipe or signal-bar icons. Each status/priority entry carries a `color` key (a literal Tailwind colour name), and both are rendered with the literal Tailwind classes in `lib/tint.js` (see below), never a CSS variable.
+
+| status (db) | Label | Icon (lucide) | `color` key |
 |---|---|---|---|
-| todo | To do | `circle` | icon: muted-foreground · pill: space accent |
-| in_progress | In progress | `circle-dot` | warn |
-| in_review | In review | `circle-ellipsis` | review |
-| blocked | Blocked | `circle-alert` | destructive |
-| done | **Completed** | `circle-check` | ok |
-| cancelled | Cancelled | `circle-x` | faint (pill: muted-foreground) |
+| todo | To do | `circle` | slate |
+| in_progress | In progress | `circle-dot` | blue |
+| in_review | In review | `circle-ellipsis` | violet |
+| blocked | Blocked | `circle-alert` | pink |
+| on_hold | On hold | `circle-pause` | amber |
+| done | **Completed** | `circle-check` | green |
+| cancelled | Cancelled | `circle-x` | red |
 
 - **Todos** have two states: "Todo" (muted) and "Done" (ok).
 - **Status appears in two forms:**
-  - As an **icon** in rows and compact contexts.
-  - As a **filled pill** (tint recipe, with a leading dot) on cards and the board.
+  - As an **icon** in rows and compact contexts, tinted with `textClasses(color)`.
+  - As a **filled pill** (`badgeClasses(color)`, with a leading dot) on cards and the board.
 
-| priority | Label | Icon | Colour |
-|---|---|---|---|
-| none | None | `minus` | faint (usually hidden) |
-| low | Low | `signal-low` | faint |
-| medium | Medium | `signal-medium` | teal |
-| high | High | `signal-high` | warn |
-| urgent | Urgent | `triangle-alert` | destructive |
+| priority | `color` key |
+|---|---|
+| none | slate |
+| low | slate |
+| medium | teal |
+| high | amber |
+| urgent | red |
+
+- **Priority is a plain coloured dot** (the shared `Dot` component), not signal-bar icons. It renders the same in every context: rows, cards, the dialog's priority chip and the priority menu.
+
+### Literal Tailwind colour classes (`src/lib/tint.js`)
+
+For **status and priority badges/pills, and tag pills**, colours are written as literal, fully-spelled Tailwind colour-scale utilities — never a CSS variable, and never a template-built class name (Tailwind's static scanner can't see `` `bg-${color}-100` ``; this is the same lesson as the `border-1.5` bug in the changelog). `lib/tint.js` exports lookup objects keyed by colour name (`slate`, `blue`, `indigo`, `violet`, `pink`, `red`, `orange`, `amber`, `green`, `teal`), each value a literal class string, with accessor functions (`badgeClasses`, `textClasses`, `dotClasses`, `ringClasses`) that fall back to `slate` for an unknown key:
+
+- **Badge/pill background + text:** `bg-{color}-100 text-{color}-700`, plus `dark:bg-{color}-500/15 dark:text-{color}-300` (the dark-mode pairing is a judgement call, not a user spec).
+- **Icon-only text tint:** `text-{color}-600`, with a `dark:text-{color}-300` (or `-400` for `slate`) pairing.
+- **Dot fill:** `bg-{color}-500` (`slate` uses `bg-slate-400 dark:bg-slate-500` for contrast against `bg-slate-100`).
+- **Selection ring** (swatch pickers): `ring-{color}-500` (`slate`: `ring-slate-400`).
+
+This is a **different mechanism from the space-accent tint recipe** below, which stays CSS-variable-based because it drives a whole dynamic theme (nav highlighting, rings, buttons across the app), not a single discrete badge. Don't mix the two: a status/priority/tag pill never reads `--hue-*` or the tint recipe, and a space accent never reads `lib/tint.js`'s literal classes.
 
 - **Due date labels** are set in Geist Mono at `text-xs`:
   - Normal: muted-foreground (`Fri 26 Sep`).
@@ -136,7 +152,7 @@ Database values stay as they are (`.claude/docs/data-model.md`). Only the labels
   - `Overdue · 3d` / `Overdue 20 Sep`: destructive.
   - Completed: ok (`Completed 18 Sep`).
   - No date: faint.
-- **External link** (MR) icon: `git-pull-request-arrow`.
+- **Links** (MR, ticket, doc — a task can have any number, `git-pull-request-arrow` icon): one button (`TaskLinksButton`, shared by the row, card and board card), hidden entirely when a task has none, opening a hover popover that lists every link. It replaces a per-row Tooltip.
 
 ## Typography
 

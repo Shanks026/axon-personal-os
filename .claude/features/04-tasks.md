@@ -509,11 +509,25 @@ None beyond the component changes above.
 
 ---
 
+## Follow-up (2026-09-25): task dialog UX and colour polish
+
+Browser feedback after Feature 04/05 shipped, not a new phase. Full detail in `00-index.md`'s changelog entry of the same date.
+
+- No space picker in the task dialog anywhere (including Global) — a task's space is fixed at creation. Documented as an exception to the SpacePicker convention in `components.md`.
+- New `on_hold` status (amber, between Blocked and Completed); the board now has six columns.
+- `tasks.external_url` replaced by a new `task_links` table (a task can have any number of links), with a shared `TaskLinksButton` (hover popover) on the row, card and board card, and a rewritten `LinksChip` in the dialog.
+- Priority is a plain coloured dot (the shared `Dot` component), not signal-bar icons.
+- Status, priority and tag colours moved from the CSS-variable tint recipe to literal Tailwind colour-scale classes (`lib/tint.js`); see `design-system.md`.
+- The dialog's property chips (status, priority, dates, tags, links) open on hover as well as on click (`useHoverOpen`), row/card/board menus unchanged (click-only).
+
+---
+
 ## Data Model Summary (after all phases)
 
 ```
 spaces 1 ── n tasks
 tasks  n ── n tags   (via task_tags)
+tasks  1 ── n task_links
 tags.space_id NULL ⇒ available in every space
 ```
 
@@ -524,11 +538,10 @@ tags.space_id NULL ⇒ available in every space
 | `space_id` | uuid | composite FK to spaces, cascade |
 | `title` | text | 1–300 |
 | `description` / `description_text` | jsonb / text | edited from 07 |
-| `status` | text | todo, in_progress, in_review, blocked, done, cancelled |
+| `status` | text | todo, in_progress, in_review, blocked, on_hold, done, cancelled |
 | `priority` | text | none, low, medium, high, urgent |
 | `start_date` / `due_date` | date | start ≤ due |
 | `completed_at` | timestamptz | trigger-maintained |
-| `external_url` | text | MR / Jira link |
 | `position` | double | fractional ordering |
 | `pinned_at` | timestamptz | UI in 14 |
 | `deleted_at` | timestamptz | soft delete |
@@ -545,6 +558,15 @@ tags.space_id NULL ⇒ available in every space
 | Column | Type | Notes |
 |---|---|---|
 | `task_id`, `tag_id` | uuid | PK pair; composite FKs, cascade |
+
+### `task_links` (added 2026-09-25, replaces `tasks.external_url`)
+| Column | Type | Notes |
+|---|---|---|
+| `id` | uuid | PK; `unique(id, user_id)` |
+| `task_id` | uuid | composite FK to tasks, cascade |
+| `url` | text | 1–2000 chars |
+| `label` | text | optional display label |
+| `position` | double | fractional ordering |
 
 ## Out of Scope (All Phases)
 - Description, detail page, activity log: Feature 07

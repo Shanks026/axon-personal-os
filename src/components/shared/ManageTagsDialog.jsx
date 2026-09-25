@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { Tags, Trash2 } from 'lucide-react'
-import { hueVar } from '@/lib/tint'
+import { dotClasses, ringClasses } from '@/lib/tint'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { ConfirmDialog } from '@/components/shared/ConfirmDialog'
@@ -38,8 +38,10 @@ function ColorSwatchButton({ color, onChange }) {
             <button
               type="button"
               aria-label={`Colour: ${color}`}
-              className="size-6 shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring"
-              style={{ background: hueVar(color) }}
+              className={cn(
+                'size-6 shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                dotClasses(color),
+              )}
             />
           </PopoverTrigger>
         </TooltipTrigger>
@@ -57,9 +59,9 @@ function ColorSwatchButton({ color, onChange }) {
               onClick={() => onChange(key)}
               className={cn(
                 'size-5.5 rounded-full ring-offset-2 ring-offset-popover outline-none',
-                key === color && 'ring-2',
+                dotClasses(key),
+                key === color && cn('ring-2', ringClasses(key)),
               )}
-              style={{ background: hueVar(key), '--tw-ring-color': hueVar(key) }}
             />
           ))}
         </div>

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { taskSchema } from '@/features/tasks/schemas'
+import { taskLinkUrlSchema, taskSchema } from '@/features/tasks/schemas'
 import {
   boardStatuses,
   filterTasks,
@@ -34,11 +34,12 @@ describe('groupTasksByStatus', () => {
       'in_progress',
       'in_review',
       'blocked',
+      'on_hold',
       'done',
       'cancelled',
     ])
     expect(groups[0].tasks.map((x) => x.id)).toEqual(['c', 'b'])
-    expect(groups[4].tasks.map((x) => x.id)).toEqual(['a'])
+    expect(groups[5].tasks.map((x) => x.id)).toEqual(['a'])
   })
 })
 
@@ -92,12 +93,10 @@ describe('taskSchema', () => {
     priority: 'none',
     start_date: null,
     due_date: null,
-    external_url: '',
   }
 
-  it('accepts a minimal task and turns an empty link into null', () => {
-    const r = taskSchema.parse(base)
-    expect(r.external_url).toBeNull()
+  it('accepts a minimal task', () => {
+    expect(taskSchema.safeParse(base).success).toBe(true)
   })
 
   it('rejects a due date before the start date on the due field', () => {
@@ -106,15 +105,28 @@ describe('taskSchema', () => {
     expect(r.error.issues[0].path).toEqual(['due_date'])
   })
 
-  it('rejects a bad link and an empty title', () => {
-    expect(taskSchema.safeParse({ ...base, external_url: 'nope' }).success).toBe(false)
+  it('rejects an empty title', () => {
     expect(taskSchema.safeParse({ ...base, title: '  ' }).success).toBe(false)
   })
 })
 
+describe('taskLinkUrlSchema', () => {
+  it('accepts a full URL and rejects a bad one', () => {
+    expect(taskLinkUrlSchema.safeParse('https://gitlab.com/thmp/buyer/-/merge_requests/1431').success).toBe(true)
+    expect(taskLinkUrlSchema.safeParse('nope').success).toBe(false)
+  })
+})
+
 describe('boardStatuses', () => {
-  it('shows five columns and never Cancelled', () => {
-    expect(boardStatuses()).toEqual(['todo', 'in_progress', 'in_review', 'blocked', 'done'])
+  it('shows six columns and never Cancelled', () => {
+    expect(boardStatuses()).toEqual([
+      'todo',
+      'in_progress',
+      'in_review',
+      'blocked',
+      'on_hold',
+      'done',
+    ])
     expect(boardStatuses({ status: ['cancelled'] })).toEqual([])
   })
 

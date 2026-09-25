@@ -1,19 +1,27 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CalendarArrowUp, CalendarDays, ChevronRight, X } from 'lucide-react'
+import { CalendarArrowUp, CalendarDays, X } from 'lucide-react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { useDefaultSpaceId } from '@/hooks/useDefaultSpaceId'
+import { useSpace } from '@/context/SpaceContext'
 import { Kbd } from '@/components/shared/Kbd'
 import { PropertyChip } from '@/components/shared/PropertyChip'
-import { SpaceChipPicker } from '@/components/shared/SpaceChipPicker'
+import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import { Button } from '@/components/ui/button'
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
+import { textClasses } from '@/lib/tint'
 import { usePreferences } from '@/features/settings/api'
 import { useSetTaskTags, useTags } from '@/features/tags/api'
-import { useCreateTask, useUpdateTask } from '@/features/tasks/api'
-import { DateChip, LinkChip, TagsChip } from '@/features/tasks/components/TaskDialogChips'
+import {
+  useCreateTask,
+  useCreateTaskLink,
+  useCreateTaskLinks,
+  useDeleteTaskLink,
+  useUpdateTask,
+} from '@/features/tasks/api'
+import { DateChip, LinksChip, TagsChip } from '@/features/tasks/components/TaskDialogChips'
 import { PriorityMenu, StatusMenu } from '@/features/tasks/components/TaskMenus'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP } from '@/features/tasks/constants'
 import { taskSchema } from '@/features/tasks/schemas'
@@ -23,6 +31,7 @@ import { ChecklistSection } from '@/features/todos/components/ChecklistSection'
 /**
  * Create (no `task`) or edit a task (design 04f, Linear-style). Mountable standalone:
  * it only needs SpaceContext. `initialValues` prefills a create; `onSuccess(row)` runs after save.
+ * A task's space is fixed at creation (the user's request, 2026-09-25): there is no space picker.
  */
 export function TaskDialog({ open, onOpenChange, task, initialValues, onSuccess }) {
   return (
@@ -41,23 +50,26 @@ export function TaskDialog({ open, onOpenChange, task, initialValues, onSuccess 
 
 function TaskForm({ task, initialValues, onClose, onSuccess }) {
   const isEdit = !!task
+  const { spaceById } = useSpace()
   const create = useCreateTask()
   const update = useUpdateTask()
   const setTaskTags = useSetTaskTags()
+  const createLink = useCreateTaskLink(task?.id)
+  const createLinks = useCreateTaskLinks()
+  const deleteLink = useDeleteTaskLink(task?.id)
   const { weekStartsOn } = usePreferences()
-  const defaultSpace = useDefaultSpaceId(initialValues?.space_id)
+  const defaultSpace = useDefaultSpaceId(initialValues?.space_id ?? task?.space_id)
   const [createMore, setCreateMore] = useState(false)
   const [tagIds, setTagIds] = useState(task?.tag_ids ?? initialValues?.tag_ids ?? [])
+  const [links, setLinks] = useState(task?.links ?? initialValues?.links ?? [])
 
   const blank = {
-    space_id: defaultSpace,
     title: '',
     description_text: '',
     status: 'todo',
     priority: 'none',
     start_date: null,
     due_date: null,
-    external_url: '',
   }
   const form = useForm({
     resolver: zodResolver(taskSchema),
@@ -70,43 +82,36 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
           priority: task.priority,
           start_date: task.start_date,
           due_date: task.due_date,
-          external_url: task.external_url ?? '',
         }
       : { ...blank, ...initialValues, space_id: defaultSpace },
   })
-  const [status, priority, externalUrl, spaceId] = useWatch({
-    control: form.control,
-    name: ['status', 'priority', 'external_url', 'space_id'],
-  })
+  const [status, priority] = useWatch({ control: form.control, name: ['status', 'priority'] })
   const errors = form.formState.errors
   const pending = create.isPending || update.isPending
+  const space = spaceById.get(defaultSpace)
 
-  // Changing the space (Global only) drops tags scoped to a different space.
-  const { data: spaceTags = [] } = useTags({ spaceIds: spaceId ? [spaceId] : [] })
-  const prevSpaceId = useRef(spaceId)
-  useEffect(() => {
-    if (spaceId === prevSpaceId.current) return
-    prevSpaceId.current = spaceId
-    setTagIds((ids) => ids.filter((id) => spaceTags.some((t) => t.id === id)))
-  }, [spaceId, spaceTags])
+  // Tags are scoped to the task's own (fixed) space.
+  const { data: spaceTags = [] } = useTags({ spaceIds: defaultSpace ? [defaultSpace] : [] })
 
   const onSubmit = form.handleSubmit((values) => {
     const payload = { ...values, description: textToDoc(values.description_text) }
     const done = (row) => {
       setTaskTags.mutate({ taskId: row.id, tagIds })
+      if (!isEdit && links.length) createLinks.mutate({ taskId: row.id, links })
       onSuccess?.(row)
       if (!isEdit && createMore) {
         toast.success('Task created', { description: row.title })
         form.reset({ ...values, title: '', description_text: '' })
         form.setFocus('title')
         setTagIds([])
+        setLinks([])
         return
       }
       if (!isEdit) toast.success('Task created')
       onClose()
     }
     if (isEdit) update.mutate({ id: task.id, patch: payload }, { onSuccess: done })
-    else create.mutate(payload, { onSuccess: done })
+    else create.mutate({ ...payload, space_id: defaultSpace }, { onSuccess: done })
   })
 
   const StatusIcon = TASK_STATUS_MAP[status].icon
@@ -123,20 +128,16 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
       }}
       noValidate
     >
-      <div className="flex items-center gap-2 px-5 pt-3.5 text-xs text-muted-foreground">
-        <Controller
-          name="space_id"
-          control={form.control}
-          render={({ field }) => <SpaceChipPicker value={field.value} onChange={field.onChange} />}
-        />
-        <ChevronRight className="size-3 text-faint" aria-hidden />
-        <DialogTitle className="text-xs font-normal text-muted-foreground">
-          {isEdit ? 'Edit task' : 'New task'}
-        </DialogTitle>
-        <DialogDescription className="sr-only">
-          Title, description, status, priority, dates and link.
-        </DialogDescription>
-        <div className="flex-1" />
+      <div className="flex items-start gap-2 px-5 pt-4">
+        <div className="min-w-0 flex-1">
+          <DialogTitle className="text-sm font-semibold">
+            {isEdit ? 'Edit task' : 'New task'}
+          </DialogTitle>
+          <DialogDescription className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+            <SpaceIcon icon={space?.icon} size="xs" />
+            {space?.name}
+          </DialogDescription>
+        </div>
         <Button type="button" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
           <X />
         </Button>
@@ -169,18 +170,15 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
       </div>
 
       <div className="flex flex-wrap gap-1.5 px-5 pt-2 pb-4">
-        <StatusMenu value={status} onChange={(v) => form.setValue('status', v)}>
-          <PropertyChip
-            icon={StatusIcon}
-            iconStyle={{ color: TASK_STATUS_MAP[status].iconTone ?? TASK_STATUS_MAP[status].tone }}
-          >
+        <StatusMenu value={status} onChange={(v) => form.setValue('status', v)} hoverOpen>
+          <PropertyChip icon={StatusIcon} iconClassName={textClasses(TASK_STATUS_MAP[status].color)}>
             {TASK_STATUS_MAP[status].label}
           </PropertyChip>
         </StatusMenu>
-        <PriorityMenu value={priority} onChange={(v) => form.setValue('priority', v)}>
+        <PriorityMenu value={priority} onChange={(v) => form.setValue('priority', v)} hoverOpen>
           <PropertyChip
             icon={PriorityIcon}
-            iconStyle={{ color: TASK_PRIORITY_MAP[priority].tone }}
+            iconProps={{ color: TASK_PRIORITY_MAP[priority].color }}
             empty={priority === 'none'}
           >
             {priority === 'none' ? 'Priority' : TASK_PRIORITY_MAP[priority].label}
@@ -200,12 +198,18 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
           icon={CalendarDays}
           weekStartsOn={weekStartsOn}
         />
-        <TagsChip spaceId={spaceId} tags={spaceTags} value={tagIds} onChange={setTagIds} />
-        <LinkChip form={form} value={externalUrl} />
+        <TagsChip spaceId={defaultSpace} tags={spaceTags} value={tagIds} onChange={setTagIds} />
+        <LinksChip
+          taskId={task?.id}
+          links={links}
+          onLinksChange={setLinks}
+          onCreate={(values, onDone) => createLink.mutate(values, { onSuccess: onDone })}
+          onDelete={(id) => deleteLink.mutate(id)}
+        />
       </div>
-      {(errors.due_date || errors.external_url || errors.space_id) && (
+      {(errors.due_date || errors.space_id) && (
         <p className="-mt-2 px-5 pb-3 text-xs text-destructive">
-          {errors.due_date?.message ?? errors.external_url?.message ?? errors.space_id?.message}
+          {errors.due_date?.message ?? errors.space_id?.message}
         </p>
       )}
 

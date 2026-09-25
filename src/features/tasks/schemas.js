@@ -6,11 +6,11 @@ const isoDate = z
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .nullable()
 
-const url = z
+/** A single task link's URL (used when adding a link, one at a time). */
+export const taskLinkUrlSchema = z
   .string()
   .trim()
-  .transform((v) => v || null)
-  .pipe(z.url('Enter a full link, e.g. https://gitlab.com/…').nullable())
+  .pipe(z.url('Enter a full link, e.g. https://gitlab.com/…'))
 
 export const taskSchema = z
   .object({
@@ -21,7 +21,6 @@ export const taskSchema = z
     priority: z.enum(TASK_PRIORITIES.map((p) => p.value)),
     start_date: isoDate,
     due_date: isoDate,
-    external_url: url,
   })
   .refine((v) => !v.start_date || !v.due_date || v.start_date <= v.due_date, {
     path: ['due_date'],

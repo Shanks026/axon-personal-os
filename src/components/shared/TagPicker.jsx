@@ -1,6 +1,6 @@
 import { forwardRef, useState } from 'react'
 import { Check, ChevronDown, Plus, Tag as TagIcon } from 'lucide-react'
-import { hueVar } from '@/lib/tint'
+import { dotClasses } from '@/lib/tint'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { ManageTagsDialog } from '@/components/shared/ManageTagsDialog'
@@ -51,9 +51,14 @@ export function TagPicker({
   mode = 'assign',
   trigger,
   align = 'start',
+  open: openProp,
+  onOpenChange: onOpenChangeProp,
+  contentProps,
 }) {
   const { spaceById } = useSpace()
-  const [open, setOpen] = useState(false)
+  const [internalOpen, setInternalOpen] = useState(false)
+  const open = openProp ?? internalOpen
+  const setOpen = onOpenChangeProp ?? setInternalOpen
   const [manageOpen, setManageOpen] = useState(false)
   const [query, setQuery] = useState('')
   const { data: tags = [] } = useTags({ spaceIds })
@@ -80,7 +85,7 @@ export function TagPicker({
         <PopoverTrigger asChild>
           {trigger ?? <DefaultTrigger count={value.length} />}
         </PopoverTrigger>
-        <PopoverContent align={align} className="w-64 p-0">
+        <PopoverContent align={align} className="w-64 p-0" {...contentProps}>
           <Command>
             <CommandInput placeholder="Search tags…" value={query} onValueChange={setQuery} />
             <CommandList>
@@ -96,8 +101,7 @@ export function TagPicker({
                       aria-hidden
                     />
                     <span
-                      className="size-2 shrink-0 rounded-full"
-                      style={{ background: hueVar(tag.color) }}
+                      className={cn('size-2 shrink-0 rounded-full', dotClasses(tag.color))}
                       aria-hidden
                     />
                     <span className="flex-1 truncate">{tag.name}</span>

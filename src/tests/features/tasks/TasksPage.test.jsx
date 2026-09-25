@@ -15,6 +15,7 @@ const db = vi.hoisted(() => ({
   tasks: [],
   tags: [],
   taskTags: [],
+  taskLinks: [],
   calls: [],
   failUpdate: false,
 }))
@@ -32,6 +33,9 @@ vi.mock('@/lib/supabase', () => {
   const attachTagIds = (row) => ({
     ...row,
     tag_ids: db.taskTags.filter((tt) => tt.task_id === row.id).map((tt) => ({ tag_id: tt.tag_id })),
+    links: db.taskLinks
+      .filter((l) => l.task_id === row.id)
+      .sort((a, b) => a.position - b.position),
   })
 
   function builder(table) {
@@ -189,10 +193,32 @@ vi.mock('@/lib/supabase', () => {
       return result(db.taskTags)
     }
 
+    function runTaskLinks() {
+      if (state.op === 'insert') {
+        const row = { id: `link${db.taskLinks.length + 1}`, label: null, ...state.patch }
+        db.calls.push(['insert:task_links', row])
+        db.taskLinks.push(row)
+        return result(row)
+      }
+      if (state.op === 'update') {
+        db.calls.push(['update:task_links', state.id, state.patch])
+        db.taskLinks = db.taskLinks.map((l) => (l.id === state.id ? { ...l, ...state.patch } : l))
+        return result(db.taskLinks.find((l) => l.id === state.id))
+      }
+      if (state.op === 'delete') {
+        db.calls.push(['delete:task_links', state.id])
+        db.taskLinks = db.taskLinks.filter((l) => l.id !== state.id)
+        return result(null)
+      }
+      const forTask = db.taskLinks.filter((l) => l.task_id === state.taskId)
+      return result(state.single ? (forTask.at(-1) ?? null) : forTask)
+    }
+
     function run() {
       if (table === 'profiles') return result({ id: 'u1', last_space_id: null, week_starts_on: 1 })
       if (table === 'tags') return runTags()
       if (table === 'task_tags') return runTaskTags()
+      if (table === 'task_links') return runTaskLinks()
       return runTasks()
     }
     return b
@@ -221,7 +247,6 @@ const task = (id, title, status, extra = {}) => ({
   start_date: null,
   due_date: null,
   completed_at: status === 'done' ? '2026-09-20T10:00:00Z' : null,
-  external_url: null,
   position: Number(id.slice(1)) * 1000,
   pinned_at: null,
   deleted_at: null,
@@ -262,10 +287,12 @@ beforeEach(() => {
   db.failUpdate = false
   db.tags = []
   db.taskTags = []
+  db.taskLinks = [
+    { id: 'link1', task_id: 't1', url: 'https://gitlab.com/thmp/buyer/-/merge_requests/1431', label: null, position: 1000 },
+  ]
   db.tasks = [
     task('t1', 'Buyer portal: fix RFQ pagination', 'in_review', {
       priority: 'high',
-      external_url: 'https://gitlab.com/thmp/buyer/-/merge_requests/1431',
       description_text: 'Reset page to 1 when the filter hash changes.',
     }),
     task('t2', 'Vendor portal: migrate product form', 'in_progress'),
@@ -328,7 +355,6 @@ describe('TasksPage', () => {
       space_id: '6f1c2b58-2f0c-4a8e-9a1a-3c2b1d0e9f11',
       status: 'todo',
       priority: 'none',
-      external_url: null,
       description_text: 'Waiting on API\ncontract',
     })
     expect(inserted.description.content).toHaveLength(2)
@@ -388,7 +414,7 @@ describe('TasksPage', () => {
     expect(screen.getByRole('button', { name: /create your first task/i })).toBeInTheDocument()
   })
 
-  it('shows the board with five columns and round-trips with the grid', async () => {
+  it('shows the board with six columns and round-trips with the grid', async () => {
     db.tasks.push(task('t5', 'Old spike', 'cancelled'))
     const user = userEvent.setup()
     const router = renderPage()
@@ -402,6 +428,7 @@ describe('TasksPage', () => {
       'In progress column',
       'In review column',
       'Blocked column',
+      'On hold column',
       'Completed column',
     ])
     expect(within(columns[2]).getByText('Buyer portal: fix RFQ pagination')).toBeInTheDocument()

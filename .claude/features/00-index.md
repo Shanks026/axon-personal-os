@@ -80,8 +80,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `set_updated_at()`, `pg_trgm` | 02 | ✅ | Shared trigger function and extension |
 | `profiles` + `handle_new_user()` trigger | 02 | ✅ | 1:1 with auth.users; `fy_start_month` default 4. Migration `20260923164417`; `handle_new_user` execute revoked |
 | `spaces` | 03 | ✅ | `unique(user_id, slug)`; slug `global` reserved. Migration `20260923171644`, plus the `profiles.last_space_id` FK. `icon` is an emoji (`20260923180401`) |
-| `tasks` (+ completed_at trigger) | 04 | ✅ | Six statuses, five priorities, fractional `position`. Migration `20260923181804` |
+| `tasks` (+ completed_at trigger) | 04 | ✅ | Seven statuses (`on_hold` added `20260925061559`), five priorities, fractional `position`. Migration `20260923181804` |
 | `tags`, `task_tags` | 04 | ✅ | Tag `space_id` NULL means available in all spaces |
+| `task_links` | 04 | ✅ | Replaces `tasks.external_url`; a task can carry any number of links. Migration `20260925061612` |
 | `todos` (+ cascade triggers) | 05 | ✅ | `task_id` set means a checklist item |
 | `notes`, `note_tags` | 06 | ⬜ | Tiptap JSON plus `content_text`; generated `excerpt` (280 characters) for list cards |
 | `task_activity` (+ log trigger) | 07 | ⬜ | Auto history plus manual work-log comments |
@@ -111,6 +112,26 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-25: Feature 04 follow-up: task dialog UX and colour polish (browser feedback)
+- **No space picker in the task dialog** (the user's decision): a task's space is fixed at creation, either from context (the current space, or the column/status it was created from) or `useDefaultSpaceId`'s existing fallback chain. This is a deliberate, task-specific exception to `axon-feature`'s "Global create dialogs require a SpacePicker" convention — the dialog instead shows the space as a read-only title/subtitle (icon + name) under the task title.
+- **New status: On hold** (amber, `circle-pause`), between Blocked and Completed. Migration `20260925061559_tasks_add_on_hold_status` widens the `tasks.status` check constraint. The board now shows six columns (Cancelled still hidden).
+- **Multiple links per task**, replacing the single `tasks.external_url` column:
+  - **Migration `20260925061612_create_task_links`:** a new `task_links` table (`task_id`, `url`, `label`, fractional `position`), owner RLS, composite ownership FK, migrates any existing `external_url` into a first link, then drops the column.
+  - **`tasks/api.js`:** `LIST_COLUMNS` embeds `links:task_links(...)`, sorted client-side by position; `createTaskLink`/`updateTaskLink`/`deleteTaskLink` plus their mutation hooks, and a bulk `useCreateTaskLinks` for attaching a create-mode task's staged links once the task itself exists (mirrors `useSetTaskTags`'s invalidation pattern).
+  - **New `TaskLinksButton`** (shared across `TaskCard`, `TaskRow`, `BoardCard`): one icon, renders nothing without links, opens a hover popover listing every link. `BoardCard` merges its own drag-stop handling into the button's trigger via a new `triggerProps` prop.
+  - **`TaskDialogChips`'s `LinksChip`** replaces `LinkChip`: an add-link popover (validated with the new `taskLinkUrlSchema`) plus per-link remove. Links are added directly in the description otherwise — no separate section was considered necessary beyond attaching MR/ticket/doc URLs.
+  - The task's `TaskActionsMenu` now lists one "open" item per link instead of a single external-link item.
+- **Priority is a plain coloured dot**, not signal-bar icons (the user's request): `TASK_PRIORITIES` icon is the shared `Dot` component for every priority.
+- **Status and priority colours use literal Tailwind colour-scale classes**, not the CSS-variable tint recipe (the user's request, "always use tailwind colors for the badges and pills... bg-100, text-700... no need for separate color variables"):
+  - New `src/lib/tint.js` exports: `BADGE_CLASSES`/`textClasses`/`dotClasses`/`ringClasses`, keyed by a literal Tailwind colour name (`slate`, `blue`, `violet`, `pink`, `amber`, `green`, `red`, …), each a fully spelled-out class string (`bg-blue-100 text-blue-700 dark:bg-blue-500/15 dark:text-blue-300`) — Tailwind's static scanner can't see template-built class names, so these must stay literal, the same lesson as the `border-1.5` bug below.
+  - `TASK_STATUSES`/`TASK_PRIORITIES` each carry a `color` key using this scheme: todo slate, in progress blue, in review violet (the user asked for "purple"), blocked pink, on hold amber, completed green, cancelled red.
+  - `TintPill`, `TagPill`, `Dot`, `ManageTagsDialog`'s swatches and `TaskMenus`' dropdown icons all switched from `hueVar()`/`--tint` to these literal classes. The old CSS-variable recipe stays in place for **spaces only** (a full accent theme, not a discrete badge).
+  - Dark-mode pairing (`dark:bg-{c}-500/15 dark:text-{c}-300`) is my own call, since the user didn't specify dark mode.
+- **Hover-to-open property chips** in the task dialog (status, priority, due dates, tags, links) — a new `useHoverOpen` hook plus optional controlled `open`/`onOpenChange` props on `DatePicker`, `TagPicker`, `StatusMenu` and `PriorityMenu`. Click still works. Scoped to the dialog only — row/card/board menus stay click-only, so scanning a list doesn't pop menus open.
+- **New shared `Dot.jsx`** (a plain coloured circle, replacing the old dot markup inlined in a couple of places).
+- **Tests:** 213. Updated fixtures and assertions in `TasksPage.test.jsx`, `utils.test.js` and `TaskChecklist.test.jsx` for the dropped `external_url` column, the new `on_hold` status/column, and a `task_links` mock table.
+- **Manual steps for you:** none for the database (both migrations applied and verified). Please re-check the task dialog and board in the browser — this was a large batch of UI changes.
 
 ### 2026-09-25: Fix: the todo/checklist checkbox was invisible
 - **User-reported.** `AnimatedCheckbox` used a `border-1.5` class, which Tailwind never generates (no fractional border-widths), so an unchecked box had no border and no fill — invisible against the page. Present since Feature 05 Phase 1. Fixed by switching to the plain `border` utility (the project's 1px hairline convention).

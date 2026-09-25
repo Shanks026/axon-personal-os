@@ -15,13 +15,20 @@ export const taskKeys = {
 }
 
 const LIST_COLUMNS =
-  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, external_url, position, pinned_at, created_at, updated_at, tag_ids:task_tags(tag_id)'
+  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, position, pinned_at, created_at, updated_at, tag_ids:task_tags(tag_id), links:task_links(id, url, label, position)'
 
 const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
 
-/** Flattens the embedded `task_tags(tag_id)` rows into a plain `tag_ids: string[]`. */
-function mapTagIds(row) {
-  return { ...row, tag_ids: row.tag_ids?.map((t) => t.tag_id) ?? [] }
+/**
+ * Flattens the embedded `task_tags(tag_id)` rows into a plain `tag_ids: string[]`, and orders
+ * `links` by position (PostgREST doesn't order a nested embed for us).
+ */
+function mapRow(row) {
+  return {
+    ...row,
+    tag_ids: row.tag_ids?.map((t) => t.tag_id) ?? [],
+    links: [...(row.links ?? [])].sort((a, b) => a.position - b.position),
+  }
 }
 
 /**
@@ -64,7 +71,7 @@ export async function fetchTasks({
 
   const { data, error } = await query
   if (error) throw error
-  return data.map(mapTagIds)
+  return data.map(mapRow)
 }
 
 async function nextPosition(spaceId) {
@@ -87,7 +94,7 @@ export async function createTask(values) {
     .select(LIST_COLUMNS)
     .single()
   if (error) throw error
-  return mapTagIds(data)
+  return mapRow(data)
 }
 
 export async function updateTask(id, patch) {
@@ -98,7 +105,7 @@ export async function updateTask(id, patch) {
     .select(LIST_COLUMNS)
     .single()
   if (error) throw error
-  return mapTagIds(data)
+  return mapRow(data)
 }
 
 export const softDeleteTask = (id) => updateTask(id, { deleted_at: new Date().toISOString() })
@@ -218,5 +225,101 @@ export function useRestoreTask() {
       qc.invalidateQueries({ queryKey: todoKeys.all })
     },
     onError: (err) => toast.error(err.message ?? 'Could not restore task'),
+  })
+}
+
+// A task can carry any number of links (replaces the single external_url column).
+const LINK_COLUMNS = 'id, task_id, url, label, position'
+
+async function nextLinkPosition(taskId) {
+  const { data, error } = await supabase
+    .from('task_links')
+    .select('position')
+    .eq('task_id', taskId)
+    .order('position', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+  if (error) throw error
+  return positionAfterLast(data ? [data.position] : [])
+}
+
+export async function createTaskLink(values) {
+  const position = values.position ?? (await nextLinkPosition(values.task_id))
+  const { data, error } = await supabase
+    .from('task_links')
+    .insert({ ...values, position })
+    .select(LINK_COLUMNS)
+    .single()
+  if (error) throw error
+  return data
+}
+
+/** Attaches every staged link to a just-created task (`TaskDialog`'s create-mode links). */
+export async function createTaskLinks(taskId, links) {
+  return Promise.all(
+    links.map((l) => createTaskLink({ task_id: taskId, url: l.url, label: l.label })),
+  )
+}
+
+export async function updateTaskLink(id, patch) {
+  const { data, error } = await supabase
+    .from('task_links')
+    .update(patch)
+    .eq('id', id)
+    .select(LINK_COLUMNS)
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function deleteTaskLink(id) {
+  const { error } = await supabase.from('task_links').delete().eq('id', id)
+  if (error) throw error
+}
+
+function useInvalidateTask(taskId) {
+  const qc = useQueryClient()
+  return () => {
+    qc.invalidateQueries({ queryKey: taskKeys.lists() })
+    qc.invalidateQueries({ queryKey: taskKeys.detail(taskId) })
+  }
+}
+
+export function useCreateTaskLinks() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ taskId, links }) => createTaskLinks(taskId, links),
+    onSuccess: (_data, { taskId }) => {
+      qc.invalidateQueries({ queryKey: taskKeys.lists() })
+      qc.invalidateQueries({ queryKey: taskKeys.detail(taskId) })
+    },
+    onError: (err) => toast.error(err.message ?? 'Could not add the links'),
+  })
+}
+
+export function useCreateTaskLink(taskId) {
+  const invalidate = useInvalidateTask(taskId)
+  return useMutation({
+    mutationFn: createTaskLink,
+    onSuccess: invalidate,
+    onError: (err) => toast.error(err.message ?? 'Could not add the link'),
+  })
+}
+
+export function useUpdateTaskLink(taskId) {
+  const invalidate = useInvalidateTask(taskId)
+  return useMutation({
+    mutationFn: ({ id, patch }) => updateTaskLink(id, patch),
+    onSuccess: invalidate,
+    onError: (err) => toast.error(err.message ?? 'Could not save the link'),
+  })
+}
+
+export function useDeleteTaskLink(taskId) {
+  const invalidate = useInvalidateTask(taskId)
+  return useMutation({
+    mutationFn: deleteTaskLink,
+    onSuccess: invalidate,
+    onError: (err) => toast.error(err.message ?? 'Could not remove the link'),
   })
 }
