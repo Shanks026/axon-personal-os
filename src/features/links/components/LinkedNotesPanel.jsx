@@ -123,6 +123,7 @@ export function LinkedNotesPanel({ task }) {
         open={pickerOpen}
         onOpenChange={setPickerOpen}
         excludeIds={links.map((l) => l.note.id)}
+        spaceId={task.space_id}
         onPick={(note) => link.mutate({ noteId: note.id, taskId: task.id })}
       />
     </section>

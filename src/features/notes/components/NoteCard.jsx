@@ -16,7 +16,7 @@ import { NoteActionsMenu } from '@/features/notes/components/NoteActionsMenu'
 export function NoteCard({ note, to, space, showSpace, tags, onTogglePin, onDelete }) {
   const title = note.title || 'Untitled'
   return (
-    <article className="group relative flex h-full min-h-37 flex-col rounded-xl border bg-card px-5 py-4.5 transition duration-(--dur-fast) ease-(--ease-standard) hover:-translate-y-px hover:border-border-strong hover:shadow-xs">
+    <article className="group relative flex h-full min-h-37 flex-col rounded-xl border bg-card dark:bg-card/50 px-5 py-4.5 transition duration-(--dur-fast) ease-(--ease-standard) hover:-translate-y-px hover:border-border-strong hover:shadow-xs">
       <Link
         to={to}
         className="absolute inset-0 z-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
