@@ -117,7 +117,7 @@ Database values stay as they are (`.claude/docs/data-model.md`). Only the labels
 | in_review | In review | `circle-ellipsis` | violet |
 | blocked | Blocked | `circle-alert` | pink |
 | on_hold | On hold | `circle-pause` | amber |
-| done | **Completed** | `circle-check` | green |
+| done | **Completed** | `circle-check` | emerald |
 | cancelled | Cancelled | `circle-x` | red |
 
 - **Todos** have two states: "Todo" (muted) and "Done" (ok).
@@ -150,7 +150,7 @@ This is a **different mechanism from the space-accent tint recipe** below, which
   - Normal: muted-foreground (`Fri 26 Sep`).
   - `Today` / `Due today`: warn.
   - `Overdue · 3d` / `Overdue 20 Sep`: destructive.
-  - Completed: ok (`Completed 18 Sep`).
+  - Completed: a darker emerald, `text-emerald-700 dark:text-emerald-400` (`Completed 18 Sep`). It sits a step deeper than the emerald Completed pill (the user's request, 2026-09-25).
   - No date: faint.
 - **Links** (MR, ticket, doc — a task can have any number, `git-pull-request-arrow` icon): one button (`TaskLinksButton`, shared by the row, card and board card), hidden entirely when a task has none, opening a hover popover that lists every link. It replaces a per-row Tooltip. When a task has several links, the button widens into a pill showing the count next to the icon.
 

@@ -114,6 +114,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Emerald for Completed
+- The Completed status (pill, icon, board column) is now **emerald** instead of green. The "Completed 18 Sep" label (`DueLabel`, on card footers, table rows and board cards) is a darker `emerald-700` (`emerald-400` in dark mode).
+
 ### 2026-09-25: Task versions, version filter, sans card footer
 - **Migration `20260925085654_tasks_add_versions`:** `tasks.versions text[] not null default '{}'`, capped at 10 entries and 400 characters in total, with a GIN index for the filter. It was applied through the Management API because the MCP tools weren't loaded, and verified in a rolled-back transaction. The advisors show only the 3 pre-existing warnings.
 - **Versions are free text**, and a task can have several. The dialog's new **Version** chip (`VersionsChip`) suggests versions already used in that space (`useTaskVersions` / `fetchTaskVersions`, sorted newest first with a numeric-aware sort), and "Add …" adds a new one. Commas, braces and quotes are rejected, since they would break the Postgres array filter.

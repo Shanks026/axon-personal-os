@@ -17,7 +17,7 @@ export const TASK_STATUSES = [
   { value: 'in_review', label: 'In review', icon: CircleEllipsis, color: 'violet' },
   { value: 'blocked', label: 'Blocked', icon: CircleAlert, color: 'pink' },
   { value: 'on_hold', label: 'On hold', icon: CirclePause, color: 'amber' },
-  { value: 'done', label: 'Completed', icon: CircleCheck, color: 'green' },
+  { value: 'done', label: 'Completed', icon: CircleCheck, color: 'emerald' },
   { value: 'cancelled', label: 'Cancelled', icon: CircleX, color: 'red' },
 ]
 export const TASK_STATUS_MAP = Object.fromEntries(TASK_STATUSES.map((s) => [s.value, s]))

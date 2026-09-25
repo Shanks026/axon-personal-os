@@ -10,12 +10,18 @@ const TONE_CLASS = {
 
 /**
  * Due date in its tone (design-system.md → due labels): overdue red, today amber, otherwise
- * muted; closed items read "Completed 18 Sep" in green. Mono so columns line up.
+ * muted; closed items read "Completed 18 Sep" in a darker emerald (emerald-700; 400 in dark), a
+ * step deeper than the emerald Completed status pill. Mono so columns line up (sans on cards).
  */
 export function DueLabel({ date, completedAt, closed = false, showEmpty = true, className }) {
   if (closed && completedAt) {
     return (
-      <span className={cn('font-mono text-xs whitespace-nowrap text-ok', className)}>
+      <span
+        className={cn(
+          'font-mono text-xs whitespace-nowrap text-emerald-700 dark:text-emerald-400',
+          className,
+        )}
+      >
         Completed {formatDateShort(completedAt)}
       </span>
     )
