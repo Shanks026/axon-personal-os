@@ -117,6 +117,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-26: Note icon on note cards
+- Note cards (the Notes grid) and the "Link a note" picker rows show a muted `file-text` icon before the title, on its first line (the user's request).
+
 ### 2026-09-26: "Link a note" as a proper dialog with note cards
 - The task page's note picker becomes a shadcn Dialog (default header, 672px wide, pinned search, scrolling list). Results mirror the note card without its footer (title + versions, excerpt, tags), so tags and versions show while choosing (the user's request). A note from another space shows its space emoji. It keeps keyboard navigation (cmdk).
 
