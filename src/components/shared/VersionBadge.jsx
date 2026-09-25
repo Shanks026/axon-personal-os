@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 
 /**
  * A version a task or note is linked to ("v3.9.0"): shadcn's secondary badge with the tags' square-ish
@@ -30,21 +31,46 @@ export function VersionBadge({ version, onRemove, className }) {
 }
 
 /**
- * A task's or note's versions in a row (cards, table rows, board cards): up to `max`, then "+n" with the
- * full list on hover. Renders nothing without any.
+ * A task's or note's versions in a row (cards, table rows, board cards, previews): one badge,
+ * then "+n" (the user's request, 2026-09-26, matching the tags). Hovering a group with hidden
+ * versions lists them all. Renders nothing without any.
  */
-export function VersionBadgeGroup({ versions, max = 2, className }) {
+export function VersionBadgeGroup({ versions, max = 1, className }) {
   if (!versions?.length) return null
-  const rest = versions.length - max
-  return (
+  const shown = versions.slice(0, max)
+  const rest = versions.length - shown.length
+  const group = (
     <div
-      className={cn('flex shrink-0 items-center gap-1', className)}
-      title={rest > 0 ? versions.join(', ') : undefined}
+      className={cn(
+        'flex shrink-0 items-center gap-1',
+        className,
+        // Callers may disable pointer events (grid cards); hovering must still reach the trigger.
+        rest > 0 && 'pointer-events-auto cursor-default',
+      )}
     >
-      {versions.slice(0, max).map((v) => (
+      {shown.map((v) => (
         <VersionBadge key={v} version={v} />
       ))}
-      {rest > 0 && <span className="text-xs text-faint">+{rest}</span>}
+      {rest > 0 && (
+        <span className="shrink-0 text-xs text-faint" aria-label={`${rest} more versions`}>
+          +{rest}
+        </span>
+      )}
     </div>
+  )
+  if (rest === 0) return group
+
+  return (
+    <HoverCard openDelay={150} closeDelay={100}>
+      <HoverCardTrigger asChild>{group}</HoverCardTrigger>
+      <HoverCardContent align="end" className="w-auto max-w-72 p-2">
+        <p className="mb-1.5 text-xs text-muted-foreground">{versions.length} versions</p>
+        <div className="flex flex-wrap gap-1">
+          {versions.map((v) => (
+            <VersionBadge key={v} version={v} />
+          ))}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
   )
 }

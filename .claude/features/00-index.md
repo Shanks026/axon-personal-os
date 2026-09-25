@@ -117,6 +117,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-26: One version badge, then +n
+- `VersionBadgeGroup` shows 1 version, then "+n", with a hover card listing every version, like `TagPillGroup` (the user's request). This applies to task and note cards, board cards, both tables, the task hover card and the note picker. Tested.
+
 ### 2026-09-26: Note icon removed from note cards again
 - Reviewed in the browser with the user: the title's icon misaligned it against the excerpt, tags and footer, hung second lines under the indent and squeezed titles beside the versions. It's removed from the Notes grid cards and the "Link a note" rows, and kept on the task page's linked-notes cards and in chips, where notes and tasks mix.
 
