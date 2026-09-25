@@ -16,7 +16,7 @@ function Row({ label, children }) {
 
 /**
  * The editor's side panel: the note's space, Created, Updated, Words, Tags and Versions (all of a note's metadata), then its Linked tasks
- * (moved below the details at the user's request, 2026-09-26). Rendered in the 352px rail on large screens and in
+ * (moved below the details at the user's request, 2026-09-26). Rendered in the 320px rail on large screens and in
  * a Sheet below `lg`.
  */
 export function NoteMetaRail({ note, space, words, className }) {
