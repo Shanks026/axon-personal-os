@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { FileText } from 'lucide-react'
 import { useDebounce } from 'use-debounce'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
@@ -29,7 +28,6 @@ function NoteOption({ note, tags, space, showSpace }) {
   return (
     <div className="flex w-full min-w-0 flex-col">
       <div className="flex items-start gap-2">
-        <FileText className="mt-0.75 size-4 shrink-0 text-muted-foreground" aria-hidden />
         <p className="line-clamp-2 min-w-0 flex-1 text-base leading-snug font-semibold tracking-tight">
           {note.title || <span className="text-faint">Untitled</span>}
         </p>

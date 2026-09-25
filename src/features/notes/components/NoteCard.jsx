@@ -1,4 +1,4 @@
-import { FileText, SquareCheckBig } from 'lucide-react'
+import { SquareCheckBig } from 'lucide-react'
 import { Link } from 'react-router'
 import { formatRelative } from '@/lib/dates'
 import { cn } from '@/lib/utils'
@@ -25,8 +25,6 @@ export function NoteCard({ note, to, space, showSpace, tags, onTogglePin, onDele
       />
 
       <div className="pointer-events-none relative flex items-start gap-2">
-        {/* The note icon, on the title's first line (the user's request). */}
-        <FileText className="mt-0.75 size-4 shrink-0 text-muted-foreground" aria-hidden />
         <h3
           className={cn(
             'line-clamp-2 min-w-0 flex-1 text-base leading-snug font-semibold tracking-tight text-pretty',
