@@ -61,8 +61,8 @@ Phase 3: Rich task descriptions (added 2026-09-25, pulled forward from 07)
   - `text-sm` chips.
   - Thin themed scrollbars.
   - Menus that open on hover must be `modal={false}`.
-- **Decision A (for the user):** the notes list's second view. The recommendation is a **Table** (TanStack v9, the same pattern as the Tasks table: Title + excerpt, Tags, Updated, Space in Global, ⋮), rather than the design's dense list, since the Tasks list was replaced for looking chaotic.
-- **Decision B (for the user):** "New note" in **Global**. The recommendation is to create the note in the default space silently, as the task dialog does (`useDefaultSpaceId`: the current space, then the last active, then the first). That drops `NewNoteSpacePicker`. The alternative is to keep the plan's space picker.
+- **Decision A — decided 2026-09-25: Table.** The notes list's second view is a **Table** (TanStack v9, the same pattern as the Tasks table: Title + excerpt, Tags, Updated, Space in Global, ⋮), rather than the design's dense list, since the Tasks list was replaced for looking chaotic.
+- **Decision B — decided 2026-09-25: default space.** "New note" in **Global** creates the note in the default space silently, as the task dialog does (`useDefaultSpaceId`: the current space, then the last active, then the first). That drops `NewNoteSpacePicker`. The alternative is to keep the plan's space picker.
 
 ### Goal
 At `/s/:slug/notes` the user sees their notes as a grid or list, each with a title, a two-line preview, a relative "updated" time, tags and (in Global) a space badge, and can search them. "New note" creates an empty note immediately and opens it. The editor page has a large title, a tags row, and a rich editor with a `/` command menu and a selection toolbar. Everything autosaves (800ms) with a Saving/Saved indicator, and a note left completely empty is discarded. Notes are soft-deleted with Undo.

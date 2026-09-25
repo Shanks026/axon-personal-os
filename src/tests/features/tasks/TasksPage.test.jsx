@@ -544,6 +544,26 @@ describe('TasksPage', () => {
     expect(router.state.location.search).toBe('?view=table')
   })
 
+  it('sorts the grid from the Sort menu (natural direction first) and hides it on the board', async () => {
+    db.tasks[0].priority = 'low'
+    db.tasks[2].priority = 'urgent'
+    const user = userEvent.setup()
+    const router = renderPage()
+    await screen.findByText('Storefront: lazy-load images')
+    await user.click(screen.getByRole('button', { name: 'Sort' }))
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Priority' }))
+    await waitFor(() => expect(router.state.location.search).toBe('?sort=-priority'))
+    const titles = () =>
+      screen.getAllByRole('article').map((a) => within(a).getByRole('heading').textContent)
+    await waitFor(() => expect(titles()[0]).toBe('Storefront: lazy-load images')) // urgent first
+
+    await user.keyboard('{Escape}')
+    await user.click(screen.getByRole('radio', { name: 'Board' }))
+    expect(
+      screen.queryByRole('button', { name: /Priority.*descending|^Sort$/ }),
+    ).not.toBeInTheDocument()
+  })
+
   it('opens a task from its title and changes status in place in the table', async () => {
     const user = userEvent.setup()
     renderPage('/s/thmp/tasks?view=table')

@@ -1,10 +1,5 @@
 import { useMemo } from 'react'
-import {
-  createSortedRowModel,
-  rowSortingFeature,
-  tableFeatures,
-  useTable,
-} from '@tanstack/react-table'
+import { rowSortingFeature, tableFeatures, useTable } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
@@ -18,7 +13,8 @@ import {
 } from '@/components/ui/table'
 import { buildTaskColumns } from '@/features/tasks/components/taskTableColumns'
 
-const features = tableFeatures({ rowSortingFeature, sortedRowModel: createSortedRowModel() })
+// Sorting state and header toggles only: the rows arrive already sorted (manualSorting).
+const features = tableFeatures({ rowSortingFeature })
 
 /** "-due" ⇄ [{ id: 'due', desc: true }]. Single-column sort; empty means the manual order. */
 const parseSort = (sort) =>
@@ -47,8 +43,8 @@ function SortableHeader({ header, table }) {
 
 /**
  * The Tasks page's table view (TanStack Table v9 on shadcn's Table), replacing the old grouped
- * list (the user's request, 2026-09-25). Rows keep the page's manual order until a header is
- * clicked; the sort lives in the URL (`?sort=due`, `?sort=-updated`). Status and priority change
+ * list (the user's request, 2026-09-25). Rows arrive in the page's sort order (`sortTasks`, shared
+ * with the grid); a header click, or the toolbar's Sort menu, sets `?sort=` (`due`, `-updated`). Status and priority change
  * in place; the title opens the task.
  */
 export function TaskTable({
@@ -75,6 +71,7 @@ export function TaskTable({
     data: tasks,
     getRowId: (task) => task.id,
     enableMultiSort: false,
+    manualSorting: true,
     state: { sorting },
     onSortingChange: (updater) =>
       onSortChange(formatSort(typeof updater === 'function' ? updater(sorting) : updater)),

@@ -1,7 +1,13 @@
 import { endOfWeek } from 'date-fns'
 import { parseISODate, toISODate } from '@/lib/dates'
 import { needsRebalance, positionBetween } from '@/lib/position'
-import { BOARD_STATUSES, CLOSED_STATUSES, TASK_TABS } from '@/features/tasks/constants'
+import {
+  BOARD_STATUSES,
+  CLOSED_STATUSES,
+  TASK_PRIORITIES,
+  TASK_STATUSES,
+  TASK_TABS,
+} from '@/features/tasks/constants'
 
 /** Last day of the week containing `todayISO`, as yyyy-MM-dd (0 = Sunday start, 1 = Monday). */
 export function weekEndISO(todayISO, weekStartsOn = 1) {
@@ -44,6 +50,36 @@ export function planBoardMove(column, taskId) {
 }
 
 export const isClosed = (task) => CLOSED_STATUSES.includes(task.status)
+
+const STATUS_ORDER = Object.fromEntries(TASK_STATUSES.map((s, i) => [s.value, i]))
+const PRIORITY_RANK = Object.fromEntries(TASK_PRIORITIES.map((p) => [p.value, p.rank]))
+const byString = (a, b) => (a < b ? -1 : a > b ? 1 : 0)
+
+const COMPARE = {
+  created: (a, b) => byString(a.created_at, b.created_at),
+  updated: (a, b) => byString(a.updated_at, b.updated_at),
+  priority: (a, b) => PRIORITY_RANK[a.priority] - PRIORITY_RANK[b.priority],
+  due: (a, b) => byString(a.due_date, b.due_date),
+  status: (a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status],
+  title: (a, b) => a.title.localeCompare(b.title, undefined, { sensitivity: 'base' }),
+  space: (a, b, spaceName) => byString(spaceName(a.space_id), spaceName(b.space_id)),
+}
+
+/**
+ * Tasks in `sort` order ('due' ascending, '-due' descending; '' or unknown keeps the given
+ * position order). Tasks without a due date always sort last. Ties fall back to position.
+ * `spaceName(id)` is only needed for the Global table's space sort.
+ */
+export function sortTasks(tasks, sort, { spaceName = () => '' } = {}) {
+  const key = sort?.replace(/^-/, '')
+  const compare = COMPARE[key]
+  if (!compare) return tasks
+  const dir = sort.startsWith('-') ? -1 : 1
+  return [...tasks].sort((a, b) => {
+    if (key === 'due' && !a.due_date !== !b.due_date) return a.due_date ? -1 : 1
+    return dir * compare(a, b, spaceName) || a.position - b.position
+  })
+}
 
 /** Tiptap doc from plain text: one paragraph per line (blank lines kept as empty paragraphs). */
 export function textToDoc(text) {

@@ -55,14 +55,7 @@ export function BoardCard({
         </div>
       )}
 
-      <h3
-        className={cn(
-          'leading-snug font-semibold text-pretty',
-          closed && 'text-muted-foreground line-through decoration-faint',
-        )}
-      >
-        {task.title}
-      </h3>
+      <h3 className={cn('leading-snug font-semibold text-pretty')}>{task.title}</h3>
       {tags?.length > 0 && <TagPillGroup tags={tags} className="flex-wrap" />}
 
       <footer className="box-content flex h-6 items-center gap-2 border-t border-dashed border-border-strong pt-2.5">

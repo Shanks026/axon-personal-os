@@ -29,6 +29,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
 import { useTaskVersions } from '@/features/tasks/api'
+import { TaskSortMenu } from '@/features/tasks/components/TaskSortMenu'
 import { DUE_FILTERS, TASK_PRIORITIES, TASK_STATUSES } from '@/features/tasks/constants'
 
 const VIEWS = [
@@ -202,6 +203,11 @@ export function TaskToolbar({ filters, setFilter, clear, hasFilters }) {
           </>
         )}
       </FilterButton>
+
+      {/* The board keeps its manual drag order, so there's nothing to sort there. */}
+      {filters.view !== 'board' && (
+        <TaskSortMenu value={filters.sort} onChange={(v) => setFilter('sort', v)} />
+      )}
 
       <SegmentedControl
         label="View"

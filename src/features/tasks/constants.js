@@ -55,5 +55,19 @@ export const TASK_TABS = [
 
 export const TASK_VIEWS = ['grid', 'board', 'table']
 
+/**
+ * Sort fields for the grid and table (`?sort=due`, `?sort=-due` for descending); no sort means
+ * the manual position order. `descFirst` fields start descending (newest, most urgent). The
+ * board always keeps its manual drag order. `space` exists only as a Global table column.
+ */
+export const TASK_SORTS = [
+  { value: 'created', label: 'Created', descFirst: true },
+  { value: 'updated', label: 'Updated', descFirst: true },
+  { value: 'priority', label: 'Priority', descFirst: true },
+  { value: 'due', label: 'Due date' },
+  { value: 'status', label: 'Status' },
+  { value: 'title', label: 'Title' },
+]
+
 /** Closed tasks older than this are hidden unless the Completed tab or a status filter asks. */
 export const DONE_WINDOW_DAYS = 30

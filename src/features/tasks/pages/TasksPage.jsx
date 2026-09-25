@@ -21,11 +21,18 @@ import { TaskGrid } from '@/features/tasks/components/TaskViews'
 import { useTaskActions } from '@/features/tasks/hooks/useTaskActions'
 import { useTaskFilters } from '@/features/tasks/hooks/useTaskFilters'
 import { BOARD_STATUSES, CLOSED_STATUSES } from '@/features/tasks/constants'
-import { boardStatuses, filterTasks, isClosed, tabCounts, weekEndISO } from '@/features/tasks/utils'
+import {
+  boardStatuses,
+  filterTasks,
+  isClosed,
+  sortTasks,
+  tabCounts,
+  weekEndISO,
+} from '@/features/tasks/utils'
 
 /** Tasks (design 04a–04e). Todos have their own page (Feature 05). */
 export default function TasksPage() {
-  const { space, isGlobal, activeSpaces, scopeSpaceIds } = useSpace()
+  const { space, isGlobal, activeSpaces, scopeSpaceIds, spaceById } = useSpace()
   const { weekStartsOn } = usePreferences()
   const { filters, setFilter, clear, hasFilters } = useTaskFilters()
   const actions = useTaskActions()
@@ -54,6 +61,11 @@ export default function TasksPage() {
   const visible = useMemo(
     () => filterTasks(tasks, { tab: filters.tab, status: filters.status }),
     [tasks, filters.tab, filters.status],
+  )
+  // Grid and table share one sort (?sort=); the board keeps its manual drag order.
+  const sorted = useMemo(
+    () => sortTasks(visible, filters.sort, { spaceName: (id) => spaceById.get(id)?.name ?? '' }),
+    [visible, filters.sort, spaceById],
   )
   const counts = useMemo(() => tabCounts(tasks), [tasks])
   const columns = useMemo(
@@ -158,7 +170,7 @@ export default function TasksPage() {
           )
         ) : filters.view === 'table' ? (
           <TaskTable
-            tasks={visible}
+            tasks={sorted}
             actions={actions}
             tagsById={tagsById}
             progressByTask={progressByTask}
@@ -170,7 +182,7 @@ export default function TasksPage() {
           />
         ) : (
           <TaskGrid
-            tasks={visible}
+            tasks={sorted}
             actions={actions}
             tagsById={tagsById}
             progressByTask={progressByTask}

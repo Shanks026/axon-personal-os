@@ -5,6 +5,7 @@ import {
   filterTasks,
   linkHost,
   planBoardMove,
+  sortTasks,
   tabCounts,
   textToDoc,
   weekEndISO,
@@ -159,5 +160,57 @@ describe('planBoardMove', () => {
   it('asks for a rebalance when neighbours share a position', () => {
     const column = [t('a', 'todo', 0), t('x', 'todo', 0), t('b', 'todo', 0)]
     expect(planBoardMove(column, 'x')).toEqual({ position: 0, rebalance: true })
+  })
+})
+
+describe('sortTasks', () => {
+  const task = (id, extra) => ({
+    id,
+    title: id,
+    status: 'todo',
+    priority: 'none',
+    due_date: null,
+    created_at: '2026-09-01T00:00:00Z',
+    updated_at: '2026-09-01T00:00:00Z',
+    position: Number(id.slice(1)) * 1000,
+    ...extra,
+  })
+  const tasks = [
+    task('t1', {
+      priority: 'low',
+      due_date: '2026-10-10',
+      status: 'done',
+      created_at: '2026-09-03T00:00:00Z',
+    }),
+    task('t2', { priority: 'urgent', status: 'blocked', created_at: '2026-09-01T00:00:00Z' }),
+    task('t3', {
+      priority: 'medium',
+      due_date: '2026-10-01',
+      status: 'todo',
+      created_at: '2026-09-02T00:00:00Z',
+    }),
+  ]
+  const ids = (sort) => sortTasks(tasks, sort).map((t) => t.id)
+
+  it('keeps the manual (given) order without a known sort', () => {
+    expect(ids('')).toEqual(['t1', 't2', 't3'])
+    expect(ids('nope')).toEqual(['t1', 't2', 't3'])
+  })
+
+  it('sorts by created, priority and status, both directions', () => {
+    expect(ids('-created')).toEqual(['t1', 't3', 't2'])
+    expect(ids('-priority')).toEqual(['t2', 't3', 't1'])
+    expect(ids('status')).toEqual(['t3', 't2', 't1']) // todo → blocked → done
+  })
+
+  it('puts tasks without a due date last in both directions', () => {
+    expect(ids('due')).toEqual(['t3', 't1', 't2'])
+    expect(ids('-due')).toEqual(['t1', 't3', 't2'])
+  })
+
+  it('falls back to position on ties, and never mutates the input', () => {
+    const same = [task('t2'), task('t1')]
+    expect(sortTasks(same, 'priority').map((t) => t.id)).toEqual(['t1', 't2'])
+    expect(same.map((t) => t.id)).toEqual(['t2', 't1'])
   })
 })

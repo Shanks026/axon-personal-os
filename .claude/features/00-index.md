@@ -114,6 +114,12 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Task sorting; readable closed titles
+- **Sort for the grid and table:** a new `TaskSortMenu` in the toolbar and the table headers share `?sort=`. Fields are Created, Updated, Priority, Due date, Status and Title, plus Space from the Global table header. The pure `sortTasks(tasks, sort, { spaceName })` is tested. Tasks without a due date always sort last, and ties fall back to position. The table is now `manualSorting` (no per-column `sortFn`). The board keeps its manual order, so the menu is hidden there.
+- **Completed and cancelled task titles** are no longer muted or struck through (grid card, board card, table row). Todos keep their strike-through.
+- **Feature 06 decisions recorded:** Table as the second notes view, and "New note" in Global goes to the default space.
+- **Tests:** 225.
+
 ### 2026-09-25: Feature 06 plan updated (design fold + Phase 3)
 - **`06-notes.md`:** the delta-06 design fold is added to Phase 1: no sort control, Pinned then All notes sections, pinning pulled forward from 14, the auto-collapsing sidebar and 280px rail on the editor, the highlight mark, the slash-menu order, and the Tasks-era card rules. Two decisions are open for the user: the second list view (Table recommended) and "New note" in Global (default space silently, recommended).
 - **New Phase 3 "Rich task descriptions":** a compact `RichTextEditor` in `TaskDialog`, pulled forward from 07. No migration is needed. `07-task-detail-and-linking.md` is annotated to match.

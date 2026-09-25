@@ -69,7 +69,6 @@ export function TaskCard({ task, space, showSpace, tags, progress, onEdit, onSet
         <h3
           className={cn(
             'line-clamp-2 min-w-0 flex-1 text-base leading-snug font-semibold tracking-tight text-pretty',
-            closed && 'text-muted-foreground line-through decoration-faint',
           )}
         >
           {task.title}
