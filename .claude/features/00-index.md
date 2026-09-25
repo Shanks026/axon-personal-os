@@ -21,7 +21,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | **Wave 2: Capture** | | | | |
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | ✅ Complete |
 | 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | ✅ Complete |
-| 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | 🔵 Planned |
+| 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | 🟡 In progress (Phase 1 ✅) |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🔵 Planned |
 | **Wave 3: Time** | | | | |
 | 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | 🔵 Planned |
@@ -85,7 +85,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `task_links` | 04 | ✅ | Replaces `tasks.external_url`; a task can carry any number of links. Migration `20260925061612` |
 | `tasks.versions` (text[] + GIN index) | 04 | ✅ | Free-text versions, several per task. Migration `20260925085654` |
 | `todos` (+ cascade triggers) | 05 | ✅ | `task_id` set means a checklist item |
-| `notes`, `note_tags` | 06 | ⬜ | Tiptap JSON plus `content_text`; generated `excerpt` (280 characters) for list cards |
+| `notes`, `note_tags` | 06 | ✅ | Tiptap JSON plus `content_text`; generated `excerpt` (280 characters) for list cards. Migration `20260925100223` |
 | `task_activity` (+ log trigger) | 07 | ⬜ | Auto history plus manual work-log comments |
 | `note_task_links` + `sync_note_mentions()` | 07 | ⬜ | Sources: manual or mention |
 | `events` | 08 | ⬜ | Optional `task_id` / `note_id` |
@@ -113,6 +113,37 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-25: Feature 06 Phase 1: Editor and notes
+- **Database:** migration `create_notes_and_note_tags` (`20260925100223`), applied through the Management API because the Supabase MCP tools didn't load this session. Verified in a rolled-back transaction: `excerpt` follows `content_text` (capped at 280), and deleting a tag removes its `note_tags`. Advisors show no new warnings.
+- **New shared editor** (`src/components/editor/`), on Tiptap **3.31**:
+  - `RichTextEditor`: uncontrolled after mount (remount with `key`); `onChange(json, text)`; `onEditorReady`; `immediatelyRender: true` and `shouldRerenderOnTransaction: false`.
+  - `EditorBubbleMenu` (`@tiptap/react/menus`): bold, italic, strike, code, link (an inline URL field inside the bubble), H2, highlight, and a "Turn into" menu.
+  - `SlashCommandMenu`, `SlashCommand` and `slashItems` (the design 07b order with markdown hints).
+  - `suggestionRenderer`: `ReactRenderer` plus the suggestion's own `mount()` (Floating UI), ready for 07's `[[` mentions.
+  - `buildExtensions` and `editor.css` (prose on tokens).
+- **New dependencies:** `@tiptap/react`, `pm`, `starter-kit`, `extensions`, `extension-list`, `extension-table`, `extension-highlight`, `suggestion` and `@floating-ui/dom`. `vite.config.js` gains an `editor` chunk, which keeps vendor at its old size.
+- **New shared hook:** `useAutosave({ save, delay })` returns `{ schedule, flush, status }`. Patches merge, saves run one at a time, a failed save keeps its patch, and it flushes on unmount and `beforeunload`. Tested with fake timers.
+- **Notes page** (`/s/:slug/notes`):
+  - Grid or Table (`?view=`, remembered per device); search goes to `?q=` (title substring or full text).
+  - Newest edit first; a Pinned section, then All notes.
+  - Cards: 2-line title and excerpt, tags pinned above a dashed "Updated …" footer, and the space emoji in Global.
+  - The ⋮ menu has Pin/Unpin and Move to Trash (with Undo).
+  - "New note" creates and opens a note at once; in Global it goes to the default space (decision B).
+- **Note editor** (`/s/:slug/notes/:noteId`):
+  - The sidebar auto-collapses to the rail and restores on leave; the saved preference is untouched.
+  - Header: Saving/Saved (with Retry on error), pin, a Details rail toggle and ⋮.
+  - A 680px reading column: display title (Enter moves into the body), a tags row (pills, "+ Tag" picker that can create tags, "Edited …"), then the body.
+  - A 280px rail with Space, Created, Updated and Words; a Sheet below `lg`.
+  - Title and body autosave at 800ms. A note left completely empty is discarded on leave; this is StrictMode-safe and waits for pending saves.
+  - Missing, deleted and archived-space states; notes opened under another space redirect to their own.
+- **Shared changes:**
+  - `usePageHeader` accepts `parent: { label, to }` (space › Notes › title).
+  - `SaveIndicator` accepts `onRetry`.
+  - `ManageTagsDialog` shows combined usage ("12 tasks · 3 notes", via `tagUsage`); `fetchTags` adds `note_count`.
+  - `useUpdateTag` and `useDeleteTag` also invalidate `noteKeys.all`; `setNoteTags` and `useSetNoteTags` live in `features/tags/api.js`.
+- **Tests:** `useAutosave`, notes utils (`isNoteEmpty`, `sanitizeSearch`, `countWords`, `splitPinned`), `filterSlashItems`, `tagUsage`, and a Notes page and editor flow (create → autosave → keep, empty → discard, table view, not found).
+- **Manual steps for you:** none. Please check in the browser: the bubble menu, slash menu and "Turn into" menu, and discard-on-leave with a truly empty note.
 
 ### 2026-09-25: Task table tidy-up
 - **Versions** get their own **Version** column; the actions cell is now just links and ⋮.

@@ -32,6 +32,15 @@ export function AppShell() {
   const { data: spaces, error, refetch } = useSpaces()
   const { isPending: profilePending } = useMyProfile()
   const [open, setOpen] = useLocalStorage('axon:sidebar-open', true)
+  const onNoteEditor = !!useMatch('/s/:spaceSlug/notes/:noteId')
+  // The note editor collapses the sidebar to its rail (design 07b) without touching the saved
+  // preference: toggling there is temporary, and leaving restores the usual state.
+  const [editorOpen, setEditorOpen] = useState(false)
+  const [wasOnEditor, setWasOnEditor] = useState(onNoteEditor)
+  if (onNoteEditor !== wasOnEditor) {
+    setWasOnEditor(onNoteEditor)
+    if (onNoteEditor) setEditorOpen(false)
+  }
   const scrollRef = useRef(null)
 
   // Latch: once shown, background refetches can never swap the shell for a blank screen.
@@ -70,7 +79,11 @@ export function AppShell() {
   return (
     <SpaceProvider spaceSlug={spaceSlug} spaces={spaces ?? []}>
       <PageHeaderProvider>
-        <SidebarProvider open={open} onOpenChange={setOpen} style={SIDEBAR_WIDTHS}>
+        <SidebarProvider
+          open={onNoteEditor ? editorOpen : open}
+          onOpenChange={onNoteEditor ? setEditorOpen : setOpen}
+          style={SIDEBAR_WIDTHS}
+        >
           {inSpace && <AppSidebar />}
           <div className="flex h-svh min-w-0 flex-1 flex-col">
             {/* Outside the scroll area, so its border spans the full width (no gutter gap). */}

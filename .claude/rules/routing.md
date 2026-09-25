@@ -67,6 +67,8 @@ Inside the app shell, use `useSpacePaths()`, which binds the current slug: `cons
 - Each page inside the shell calls `usePageHeader({ title, actions? })` from `@/components/layout/PageHeaderContext`.
   - The breadcrumb (space › title) comes from the space context, so pages only pass their own title.
   - Keep `actions` stable (memoise, or define the JSX once) when it holds heavy content.
+  - Detail pages pass `parent: { label, to }` for a middle crumb (space › Notes › title), e.g. `parent: { label: 'Notes', to: p.notes() }`.
+  - When the header depends on state owned by a keyed child (the note editor's save status), that child may call `usePageHeader` instead, as long as the page itself doesn't call it at the same time (child effects run first, so the parent's call would win).
 - **Pages never animate themselves.** `AppShell` fades each new page in (opacity only, keyed by pathname), with no exit animation.
 - **The space accent lives on `<html data-space-color>`,** set by `AppShell`, so portalled menus and dialogs inherit it. Outside a space and in Global, it's `slate`.
 - Filters, view mode and dates go in search params (see `data-and-hooks.md`). Use `replace: true` when a param changes while typing.

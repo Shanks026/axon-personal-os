@@ -145,7 +145,8 @@ export const needsRebalance = (a, b) => Math.abs(a - b) < 1e-9
 ```
 
 - `components/editor/RichTextEditor.jsx` props: `value` (JSON), `onChange(json, text)`, `placeholder`, `editable`, `features` (for example `{ slash: true, taskMentions: true }`).
-- Pages debounce saves at 800ms with `useDebouncedCallback`, flush on unmount, and show a "Saving… / Saved" indicator.
+- Pages autosave through the shared `useAutosave({ save: (patch) => mutation.mutateAsync({ id, patch }) })` (800ms, merged patches, serial saves, flush on unmount and `beforeunload`) and show `<SaveIndicator status onRetry={flush} />`.
+- `RichTextEditor` is uncontrolled after mount: remount it with `key={entity.id}`. Keep the latest values in a ref for leave-time checks (see `NoteEditor`'s discard-empty).
 - Task mentions are inline nodes `{ type: 'taskMention', attrs: { id, label } }`. On save, collect the ids and call `sync_note_mentions`.
 
 ## 7. Fiscal maths (`lib/fiscal.js`)
@@ -202,7 +203,10 @@ export function useTaskFilters() {
 | `TintPill`, `DotPill`, `DueLabel`, `PropertyChip`, `HeaderAlert`, `DatePicker`, `SpaceChipPicker` | `components/shared/` | 04 Phase 1 |
 | `TagPicker`, `TagPill`, `ManageTagsDialog` | `components/shared/` | 04 Phase 3 |
 | `useDefaultSpaceId` | `hooks/` | 04 Phase 1, moved here in 05 Phase 1 |
-| `RichTextEditor` | `components/editor/` | 06 |
+| `RichTextEditor` (+ `EditorBubbleMenu`, `SlashCommandMenu`, `buildExtensions`, `slashItems`, `editor.css`) | `components/editor/` | 06 Phase 1 |
+| `createSuggestionRenderer(Component)` (ReactRenderer + the suggestion's `mount()`; reuse for `[[` mentions) | `components/editor/suggestionRenderer.js` | 06 Phase 1 |
+| `useAutosave({ save, delay })` → `{ schedule, flush, status }` | `hooks/` | 06 Phase 1 |
+| `usePageHeader({ parent })` middle crumb; `SaveIndicator onRetry` | `components/layout/`, `components/shared/` | 06 Phase 1 |
 | `EntityLink` (task/note chip with hover preview) | `components/shared/` | 07 |
 
 | Mention-id collector (`collectTaskMentionIds`) | `components/editor/` | 07/09 |

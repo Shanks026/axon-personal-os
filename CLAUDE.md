@@ -21,24 +21,18 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
 | 03 Spaces gallery, app shell, Global | ✅ Complete |
 | 04 Tasks | ✅ Complete, plus many browser-feedback follow-ups on 2026-09-25 (see the changelog) |
 | 05 Todos | ✅ Complete (page, groups, reorder, task checklists) |
-| 06 Notes | 🔵 Planned and approved; design deltas folded; **Phase 1 is next** |
+| 06 Notes | 🟡 Phase 1 ✅ (editor, notes list, autosave, pinning); **Phase 2 is next** after approval |
 | 07–14 | Planned (docs in `.claude/features/`) |
 
 ### Resume here (session handoff)
 
-1. **Next step: Feature 06 Phase 1 (Editor and Notes).**
-   - Run the `axon-feature` skill, Step 4, on `.claude/features/06-notes.md`.
-   - Read the phase's **"Design fold"** block first. It overrides the older spec text below it:
-     - No sort control; notes are always ordered `updated_at desc`.
-     - Two sections, Pinned then All notes. Pinning ships now.
-     - The sidebar auto-collapses on the editor route; the editor has a 280px rail (Created, Updated, Words).
-     - The bubble menu gains the highlight mark, and the slash menu has a new order.
-   - Two decisions are already made:
-     - **A:** the second notes view is a **Table** (TanStack v9, the same pattern as `TaskTable`).
-     - **B:** "New note" in **Global** creates the note in the default space silently (`useDefaultSpaceId`), so there's **no** `NewNoteSpacePicker`.
-   - Phase 3 (added) turns the task dialog's description into a compact `RichTextEditor`.
-   - Tiptap v3 APIs must be checked against the installed packages before use. Popups inside a modal Radix Dialog need care, since Radix blocks pointer events outside `DialogContent`.
-   - **Still to confirm in the browser:** todo drag reorder (pointer and keyboard).
+1. **Next step: Feature 06 Phase 2 (Organise and editor extras), once Phase 1 is approved.**
+   - Run the `axon-feature` skill, Step 4, on `.claude/features/06-notes.md`. Phase 1's Implementation Notes (§1.8) cover the Tiptap 3.31 specifics.
+   - Phase 2 covers the tag filter, table controls, lowlight code blocks, Copy as Markdown, Ctrl+S and the shortcuts cheat sheet. Phase 3 turns the task dialog's description into a compact `RichTextEditor`; pass the suggestion `container` option inside the Dialog.
+   - **Still to confirm in the browser:**
+     - The note editor: the bubble menu, "Turn into", the slash menu, and discard-on-leave of an empty note.
+     - Todo drag reorder (pointer and keyboard).
+   - Supabase MCP tools didn't load in the 2026-09-25 session; the Management API fallback worked (see item 3).
 2. **Workflow the user expects:**
    - Build one phase, verify it (lint, tests, build, the `axon-rules` audit), and update the feature doc, `00-index.md` and the patterns catalogue.
    - **Then commit and push to `main`** (github.com/Shanks026/axon-personal-os), and stop for approval.

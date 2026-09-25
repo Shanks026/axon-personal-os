@@ -6,9 +6,9 @@ import { usePageHeaderState } from '@/components/layout/PageHeaderContext'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import { SidebarTrigger } from '@/components/ui/sidebar'
 
-/** 48px breadcrumb bar (design delta G4): sidebar toggle · space › page title · actions. */
+/** 48px breadcrumb bar (design delta G4): sidebar toggle · space › [parent ›] page title · actions. */
 export function PageHeader() {
-  const { title, actions } = usePageHeaderState()
+  const { title, actions, parent } = usePageHeaderState()
   const { space, isGlobal, spaceSlug, activeSpaces } = useSpace()
 
   return (
@@ -29,6 +29,17 @@ export function PageHeader() {
             </span>
           )}
         </Link>
+        {parent && (
+          <>
+            <ChevronRight className="size-3.5 shrink-0 text-faint" aria-hidden />
+            <Link
+              to={parent.to}
+              className="shrink-0 rounded-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              {parent.label}
+            </Link>
+          </>
+        )}
         {title && (
           <>
             <ChevronRight className="size-3.5 shrink-0 text-faint" aria-hidden />

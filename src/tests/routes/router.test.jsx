@@ -105,7 +105,7 @@ describe('router (signed in)', () => {
 
   it('renders the shell: switcher, sections and breadcrumb', async () => {
     renderAt('/s/thmp/notes')
-    expect(await screen.findByRole('heading', { name: 'Notes' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { level: 1, name: 'Notes' })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: 'Tasks' })).toHaveAttribute('href', '/s/thmp/tasks')
     expect(screen.getByRole('link', { name: 'Notes' })).toHaveAttribute('data-active', 'true')
     expect(screen.getByRole('navigation', { name: 'Breadcrumb' })).toHaveTextContent('THMP')

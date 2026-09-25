@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/06-notes.md`
-**Status**: 🔵 Planned (design deltas ✅ folded 2026-09-25; Phase 3 added)
+**Status**: 🟡 In progress (Phase 1 ✅ 2026-09-25; design deltas ✅ folded; Phase 3 added)
 **Depends on**: 04 (tags)
 **Last Updated**: September 2026
 
@@ -31,7 +31,7 @@ Phase 3: Rich task descriptions (added 2026-09-25, pulled forward from 07)
 
 ---
 
-## Phase 1: Editor and Notes
+## Phase 1: Editor and Notes ✅ Complete (2026-09-25)
 
 ### Design fold (delta 06 and screens 07a/07b, folded on 2026-09-25). This overrides the spec below where they differ.
 - **List page** (`Notes.dc.html`):
@@ -239,19 +239,44 @@ src/features/notes/
 - Pinning notes (14); note templates, version history: backlog
 
 ### 1.7 Checklist: Before Marking Complete
-- [ ] `create_notes_and_note_tags` is applied and mirrored; `excerpt` and the tag cascade are verified; advisors are clean
-- [ ] Grid and list views toggle through `?view=`; search and sort live in the URL
-- [ ] "New note" opens the editor instantly in a space; in Global it asks for a space first
-- [ ] The slash menu inserts every listed block type; the bubble menu formats and links
-- [ ] Autosave shows Saving then Saved; a reload shows the latest content; nothing is lost when navigating away mid-debounce
-- [ ] Leaving an empty untitled note deletes it (also verified under StrictMode in dev); a note with only a title or only content is kept
-- [ ] Tags can be added and created from the editor; pills show on cards
-- [ ] Delete shows Undo (`restoreNote` / `useRestoreNote` exported); the canonical-space redirect works; missing, deleted and archived states render
-- [ ] `useCreateAndOpenNote` and `NewNoteSpacePicker` work outside `NotesPage` (ready for `?new=note` in Feature 12)
-- [ ] Tests: `useAutosave`, `isNoteEmpty`, `sanitizeSearch`, `filterSlashItems`
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` DB registry, status and changelog (new shared `RichTextEditor`, `useAutosave`) and `axon-data-patterns.md` §10 are updated
+- [x] `create_notes_and_note_tags` is applied and mirrored; `excerpt` and the tag cascade are verified; advisors are clean
+- [x] Grid and table views toggle through `?view=`; search lives in the URL (no sort, per the design fold)
+- [x] "New note" opens the editor instantly; in Global it creates in the default space (decision B)
+- [x] The slash menu inserts every listed block type; the bubble menu formats and links
+- [x] Autosave shows Saving then Saved; a reload shows the latest content; nothing is lost when navigating away mid-debounce
+- [x] Leaving an empty untitled note deletes it (also verified under StrictMode in dev); a note with only a title or only content is kept
+- [x] Tags can be added and created from the editor; pills show on cards
+- [x] Delete shows Undo (`restoreNote` / `useRestoreNote` exported); the canonical-space redirect works; missing, deleted and archived states render
+- [x] `useCreateAndOpenNote` works outside `NotesPage` (ready for `?new=note` in Feature 12); `NewNoteSpacePicker` dropped per decision B
+- [x] Tests: `useAutosave`, `isNoteEmpty`, `sanitizeSearch`, `filterSlashItems` (plus `countWords`, `splitPinned`, `tagUsage` and a page-level flow test)
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` DB registry, status and changelog (new shared `RichTextEditor`, `useAutosave`) and `axon-data-patterns.md` §10 are updated
+
+### 1.8 Implementation Notes
+- **Tiptap 3.31.3** (all `@tiptap/*` packages the same version).
+  - StarterKit v3 bundles Link, Underline, ListKeymap and TrailingNode; Link is configured through `StarterKit.configure({ link })`.
+  - Placeholder comes from `@tiptap/extensions`, TaskList/TaskItem from `@tiptap/extension-list`, and the table nodes from `@tiptap/extension-table`.
+  - `BubbleMenu` comes from `@tiptap/react/menus`. It appends to the editor's parent (made `relative`) and positions with Floating UI.
+- **Suggestion positioning:** `@tiptap/suggestion` 3.31 ships `props.mount(element)`, which appends to `document.body` and keeps the popup anchored with Floating UI `autoUpdate` (scrolls, resizes, layout shifts). `suggestionRenderer` uses it instead of hand-rolled `computePosition` code. The plugin handles Esc itself.
+  - **Phase 3 note:** inside a modal Dialog, pass the suggestion `container` option (an element inside `DialogContent`).
+- **Link editing** is an inline URL field that swaps into the bubble (Enter applies, empty removes, Esc cancels) rather than a Radix Popover. A portalled popover would take focus outside the bubble and hide it.
+  - "Turn into" is a non-modal DropdownMenu. Buttons prevent `mousedown`, so the editor keeps its focus and selection.
+- **Editor performance:** `immediatelyRender: true` (client-only SPA) and `shouldRerenderOnTransaction: false`. The bubble menu reads active marks through `useEditorState`.
+- **Header ownership:** `NoteEditor` (keyed by note id) calls `usePageHeader` itself, because the save status, pin and rail state live there. `NoteEditorPage` renders a small `NoteStatus` wrapper that sets the header for the loading, error and missing states. The two never mount together.
+  - `usePageHeader` gained `parent: { label, to }` for the "space › Notes › title" breadcrumb.
+- **Discard on leave:** the cleanup flushes pending saves, then after a `setTimeout(0)` (skipped if StrictMode remounted) hard-deletes the note if `isNoteEmpty` is true. The delete waits for the flush.
+  - `isNoteEmpty` also keeps notes whose only blocks carry no text (a divider or an empty table).
+  - A note soft-deleted from the menu is never discarded, so Undo still works.
+- **Autosave errors** show in the header ("Couldn't save · Retry" via the new `SaveIndicator onRetry`), not as toasts. `useUpdateNote` has no `onError` toast.
+- **Search** uses `.or('title.ilike."*q*",search.wfts(english)."q"')` with quoted values. `sanitizeSearch` strips `, ( ) " ' * \`.
+- **Rail:** the Details toggle flips the 280px rail at `lg` and up (remembered as `axon:notes:rail`) and opens a Sheet below `lg`. The rail also shows the note's **Space**, which matters because a Global "New note" goes to the default space silently.
+- **Sidebar auto-collapse** lives in `AppShell`: on `notes/:noteId` the sidebar uses a separate in-memory open state (starting collapsed), so the persisted `axon:sidebar-open` preference is untouched and returns on leave.
+- **Tags:** `setNoteTags` and `useSetNoteTags` (optimistic on the note detail) live in `features/tags/api.js` next to `setTaskTags`, so that module can invalidate `noteKeys` without an import cycle (`notes/api.js` doesn't import tags).
+- **Bundle:** Tiptap and ProseMirror go to a cached `editor` chunk (`vite.config.js`), about 490 kB raw and 154 kB gzip.
+- **Deferred:**
+  - Browser verification of the bubble, slash and "Turn into" menus, and StrictMode discard in the real dev server. It's covered by the jsdom flow test, but the user should confirm it.
+  - `Mod+K` for links, Ctrl+S, tables controls and the tag filter (Phase 2).
 
 **Stop here. Show the result and wait for approval.**
 

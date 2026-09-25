@@ -18,7 +18,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useCreateTag, useDeleteTag, useTags, useUpdateTag } from '@/features/tags/api'
 import { TAG_COLORS } from '@/features/tags/constants'
-import { nextTagColor } from '@/features/tags/utils'
+import { nextTagColor, tagUsage } from '@/features/tags/utils'
 
 /** Colour swatch popover (design: ColorPicker), the same ten hues tags share with spaces. */
 function ColorSwatchButton({ color, onChange }) {
@@ -138,8 +138,8 @@ function TagRow({ tag }) {
           aria-label={`Rename ${tag.name}`}
           className="h-8 flex-1"
         />
-        <span className="w-14 shrink-0 text-right font-mono text-xs text-faint">
-          {tag.count} {tag.count === 1 ? 'task' : 'tasks'}
+        <span className="shrink-0 text-right font-mono text-xs whitespace-nowrap text-faint">
+          {tagUsage(tag)}
         </span>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -160,7 +160,11 @@ function TagRow({ tag }) {
         open={confirmOpen}
         onOpenChange={setConfirmOpen}
         title={`Delete "${tag.name}"?`}
-        description={`It will be removed from ${tag.count} ${tag.count === 1 ? 'task' : 'tasks'}.`}
+        description={
+          tag.count || tag.note_count
+            ? `It will be removed from ${tagUsage(tag)}.`
+            : 'Nothing uses it yet.'
+        }
         confirmLabel="Delete"
         pending={del.isPending}
         onConfirm={() => del.mutate(tag.id, { onSuccess: () => setConfirmOpen(false) })}
@@ -190,7 +194,11 @@ export function ManageTagsDialog({ open, onOpenChange, spaceIds, createSpaceId }
         </div>
         {tags.length === 0 ? (
           <div className="px-5 py-5">
-            <EmptyState icon={Tags} title="No tags yet" description="Create your first one above." />
+            <EmptyState
+              icon={Tags}
+              title="No tags yet"
+              description="Create your first one above."
+            />
           </div>
         ) : (
           <div className="max-h-100 overflow-y-auto">

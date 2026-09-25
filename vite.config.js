@@ -32,6 +32,11 @@ export default defineConfig(({ mode }) => {
               },
               { name: 'supabase', test: /node_modules[\\/]@supabase[\\/]/, priority: 20 },
               {
+                name: 'editor',
+                test: /node_modules[\\/](@tiptap|prosemirror-[a-z-]+|orderedmap|rope-sequence|w3c-keyname|linkifyjs)[\\/]/,
+                priority: 20,
+              },
+              {
                 name: 'ui',
                 test: /node_modules[\\/](radix-ui|@radix-ui|@floating-ui|motion|motion-dom|motion-utils|framer-motion|lucide-react|cmdk|sonner|next-themes)[\\/]/,
                 priority: 20,
