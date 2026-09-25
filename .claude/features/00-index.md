@@ -117,6 +117,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-26: New task from a note opens the full dialog
+- The note rail's Linked tasks replaces the quick "New task…" field with a **New task** button that opens `TaskDialog`, fixed to the note's space. Every task it saves, including each one saved with Create more, is linked to the note (the user's request: so tasks are created with full details). Tested.
+
 ### 2026-09-26: Mention text in blue-600
 - Mention text and icon move to `text-blue-600` (the user's request). WCAG contrast: 5.25:1 on white and 4.81:1 on muted (AA for normal text; AAA needs 7:1). Dark mode keeps `blue-400`: 7.46:1 on the page and 6.60:1 on cards.
 

@@ -39,7 +39,7 @@ vi.mock('@/lib/supabase', () => {
       insert: (values) => ((state.op = 'insert'), (state.patch = values), b),
       update: (patch) => ((state.op = 'update'), (state.patch = patch), b),
       delete: () => ((state.op = 'delete'), b),
-      upsert: () => ((state.op = 'upsert'), b),
+      upsert: (values) => ((state.op = 'upsert'), (state.patch = values), b),
       single: () => ((state.single = true), b),
       maybeSingle: () => ((state.single = true), b),
       then: (resolve, reject) => run().then(resolve, reject),
@@ -48,12 +48,20 @@ vi.mock('@/lib/supabase', () => {
       if (table === 'profiles') return result({ id: 'u1', last_space_id: null })
       if (table === 'tags') return result(db.tags)
       if (table === 'note_task_links') {
+        if (state.op === 'upsert') {
+          db.calls.push(['link', state.patch.note_id, state.patch.task_id])
+          return result(null)
+        }
         if (state.op === 'delete') {
           db.calls.push(['unlink'])
           db.taskLinks = []
           return result(null)
         }
         return result(db.taskLinks)
+      }
+      if (table === 'tasks' && state.op === 'insert') {
+        db.calls.push(['insert:task', state.patch])
+        return result({ id: 't-new', tag_ids: [], links: [], ...state.patch })
       }
       if (table !== 'notes') return result(state.single ? null : [])
       if (state.op === 'insert') {
@@ -408,5 +416,23 @@ describe('NoteEditor (Phase 2)', () => {
         ]),
       { timeout: 5000 },
     )
+  })
+
+  it('creates a task from the note rail through the full dialog and links it', async () => {
+    const user = userEvent.setup()
+    renderApp('/s/thmp/notes/n1')
+    const section = await screen.findByRole('region', { name: 'Linked tasks' })
+    await user.click(within(section).getByRole('button', { name: 'New task' }))
+    const dialog = await screen.findByRole('dialog', { name: 'New task' })
+    await user.type(within(dialog).getByLabelText('Task title'), 'Follow up with QA')
+    await user.click(within(dialog).getByRole('button', { name: /Create task/ }))
+
+    await waitFor(() =>
+      expect(db.calls).toContainEqual([
+        'insert:task',
+        expect.objectContaining({ title: 'Follow up with QA', space_id: SPACE.id }),
+      ]),
+    )
+    await waitFor(() => expect(db.calls).toContainEqual(['link', 'n1', 't-new']))
   })
 })

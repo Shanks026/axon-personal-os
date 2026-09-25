@@ -7,29 +7,20 @@ import { Skeleton } from '@/components/ui/skeleton'
 import { useLinkNoteTask, useTasksForNote, useUnlinkNoteTask } from '@/features/links/api'
 import { TaskPickerDialog } from '@/features/links/components/TaskPickerDialog'
 import { UnlinkButton } from '@/features/links/components/UnlinkButton'
-import { useCreateTask } from '@/features/tasks/api'
+import { TaskDialog } from '@/features/tasks/components/TaskDialog'
 
 /**
  * "Linked tasks" at the top of the note editor's Details rail (design 07b): each task as a chip
  * (status icon, title, hover preview) with its due label and an unlink ✕, then "Link task" (a
- * search picker, any space) and a "New task…" field that creates the task in the note's space
- * and links it.
+ * search picker, any space) and "New task", which opens the full task dialog (status,
+ * priority, dates, tags, description…) in the note's space and links whatever it saves.
  */
 export function LinkedTasksSection({ note }) {
   const { data: links = [], isLoading } = useTasksForNote(note.id)
   const link = useLinkNoteTask()
   const unlink = useUnlinkNoteTask()
-  const createTask = useCreateTask()
   const [pickerOpen, setPickerOpen] = useState(false)
-  const [title, setTitle] = useState('')
-
-  const create = async () => {
-    const t = title.trim()
-    if (!t || createTask.isPending) return
-    const task = await createTask.mutateAsync({ space_id: note.space_id, title: t })
-    link.mutate({ noteId: note.id, taskId: task.id })
-    setTitle('')
-  }
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   return (
     <section aria-labelledby="linked-tasks" className="flex flex-col gap-1.5">
@@ -72,33 +63,34 @@ export function LinkedTasksSection({ note }) {
         ))
       )}
 
-      <Button
-        variant="ghost"
-        size="sm"
-        className="-mx-2 justify-start text-muted-foreground"
-        onClick={() => setPickerOpen(true)}
-      >
-        <Link2 />
-        Link task
-      </Button>
-      <div className="flex h-8 items-center gap-2">
-        <Plus className="size-3.5 shrink-0 text-faint" aria-hidden />
-        <input
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          onKeyDown={(e) => {
-            if (e.key === 'Enter') {
-              e.preventDefault()
-              create()
-            }
-          }}
-          maxLength={300}
-          placeholder="New task…"
-          aria-label="New linked task"
-          className="min-w-0 flex-1 bg-transparent outline-none placeholder:text-faint"
-        />
+      <div className="-mx-2 flex flex-col">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="justify-start text-muted-foreground"
+          onClick={() => setPickerOpen(true)}
+        >
+          <Link2 />
+          Link task
+        </Button>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="justify-start text-muted-foreground"
+          onClick={() => setDialogOpen(true)}
+        >
+          <Plus />
+          New task
+        </Button>
       </div>
 
+      {/* The full task dialog, fixed to the note's space; each saved task (Create more too) is linked. */}
+      <TaskDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        initialValues={{ space_id: note.space_id }}
+        onSuccess={(task) => link.mutate({ noteId: note.id, taskId: task.id })}
+      />
       <TaskPickerDialog
         open={pickerOpen}
         onOpenChange={setPickerOpen}

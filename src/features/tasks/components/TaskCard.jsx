@@ -33,7 +33,7 @@ export function TaskCard({
   return (
     <article
       className={cn(
-        'group relative flex h-full min-h-44 flex-col rounded-xl border bg-card px-5 py-4.5 transition duration-(--dur-fast) ease-(--ease-standard) hover:-translate-y-px hover:border-border-strong hover:shadow-xs',
+        'group relative flex h-full min-h-44 flex-col rounded-xl border bg-card dark:bg-card/30 px-5 py-4.5 transition duration-(--dur-fast) ease-(--ease-standard) hover:-translate-y-px hover:border-border-strong hover:shadow-xs',
         task.status === 'cancelled' && 'opacity-70',
       )}
     >
