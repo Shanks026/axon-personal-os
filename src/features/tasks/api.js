@@ -112,8 +112,30 @@ export async function updateTask(id, patch) {
   return mapRow(data)
 }
 
+/**
+ * A task's rich description, which the list columns leave out (it's heavy). The edit dialog
+ * loads it here; it's the only read of `description`. Cached under `detail(id)`.
+ */
+export async function fetchTask(id) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('id, description')
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
 export const softDeleteTask = (id) => updateTask(id, { deleted_at: new Date().toISOString() })
 export const restoreTask = (id) => updateTask(id, { deleted_at: null })
+
+export function useTask(id) {
+  return useQuery({
+    queryKey: taskKeys.detail(id),
+    queryFn: () => fetchTask(id),
+    enabled: !!id,
+  })
+}
 
 export function useTasks(params) {
   return useQuery({
@@ -167,7 +189,12 @@ export function useUpdateTask() {
     mutationFn: ({ id, patch }) => updateTask(id, patch),
     onSuccess: (row, { patch }) => {
       qc.invalidateQueries({ queryKey: taskKeys.lists() })
-      qc.setQueryData(taskKeys.detail(row.id), row)
+      // Merge: `row` has the list columns only, so keep the cached description (or the new one).
+      qc.setQueryData(taskKeys.detail(row.id), (old) => ({
+        ...old,
+        ...row,
+        ...('description' in patch && { description: patch.description }),
+      }))
       if ('versions' in patch) qc.invalidateQueries({ queryKey: [...taskKeys.all, 'versions'] })
       // A space move cascades to checklist todos (tasks_cascade_to_todos).
       if ('space_id' in patch) qc.invalidateQueries({ queryKey: todoKeys.all })

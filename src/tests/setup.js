@@ -35,3 +35,12 @@ if (!Element.prototype.hasPointerCapture) {
 }
 if (!Element.prototype.scrollIntoView) Element.prototype.scrollIntoView = () => {}
 if (!Element.prototype.scrollTo) Element.prototype.scrollTo = () => {}
+// ProseMirror (Tiptap) measures the selection and the DOM for scrolling and cursor placement.
+if (!document.elementFromPoint) document.elementFromPoint = () => null
+const noRects = () => ({ length: 0, item: () => null, [Symbol.iterator]: [][Symbol.iterator] })
+const emptyRect = () => new DOMRect(0, 0, 0, 0)
+for (const proto of [Range.prototype, Element.prototype]) {
+  if (!proto.getClientRects) proto.getClientRects = noRects
+  if (!proto.getBoundingClientRect) proto.getBoundingClientRect = emptyRect
+}
+if (!Text.prototype.getClientRects) Text.prototype.getClientRects = noRects

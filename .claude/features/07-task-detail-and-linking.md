@@ -102,8 +102,8 @@ activity: (taskId) => [...taskKeys.activities(), taskId],
 
 | Function / hook | Details |
 |---|---|
-| `fetchTask(id)` / `useTask(id)` | `select('*, tag_ids:task_tags(tag_id)').eq('id', id).maybeSingle()`, mapping `tag_ids`; `enabled: !!id`. Not scope-filtered |
-| `useUpdateTask()` (changed) | `onSuccess` **merges** into `detail(id)` (`old ? { ...old, ...row } : old`), because the returned list columns omit `description`; invalidates `lists()` and `activity(id)` |
+| `fetchTask(id)` / `useTask(id)` | **Exists since 06 Phase 3** as `select('id, description')` (the task dialog's rich description), key `detail(id)`. Widen it here to `select('*, tag_ids:task_tags(tag_id)')` and map `tag_ids`; the dialog keeps working, since it only reads `description`. `enabled: !!id`. Not scope-filtered |
+| `useUpdateTask()` (changed) | **Merging done in 06 Phase 3:** `onSuccess` merges into `detail(id)` (`{ ...old, ...row }`, plus `patch.description` when sent), because the returned list columns omit `description`. Still to add here: invalidate `activity(id)` |
 | `useQuickUpdateTask()` (changed) | also patches `detail(id)` optimistically; `onSettled` invalidates `activity(id)` |
 | `useMoveTaskToSpace()` | `({ id, spaceId })`: updates `space_id`, then deletes `task_tags` whose tag is scoped to a different space (tags with `space_id` null are kept). Returns `{ task, removedTagCount }`. Invalidates `taskKeys.all`, `todoKeys.all` (checklist follows by trigger) and `tagKeys.all` |
 | `fetchTaskActivity(taskId)` / `useTaskActivity(taskId)` | `select('id, kind, from_value, to_value, body, created_at, updated_at').eq('task_id', taskId).order('created_at', { ascending: false }).limit(200)`; key `activity(taskId)` |

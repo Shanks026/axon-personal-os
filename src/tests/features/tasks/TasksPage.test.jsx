@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, renderHook, screen, waitFor, within } from '@testing-library/react'
+import { act, fireEvent, render, renderHook, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -116,6 +116,8 @@ vi.mock('@/lib/supabase', () => {
         db.tasks = db.tasks.map((t) => (t.id === state.id ? { ...t, ...state.patch } : t))
         return result(attachTagIds(db.tasks.find((t) => t.id === state.id)))
       }
+      // fetchTask(id): the edit dialog's rich description.
+      if (state.single && state.id) return result(db.tasks.find((t) => t.id === state.id) ?? null)
       let live = db.tasks.filter((t) => !t.deleted_at)
       const tagFilter = state.filters.find((f) => f.col === 'tag_match.tag_id')
       if (tagFilter) {
@@ -359,7 +361,11 @@ describe('TasksPage', () => {
     await user.click(screen.getByRole('button', { name: 'New task' }))
     const dialog = await screen.findByRole('dialog')
     await user.type(within(dialog).getByLabelText('Task title'), 'Admin: role-based menu')
-    await user.type(within(dialog).getByLabelText('Description'), 'Waiting on API\ncontract')
+    // The description is the compact rich editor; Tiptap exposes the instance on its DOM node.
+    const description = within(dialog).getByLabelText('Description')
+    act(() => {
+      description.editor.commands.insertContent('<p>Waiting on API</p><p>contract</p>')
+    })
     await user.click(within(dialog).getByRole('switch'))
     await user.click(within(dialog).getByRole('button', { name: /create task/i }))
 
@@ -376,6 +382,51 @@ describe('TasksPage', () => {
     // Create more: still open, title cleared for the next one
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(within(screen.getByRole('dialog')).getByLabelText('Task title')).toHaveValue('')
+    // …and the description editor starts over, empty.
+    expect(within(screen.getByRole('dialog')).getByLabelText('Description')).toHaveTextContent('')
+  })
+
+  it('loads a formatted description to edit, and Mod+Enter in it saves', async () => {
+    db.tasks[0].description = {
+      type: 'doc',
+      content: [
+        { type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text: 'Root cause' }] },
+        { type: 'paragraph', content: [{ type: 'text', text: 'Filter hash ignored.' }] },
+      ],
+    }
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(
+      await screen.findByRole('button', { name: 'Edit Buyer portal: fix RFQ pagination' }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    const description = await within(dialog).findByLabelText('Description')
+    expect(description.querySelector('h2')).toHaveTextContent('Root cause')
+
+    act(() => {
+      description.editor.commands.focus('end')
+      description.editor.commands.insertContent(' Fixed.')
+    })
+    fireEvent.keyDown(description, { key: 'Enter', ctrlKey: true })
+
+    await waitFor(() => expect(db.calls.some((c) => c[0] === 'update' && c[1] === 't1')).toBe(true))
+    const patch = db.calls.find((c) => c[0] === 'update' && c[1] === 't1')[2]
+    expect(patch.description_text).toBe('Root cause\nFilter hash ignored. Fixed.')
+    // Mod+Enter submitted without adding a line break to the description.
+    expect(JSON.stringify(patch.description)).not.toContain('hardBreak')
+  })
+
+  it('opens an old plain-text description as paragraphs', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await user.click(
+      await screen.findByRole('button', { name: 'Edit Buyer portal: fix RFQ pagination' }),
+    )
+    const dialog = await screen.findByRole('dialog')
+    const description = await within(dialog).findByLabelText('Description')
+    expect(description.querySelector('p')).toHaveTextContent(
+      'Reset page to 1 when the filter hash changes.',
+    )
   })
 
   it('stages two links inline and saves them with the new task', async () => {

@@ -21,7 +21,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | **Wave 2: Capture** | | | | |
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | ✅ Complete |
 | 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | ✅ Complete |
-| 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | 🟡 In progress (Phases 1–2 ✅; Phase 3 next) |
+| 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | ✅ Complete |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🔵 Planned |
 | **Wave 3: Time** | | | | |
 | 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | 🔵 Planned |
@@ -114,6 +114,19 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-25: Feature 06 Phase 3: Rich task descriptions (Feature 06 complete)
+- **Task dialog:** the description textarea is now the compact `RichTextEditor`. It supports markdown shortcuts, the selection bubble and `/` (no H1 or Table), and still saves with the form (Save / Mod+Enter).
+  - Edit mode loads the formatted description through the new `useTask(id)` (`id, description`), with a 2-line skeleton while it loads. Old plain-text descriptions open as paragraphs.
+  - Create more resets the editor.
+- **Editor:**
+  - New `variant="compact"`.
+  - `KeyboardShortcuts` can swallow Mod-Enter, so the dialog submits without a line break.
+  - `SlashCommand` takes an `exclude` list.
+  - Suggestion popups mount inside an enclosing modal dialog, so they're clickable and don't close it.
+- **Data:** `useUpdateTask` merges into the task detail cache instead of replacing it. New shared `lib/richText.js` (`isDocEmpty`), and an empty description saves as `null`.
+- **Tests:** dialog tests drive the editor through Tiptap's `dom.editor`. New tests for loading a formatted description, Mod+Enter from the editor, plain-text fallback and Create more. `tests/setup.js` gets ProseMirror jsdom stand-ins.
+- **Manual steps for you:** none. Please check in the browser: `/` and the bubble inside the task dialog, including while the dialog body scrolls.
 
 ### 2026-09-25: Feature 06 Phase 2: Organise and editor extras
 - **Tag filter:** inline chips in the notes toolbar (design 07a): All, the 6 most-used note tags, and "More". Any-of, in `?tag=`. `fetchNotes` filters through a second `note_tags!inner` alias. The empty state gains "Clear filters".

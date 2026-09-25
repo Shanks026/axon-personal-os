@@ -13,13 +13,15 @@ import { SlashCommand } from '@/components/editor/extensions/SlashCommand'
  * `features` is a plain config object so the editor never imports feature code:
  * - `slash`: the `/` block menu.
  * - `codeHighlight` (default on): lowlight code blocks with a language picker.
+ * - `compact`: the task dialog's description (H2–H3 only, no H1 or Table in the `/` menu,
+ *   Mod-Enter left to the dialog's submit).
  * Feature 07 adds `taskMentions`.
  */
 export function buildExtensions({ placeholder, features = {} }) {
   const highlight = features.codeHighlight !== false
   const extensions = [
     StarterKit.configure({
-      heading: { levels: [1, 2, 3] },
+      heading: { levels: features.compact ? [2, 3] : [1, 2, 3] },
       link: { openOnClick: false, autolink: true, defaultProtocol: 'https' },
       ...(highlight && { codeBlock: false }),
     }),
@@ -31,9 +33,14 @@ export function buildExtensions({ placeholder, features = {} }) {
     TableRow,
     TableHeader,
     TableCell,
-    KeyboardShortcuts, // Mod-s save (via editor storage) and Mod-k link
+    // Mod-s save (via editor storage), Mod-k link, and Mod-Enter for dialogs.
+    KeyboardShortcuts.configure({ swallowModEnter: !!features.compact }),
   ]
   if (highlight) extensions.push(CodeBlockHighlighted)
-  if (features.slash) extensions.push(SlashCommand)
+  if (features.slash) {
+    extensions.push(
+      SlashCommand.configure({ exclude: features.compact ? ['heading-1', 'table'] : [] }),
+    )
+  }
   return extensions
 }

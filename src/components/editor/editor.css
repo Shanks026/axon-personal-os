@@ -271,3 +271,19 @@
 .axon-prose .hljs-strong {
   font-weight: 600;
 }
+
+/* Compact variant (the task dialog's description): UI-size text, no minimum height. */
+.axon-prose-compact {
+  min-height: 0;
+}
+.axon-prose-compact h2 {
+  font-size: 1.2em;
+  margin-top: 1em;
+}
+.axon-prose-compact h3 {
+  font-size: 1.05em;
+  margin-top: 0.9em;
+}
+.axon-prose-compact > * + * {
+  margin-top: 0.5em;
+}

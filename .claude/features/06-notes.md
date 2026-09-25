@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/06-notes.md`
-**Status**: 🟡 In progress (Phases 1–2 ✅ 2026-09-25; Phase 3 next)
+**Status**: ✅ Complete (Phases 1–3, 2026-09-25)
 **Depends on**: 04 (tags)
 **Last Updated**: September 2026
 
@@ -379,7 +379,7 @@ src/features/notes/components/
 
 ---
 
-## Phase 3: Rich Task Descriptions
+## Phase 3: Rich Task Descriptions ✅ Complete (2026-09-25)
 
 ### Goal
 In the task dialog, the description is a compact rich editor instead of a plain textarea. It supports markdown shortcuts (`#`, `-`, `[]`, `>`, `**bold**` and so on), the selection bubble menu, and the `/` menu, with no fixed toolbar. It keeps its borderless "Add description…" look and grows inside the dialog's scrolling body. Descriptions keep their formatting after saving, and cards and the table keep showing the plain-text preview.
@@ -427,12 +427,41 @@ None. Feature 07's task detail page later reuses the same editor (`variant="full
 - Autosave in the dialog, and `[[task]]` mentions in descriptions (07 / backlog).
 
 ### 3.7 Checklist: Before Marking Complete
-- [ ] Markdown shortcuts, the bubble menu and `/` work inside the dialog. The popups are clickable (no pointer-events lock) and positioned correctly while the body scrolls.
-- [ ] Editing an existing task loads its formatted description. Old plain-text descriptions open as paragraphs.
-- [ ] Save and Mod+Enter persist `description` (JSON) and `description_text`. Card and table previews update.
-- [ ] Create more clears the editor.
-- [ ] Light and dark mode both render correctly.
-- [ ] `npm run lint`, `npm test` and `npm run build` pass. The `axon-rules` audit is clean. `00-index.md` is updated and 07's doc is annotated.
+- [x] Markdown shortcuts, the bubble menu and `/` work inside the dialog. The popups are clickable (no pointer-events lock) and positioned correctly while the body scrolls. *(Built for it: the slash popup mounts inside `DialogContent`, and the bubble lives next to the editor. Confirm in the browser.)*
+- [x] Editing an existing task loads its formatted description. Old plain-text descriptions open as paragraphs.
+- [x] Save and Mod+Enter persist `description` (JSON) and `description_text`. Card and table previews update.
+- [x] Create more clears the editor.
+- [x] Light and dark mode both render correctly (the same token-based prose styles as notes).
+- [x] `npm run lint`, `npm test` and `npm run build` pass. The `axon-rules` audit is clean. `00-index.md` is updated and 07's doc is annotated.
+
+### 3.8 Implementation Notes
+- **`RichTextEditor variant="compact"`:**
+  - The `axon-prose-compact` class drops the 12rem minimum, and headings and spacing get smaller. Type size comes from the dialog's `text-sm`.
+  - The placeholder defaults to "Add description…".
+  - `buildExtensions` gets `features.compact`: heading levels [2, 3], `SlashCommand.configure({ exclude: ['heading-1', 'table'] })`, and `KeyboardShortcuts.configure({ swallowModEnter: true })`.
+  - The bubble's "Turn into" hides Heading 1. The Table extension stays loaded, so pasted tables survive.
+- **Mod+Enter:** StarterKit's HardBreak binds Mod-Enter.
+  - `KeyboardShortcuts` (priority 1000) returns true for it in compact mode, so no hard break is inserted.
+  - ProseMirror only calls `preventDefault()` (checked in `prosemirror-view`), so the keydown still bubbles to the form's handler, which submits.
+  - Tested: the patch has no `hardBreak`.
+- **Popups in a modal Dialog:**
+  - `suggestionRenderer` puts the popup inside the nearest `[data-slot="dialog-content"]` *before* calling the suggestion's `mount()`, which leaves an already-connected element where it is. Radix makes everything outside `DialogContent` inert, and a click outside would close the dialog.
+  - `BubbleMenu` already appends to the editor's parent, inside the dialog. Radix menus and selects nest in the dialog's layer as usual.
+  - Trade-off: `DialogContent` is `overflow-hidden`, so a popup near an edge flips instead of overflowing.
+- **Data:**
+  - `fetchTask(id)` / `useTask(id)` select `id, description` under `taskKeys.detail(id)`.
+  - `useUpdateTask` merges into the detail (`{ ...old, ...row, description: patch.description }` when the patch has one).
+  - Edit mode shows a 2-line skeleton until the description loads (or falls back to `textToDoc(description_text)` on error).
+  - An untouched description in edit mode isn't sent. Create sends `description ?? null`.
+  - An empty doc saves as `null` (`lib/richText.js` `isDocEmpty`, now also used by `isNoteEmpty`).
+  - `description_text` is sliced to 20,000 characters, matching `taskSchema`.
+- **`textToDoc` stays:** it's the fallback for old plain-text rows (and tested).
+- **Create more** bumps an `editorKey` so the uncontrolled editor remounts empty.
+- **Tests:**
+  - Dialog tests drive the editor through `element.editor` (Tiptap sets `dom.editor`), because typing into `contenteditable` isn't reliable in jsdom.
+  - New tests: formatted description loads, and Mod+Enter from the editor saves without a hard break; old plain text opens as paragraphs; Create more clears the editor.
+  - `tests/setup.js` gains jsdom stand-ins for `document.elementFromPoint` and `Range`/`Text` `getClientRects`/`getBoundingClientRect`, which ProseMirror calls.
+  - One full-file run hung once on an unrelated sort test and never reproduced (the file passed 34/34 and the suite 270/270 on reruns). Worth watching.
 
 **Stop here. Show the result and wait for approval.**
 

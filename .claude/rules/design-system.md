@@ -296,7 +296,7 @@ Each of these maps to a shadcn primitive.
 - **Task dialog** (revised 2026-09-25 after the user reviewed it in the browser; they found the text "so small and heavy"):
   - **Height:** capped by `max-h-dialog` (a utility in `index.css`: `calc(100dvh - 4rem)`). The header and footer stay pinned, and only the middle (title → checklist) scrolls. The description textarea grows with its content and has no scroll of its own. Use the same pattern for any dialog whose content can grow.
   - The header is shadcn's default title and description (see `components.md`), with a ghost `icon-sm` close button beside it.
-  - The task title input is `text-xl font-semibold tracking-tight` (the user asked for semibold, 2026-09-25, after trying medium). The description is default `text-sm`.
+  - The task title input is `text-xl font-semibold tracking-tight` (the user asked for semibold, 2026-09-25, after trying medium). The description is the **compact rich editor** (Feature 06 Phase 3): borderless, default `text-sm`, "Add description…", markdown shortcuts, the selection bubble and `/` (no H1 or Table), and no toolbar. It grows inside the scrolling body; while an edit loads its description, it shows a 2-line skeleton.
   - Under the description come the selected tags (`TagPill size="md"`: 26px tall, `text-sm`, removable), then the inline links field.
   - Property chips (`PropertyChip`) are **32px tall with `text-sm`**, never `text-xs`. The priority chip's dot is `size-2` (8px), smaller than the chip's 14px icons.
   - A new task's priority defaults to **Medium** in the dialog (the user changed it from High, 2026-09-25). The database default stays `none`, so board quick-add still creates tasks with no priority.

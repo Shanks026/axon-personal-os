@@ -14,9 +14,18 @@ export function setSaveHandler(editor, onSave) {
  *   it current) and always returns true, so the browser's "Save page" dialog never opens.
  * - Mod-k opens the bubble menu's link field when text is selected; with no selection it does
  *   nothing, so the command palette (Feature 12) keeps Mod-k everywhere else.
+ * - With `swallowModEnter` (the compact editor in a dialog), Mod-Enter does nothing in the doc
+ *   (no hard break); ProseMirror only prevents the default, so the dialog's form still gets
+ *   the keydown and submits.
  */
 export const KeyboardShortcuts = Extension.create({
   name: 'axonShortcuts',
+  // Ahead of HardBreak, which also binds Mod-Enter.
+  priority: 1000,
+
+  addOptions() {
+    return { swallowModEnter: false }
+  },
 
   addStorage() {
     return { onSave: null }
@@ -28,6 +37,7 @@ export const KeyboardShortcuts = Extension.create({
         this.storage.onSave?.()
         return true
       },
+      'Mod-Enter': () => this.options.swallowModEnter,
       'Mod-k': () => {
         if (this.editor.state.selection.empty) return false
         this.editor.emit(EDIT_LINK_EVENT)

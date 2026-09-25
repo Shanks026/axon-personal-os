@@ -1,3 +1,5 @@
+import { isDocEmpty } from '@/lib/richText'
+
 /**
  * True when a note has nothing worth keeping: no title, no text, no tags or versions, and no
  * blocks that carry no text of their own (a table, a divider). Used to discard a brand-new note
@@ -6,8 +8,7 @@
 export function isNoteEmpty({ title, content_text, content, tag_ids, versions }) {
   if (title?.trim() || content_text?.trim()) return false
   if (tag_ids?.length || versions?.length) return false
-  const blocks = content?.content ?? []
-  return blocks.every((node) => node.type === 'paragraph' && !node.content?.length)
+  return isDocEmpty(content)
 }
 
 /**

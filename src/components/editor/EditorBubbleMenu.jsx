@@ -144,7 +144,7 @@ function LinkField({ editor, onDone }) {
  * prevented), and the menu re-reads the active marks through `useEditorState`, since the editor
  * doesn't re-render on every transaction.
  */
-export function EditorBubbleMenu({ editor }) {
+export function EditorBubbleMenu({ editor, compact = false }) {
   const [editingLink, setEditingLink] = useState(false)
   const active = useEditorState({
     editor,
@@ -175,7 +175,9 @@ export function EditorBubbleMenu({ editor }) {
   }, [editor])
 
   const run = (fn) => fn(editor.chain().focus()).run()
-  const block = TURN_INTO.find((b) => b.id === active.block) ?? TURN_INTO[0]
+  // The compact editor (task descriptions) has no Heading 1.
+  const turnInto = compact ? TURN_INTO.filter((b) => b.id !== 'h1') : TURN_INTO
+  const block = turnInto.find((b) => b.id === active.block) ?? turnInto[0]
 
   return (
     <BubbleMenu
@@ -229,7 +231,7 @@ export function EditorBubbleMenu({ editor }) {
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="start" className="w-44">
-              {TURN_INTO.map((b) => (
+              {turnInto.map((b) => (
                 <DropdownMenuItem key={b.id} onSelect={() => run(b.run)}>
                   <b.icon />
                   <span className="flex-1">{b.label}</span>

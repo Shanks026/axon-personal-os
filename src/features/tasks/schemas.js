@@ -20,6 +20,7 @@ export const taskSchema = z
   .object({
     space_id: z.uuid('Pick a space'),
     title: z.string().trim().min(1, 'Give the task a title').max(300, 'Up to 300 characters'),
+    description: z.any().nullable().optional(), // Tiptap JSON from the compact editor
     description_text: z.string().max(20_000),
     status: z.enum(TASK_STATUSES.map((s) => s.value)),
     priority: z.enum(TASK_PRIORITIES.map((p) => p.value)),

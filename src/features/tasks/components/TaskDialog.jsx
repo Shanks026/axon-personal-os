@@ -4,6 +4,8 @@ import { CalendarArrowUp, CalendarDays, X } from 'lucide-react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { useDefaultSpaceId } from '@/hooks/useDefaultSpaceId'
+import { isDocEmpty } from '@/lib/richText'
+import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { Kbd } from '@/components/shared/Kbd'
 import { PropertyChip } from '@/components/shared/PropertyChip'
 import { VersionBadge } from '@/components/shared/VersionBadge'
@@ -15,6 +17,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { textClasses } from '@/lib/tint'
 import { usePreferences } from '@/features/settings/api'
@@ -24,6 +27,7 @@ import {
   useCreateTaskLink,
   useCreateTaskLinks,
   useDeleteTaskLink,
+  useTask,
   useUpdateTask,
 } from '@/features/tasks/api'
 import {
@@ -44,6 +48,8 @@ import { ChecklistSection } from '@/features/todos/components/ChecklistSection'
  * Create (no `task`) or edit a task (design 04f, Linear-style). Mountable standalone:
  * it only needs SpaceContext. `initialValues` prefills a create; `onSuccess(row)` runs after save.
  * A task's space is fixed at creation (the user's request, 2026-09-25): there is no space picker.
+ * The description is the compact rich editor (Feature 06 Phase 3); it still saves with the form
+ * (Save / Mod+Enter), not on its own.
  */
 export function TaskDialog({ open, onOpenChange, task, initialValues, onSuccess }) {
   return (
@@ -77,6 +83,14 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
   const [tagIds, setTagIds] = useState(task?.tag_ids ?? initialValues?.tag_ids ?? [])
   const [links, setLinks] = useState(task?.links ?? initialValues?.links ?? [])
   const [checklist, setChecklist] = useState([])
+  // Bumped by Create more, so the (uncontrolled) description editor starts empty again.
+  const [editorKey, setEditorKey] = useState(0)
+  // The rich description isn't in the list columns: an edit loads it first.
+  const detail = useTask(task?.id)
+  const descriptionReady = !isEdit || detail.data !== undefined || detail.isError
+  const initialDescription = isEdit
+    ? (detail.data?.description ?? textToDoc(task.description_text))
+    : (initialValues?.description ?? null)
   const createChecklist = useCreateChecklistItems()
 
   const blank = {
@@ -116,7 +130,8 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
   const selectedTags = spaceTags.filter((t) => tagIds.includes(t.id))
 
   const onSubmit = form.handleSubmit((values) => {
-    const payload = { ...values, description: textToDoc(values.description_text) }
+    // An untouched description in edit mode stays out of the patch (undefined isn't sent).
+    const payload = isEdit ? values : { ...values, description: values.description ?? null }
     const done = (row) => {
       setTaskTags.mutate({ taskId: row.id, tagIds })
       if (!isEdit && links.length) createLinks.mutate({ taskId: row.id, links })
@@ -126,7 +141,8 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
       onSuccess?.(row)
       if (!isEdit && createMore) {
         toast.success('Task created', { description: row.title })
-        form.reset({ ...values, title: '', description_text: '' })
+        form.reset({ ...values, title: '', description: null, description_text: '' })
+        setEditorKey((k) => k + 1)
         form.setFocus('title')
         setTagIds([])
         setLinks([])
@@ -207,13 +223,26 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
             {errors.title && (
               <p className="mt-1 text-xs text-destructive">{errors.title.message}</p>
             )}
-            <textarea
-              {...form.register('description_text')}
-              placeholder="Add description…"
-              aria-label="Description"
-              rows={2}
-              className="mt-1.5 field-sizing-content min-h-12 w-full resize-none bg-transparent leading-relaxed outline-none placeholder:text-faint"
-            />
+            {descriptionReady ? (
+              <RichTextEditor
+                key={`${task?.id ?? 'new'}-${editorKey}`}
+                variant="compact"
+                value={initialDescription}
+                label="Description"
+                onChange={(json, text) => {
+                  form.setValue('description', isDocEmpty(json) ? null : json, {
+                    shouldDirty: true,
+                  })
+                  form.setValue('description_text', text.slice(0, 20_000), { shouldDirty: true })
+                }}
+                className="mt-1.5 min-h-12 leading-relaxed"
+              />
+            ) : (
+              <div className="mt-2.5 flex min-h-12 flex-col gap-2" aria-hidden>
+                <Skeleton className="h-3.5 w-4/5" />
+                <Skeleton className="h-3.5 w-1/2" />
+              </div>
+            )}
           </div>
           <TagList
             tags={selectedTags}

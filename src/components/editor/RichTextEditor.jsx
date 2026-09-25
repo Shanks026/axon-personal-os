@@ -19,11 +19,16 @@ const MAX_TEXT = 100_000
  * `label` is the editable area's accessible name. `features` (read once, merged over the
  * defaults `{ slash: true, codeHighlight: true }`) may add `onSave`, called on Ctrl/Cmd+S;
  * the latest `onSave` is always used.
+ *
+ * `variant="compact"` is the task dialog's description: `text-sm`, no minimum height, the
+ * placeholder "Add description…", H2–H3 only, no H1 or Table in the `/` menu, and Mod-Enter left
+ * to the dialog's form. Its popups stay inside the dialog (see `suggestionRenderer`).
  */
 export function RichTextEditor({
   value,
   onChange,
-  placeholder = "Type '/' for commands",
+  variant = 'full',
+  placeholder,
   editable = true,
   features,
   autofocus = false,
@@ -31,6 +36,7 @@ export function RichTextEditor({
   label = 'Editor',
   className,
 }) {
+  const compact = variant === 'compact'
   const onChangeRef = useRef(onChange)
   const onReadyRef = useRef(onEditorReady)
   useEffect(() => {
@@ -39,7 +45,10 @@ export function RichTextEditor({
   })
 
   const editor = useEditor({
-    extensions: buildExtensions({ placeholder, features: { ...DEFAULT_FEATURES, ...features } }),
+    extensions: buildExtensions({
+      placeholder: placeholder ?? (compact ? 'Add description…' : "Type '/' for commands"),
+      features: { ...DEFAULT_FEATURES, ...features, compact },
+    }),
     content: value ?? '',
     editable,
     autofocus,
@@ -47,7 +56,12 @@ export function RichTextEditor({
     // (the bubble menu subscribes to what it needs through useEditorState).
     immediatelyRender: true,
     shouldRerenderOnTransaction: false,
-    editorProps: { attributes: { class: 'axon-prose', 'aria-label': label } },
+    editorProps: {
+      attributes: {
+        class: compact ? 'axon-prose axon-prose-compact' : 'axon-prose',
+        'aria-label': label,
+      },
+    },
     onUpdate: ({ editor: e }) =>
       onChangeRef.current?.(e.getJSON(), e.getText({ blockSeparator: '\n' }).slice(0, MAX_TEXT)),
   })
@@ -69,7 +83,7 @@ export function RichTextEditor({
   return (
     <div className={cn('relative', className)}>
       <EditorContent editor={editor} />
-      {editor && editable && <EditorBubbleMenu editor={editor} />}
+      {editor && editable && <EditorBubbleMenu editor={editor} compact={compact} />}
       {editor && editable && <TableBubbleMenu editor={editor} />}
     </div>
   )
