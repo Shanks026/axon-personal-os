@@ -34,7 +34,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 13 | Inbox and Quick Capture | [13-inbox-quick-capture.md](13-inbox-quick-capture.md) | 12 | 🔵 Planned |
 | 14 | Pins and Trash | [14-pins-and-trash.md](14-pins-and-trash.md) | 13 | 🔵 Planned |
 | **Wave 6: Later** (backlog; each gets a full doc through the skill when started) | | | | |
-| 15 | Attachments and Media | none | 14 | ⚪ Backlog |
+| 15 | Attachments and Media | [15-attachments-and-media.md](15-attachments-and-media.md) | 06 | 🔵 Planned (Phase 1, images in the editor, pulled forward; next) |
 | 16 | Recurring Tasks and Reminders | none | 14 | ⚪ Backlog |
 | 17 | AI Assistant | none | 11, 12 | ⚪ Backlog |
 | 18 | Automation and Email Triggers | none | 13, 16 | ⚪ Backlog |
@@ -87,6 +87,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `todos` (+ cascade triggers) | 05 | ✅ | `task_id` set means a checklist item |
 | `notes`, `note_tags` | 06 | ✅ | Tiptap JSON plus `content_text`; generated `excerpt` (280 characters) for list cards. Migration `20260925100223` |
 | `notes.versions` (text[] + GIN index) | 06 | ✅ | Free-text versions like `tasks.versions`. Migration `20260925104452` |
+| Storage bucket `attachments` + owner-only `storage.objects` policies | 15 | ⬜ | Private; `{user_id}/{space_id}/{uuid}.{ext}`; images only (10 MB) in Phase 1 |
 | `task_activity` (+ log trigger) | 07 | ⬜ | Auto history plus manual work-log comments |
 | `note_task_links` + `sync_note_mentions()` | 07 | ⬜ | Sources: manual or mention |
 | `events` | 08 | ⬜ | Optional `task_id` / `note_id` |
@@ -114,6 +115,15 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-25: Feature 15 plan (Attachments and Media), Phase 1 pulled forward
+- **`15-attachments-and-media.md` written** at the user's request to add images now that task descriptions are rich text.
+- **Phase 1: images in the shared editor**, for notes and task descriptions:
+  - Paste, drop or "/ Image".
+  - A private `attachments` bucket (owner-only policies on the first path segment) and signed URLs cached through TanStack Query.
+  - The editor gets `features.images = { upload, resolveUrl }`, so it still never imports feature code.
+- **Later phases:** Phase 2 adds file attachments on tasks (an `attachments` table), and Phase 3 adds space images.
+- **Order:** Feature 15 now depends on 06 (was 14), and Phase 1 comes before Feature 07.
 
 ### 2026-09-25: Feature 06 Phase 3: Rich task descriptions (Feature 06 complete)
 - **Task dialog:** the description textarea is now the compact `RichTextEditor`. It supports markdown shortcuts, the selection bubble and `/` (no H1 or Table), and still saves with the form (Save / Mod+Enter).
