@@ -28,9 +28,7 @@ export function TaskPriorityPill({ priority, showNone = false, ...props }) {
 export function TaskStatusIcon({ status, className }) {
   const s = TASK_STATUS_MAP[status] ?? TASK_STATUS_MAP.todo
   const Icon = s.icon
-  return (
-    <Icon className={cn('size-3.75 shrink-0', textClasses(s.color), className)} aria-hidden />
-  )
+  return <Icon className={cn('size-3.75 shrink-0', textClasses(s.color), className)} aria-hidden />
 }
 
 /** Priority icon (a coloured dot) for dense rows. */

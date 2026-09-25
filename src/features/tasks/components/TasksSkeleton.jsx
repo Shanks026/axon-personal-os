@@ -1,6 +1,6 @@
 import { Skeleton } from '@/components/ui/skeleton'
 
-/** Card-shaped skeletons (design 04e); list view gets row-shaped ones. */
+/** Card-shaped skeletons (design 04e); the table view gets row-shaped ones. */
 export function TasksSkeleton({ view }) {
   if (view === 'board') {
     return (
@@ -16,7 +16,7 @@ export function TasksSkeleton({ view }) {
       </div>
     )
   }
-  if (view === 'list') {
+  if (view === 'table') {
     return (
       <div className="overflow-hidden rounded-xl border" aria-hidden>
         {Array.from({ length: 6 }, (_, i) => (

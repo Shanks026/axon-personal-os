@@ -7,7 +7,8 @@ const TABS = TASK_TABS.map((t) => t.value)
 
 /**
  * Tasks page state in the URL (shareable, survives reloads): tab, view, status[], priority[],
- * tag[], due, q. The last view is also remembered per device and used when the URL has none.
+ * tag[], due, q, and the table view's sort. The last view is also remembered per device and used
+ * when the URL has none. Clearing filters keeps tab, view and sort.
  */
 export function useTaskFilters() {
   const [params, setParams] = useSearchParams()
@@ -24,6 +25,7 @@ export function useTaskFilters() {
       tag: params.getAll('tag'),
       due: params.get('due') ?? '',
       q: params.get('q') ?? '',
+      sort: params.get('sort') ?? '', // table view: 'due' or '-due' (descending)
     }
   }, [params, lastView])
 
@@ -51,7 +53,7 @@ export function useTaskFilters() {
       setParams(
         (prev) => {
           const next = new URLSearchParams()
-          for (const key of ['tab', 'view']) if (prev.get(key)) next.set(key, prev.get(key))
+          for (const key of ['tab', 'view', 'sort']) if (prev.get(key)) next.set(key, prev.get(key))
           return next
         },
         { replace: true },

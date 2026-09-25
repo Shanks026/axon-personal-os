@@ -16,7 +16,8 @@ import { TaskDialog } from '@/features/tasks/components/TaskDialog'
 import { TasksSkeleton } from '@/features/tasks/components/TasksSkeleton'
 import { TaskTabs } from '@/features/tasks/components/TaskTabs'
 import { TaskToolbar } from '@/features/tasks/components/TaskToolbar'
-import { TaskGrid, TaskList } from '@/features/tasks/components/TaskViews'
+import { TaskTable } from '@/features/tasks/components/TaskTable'
+import { TaskGrid } from '@/features/tasks/components/TaskViews'
 import { useTaskActions } from '@/features/tasks/hooks/useTaskActions'
 import { useTaskFilters } from '@/features/tasks/hooks/useTaskFilters'
 import { BOARD_STATUSES, CLOSED_STATUSES } from '@/features/tasks/constants'
@@ -32,7 +33,8 @@ export default function TasksPage() {
 
   const today = toISODate(new Date())
   const allClosed =
-    CLOSED_STATUSES.includes(filters.tab) || filters.status.some((s) => s === 'done' || s === 'cancelled')
+    CLOSED_STATUSES.includes(filters.tab) ||
+    filters.status.some((s) => s === 'done' || s === 'cancelled')
   const { data, isLoading, error, refetch } = useTasks({
     spaceIds: scopeSpaceIds,
     priority: filters.priority,
@@ -153,13 +155,15 @@ export default function TasksPage() {
               }
             />
           )
-        ) : filters.view === 'list' ? (
-          <TaskList
+        ) : filters.view === 'table' ? (
+          <TaskTable
             tasks={visible}
             actions={actions}
             tagsById={tagsById}
             progressByTask={progressByTask}
             onEdit={openEdit}
+            sort={filters.sort}
+            onSortChange={(v) => setFilter('sort', v)}
             windowed={!allClosed}
             onShowAllCompleted={() => setFilter('tab', 'done')}
           />

@@ -1,24 +1,11 @@
 import { endOfWeek } from 'date-fns'
 import { parseISODate, toISODate } from '@/lib/dates'
 import { needsRebalance, positionBetween } from '@/lib/position'
-import {
-  BOARD_STATUSES,
-  CLOSED_STATUSES,
-  TASK_STATUSES,
-  TASK_TABS,
-} from '@/features/tasks/constants'
+import { BOARD_STATUSES, CLOSED_STATUSES, TASK_TABS } from '@/features/tasks/constants'
 
 /** Last day of the week containing `todayISO`, as yyyy-MM-dd (0 = Sunday start, 1 = Monday). */
 export function weekEndISO(todayISO, weekStartsOn = 1) {
   return toISODate(endOfWeek(parseISODate(todayISO), { weekStartsOn }))
-}
-
-/** [{ status, tasks }] in TASK_STATUSES order, ordered by position within each group. */
-export function groupTasksByStatus(tasks) {
-  return TASK_STATUSES.map(({ value }) => ({
-    status: value,
-    tasks: tasks.filter((t) => t.status === value).sort((a, b) => a.position - b.position),
-  }))
 }
 
 /** Tasks matching a tab and an optional status filter (client-side, over one scoped query). */

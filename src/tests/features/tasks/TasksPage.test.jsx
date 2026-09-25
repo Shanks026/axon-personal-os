@@ -33,9 +33,7 @@ vi.mock('@/lib/supabase', () => {
   const attachTagIds = (row) => ({
     ...row,
     tag_ids: db.taskTags.filter((tt) => tt.task_id === row.id).map((tt) => ({ tag_id: tt.tag_id })),
-    links: db.taskLinks
-      .filter((l) => l.task_id === row.id)
-      .sort((a, b) => a.position - b.position),
+    links: db.taskLinks.filter((l) => l.task_id === row.id).sort((a, b) => a.position - b.position),
   })
 
   function builder(table) {
@@ -288,7 +286,13 @@ beforeEach(() => {
   db.tags = []
   db.taskTags = []
   db.taskLinks = [
-    { id: 'link1', task_id: 't1', url: 'https://gitlab.com/thmp/buyer/-/merge_requests/1431', label: null, position: 1000 },
+    {
+      id: 'link1',
+      task_id: 't1',
+      url: 'https://gitlab.com/thmp/buyer/-/merge_requests/1431',
+      label: null,
+      position: 1000,
+    },
   ]
   db.tasks = [
     task('t1', 'Buyer portal: fix RFQ pagination', 'in_review', {
@@ -427,14 +431,81 @@ describe('TasksPage', () => {
     ).toBeInTheDocument()
   })
 
-  it('switches to the grouped list view and remembers it', async () => {
+  it('switches to the table view and remembers it', async () => {
     const user = userEvent.setup()
     const router = renderPage()
     await screen.findByText('Storefront: lazy-load images')
-    await user.click(screen.getByRole('radio', { name: 'List' }))
-    expect(router.state.location.search).toBe('?view=list')
-    expect(await screen.findByRole('button', { name: /In review\s*1/ })).toBeInTheDocument()
-    expect(localStorage.getItem('axon:tasks:view')).toBe('"list"')
+    await user.click(screen.getByRole('radio', { name: 'Table' }))
+    expect(router.state.location.search).toBe('?view=table')
+    const table = await screen.findByRole('table')
+    const headers = within(table)
+      .getAllByRole('columnheader')
+      .map((h) => h.textContent)
+    expect(headers).toEqual([
+      'Task',
+      'Status',
+      'Priority',
+      'Tags',
+      'Checklist',
+      'Due',
+      'Updated',
+      'Actions',
+    ])
+    expect(within(table).getAllByRole('row')).toHaveLength(5) // header + 4 tasks
+    expect(localStorage.getItem('axon:tasks:view')).toBe('"table"')
+  })
+
+  it('sorts the table by a column through the URL, cycling asc → desc → off', async () => {
+    db.tasks[1].due_date = '2026-10-20' // Vendor portal
+    db.tasks[2].due_date = '2026-10-05' // Storefront
+    const user = userEvent.setup()
+    const router = renderPage('/s/thmp/tasks?view=table')
+    const table = await screen.findByRole('table')
+    const titles = () =>
+      within(table)
+        .getAllByRole('row')
+        .slice(1)
+        .map((r) => within(r).getAllByRole('button')[0].textContent)
+
+    await user.click(within(table).getByRole('button', { name: 'Due' }))
+    expect(router.state.location.search).toBe('?view=table&sort=due')
+    // No due date sorts last in both directions.
+    await waitFor(() =>
+      expect(titles().slice(0, 2)).toEqual([
+        'Storefront: lazy-load images',
+        'Vendor portal: migrate product form',
+      ]),
+    )
+    expect(within(table).getByRole('columnheader', { name: 'Due' })).toHaveAttribute(
+      'aria-sort',
+      'ascending',
+    )
+
+    await user.click(within(table).getByRole('button', { name: 'Due' }))
+    expect(router.state.location.search).toBe('?view=table&sort=-due')
+    await waitFor(() =>
+      expect(titles().slice(0, 2)).toEqual([
+        'Vendor portal: migrate product form',
+        'Storefront: lazy-load images',
+      ]),
+    )
+
+    await user.click(within(table).getByRole('button', { name: 'Due' }))
+    expect(router.state.location.search).toBe('?view=table')
+  })
+
+  it('opens a task from its title and changes status in place in the table', async () => {
+    const user = userEvent.setup()
+    renderPage('/s/thmp/tasks?view=table')
+    const table = await screen.findByRole('table')
+    const row = within(table).getByText('Storefront: lazy-load images').closest('tr')
+    await user.click(within(row).getByRole('button', { name: 'Change status' }))
+    await user.click(await screen.findByRole('menuitem', { name: /Completed/ }))
+    await waitFor(() => expect(db.calls).toContainEqual(['update', 't3', { status: 'done' }]))
+
+    await user.click(within(row).getByRole('button', { name: 'Storefront: lazy-load images' }))
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByLabelText('Task title')).toHaveValue('Storefront: lazy-load images')
   })
 
   it('shows the first-run empty state', async () => {
@@ -521,14 +592,14 @@ describe('Tags (Phase 3)', () => {
     db.taskTags = [{ task_id: 't1', tag_id: 'tag1', user_id: 'u1' }]
   })
 
-  it('shows tag pills on a card and a row', async () => {
+  it('shows tag pills on a card and a table row', async () => {
     const user = userEvent.setup()
     renderPage()
     const card = (await screen.findByText('Buyer portal: fix RFQ pagination')).closest('article')
     expect(within(card).getByText('frontend')).toBeInTheDocument()
 
-    await user.click(screen.getByRole('radio', { name: 'List' }))
-    const row = (await screen.findByText('Buyer portal: fix RFQ pagination')).closest('div')
+    await user.click(screen.getByRole('radio', { name: 'Table' }))
+    const row = (await screen.findByText('Buyer portal: fix RFQ pagination')).closest('tr')
     expect(within(row).getByText('frontend')).toBeInTheDocument()
   })
 

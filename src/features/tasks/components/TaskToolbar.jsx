@@ -5,7 +5,7 @@ import {
   CircleDashed,
   Columns3,
   LayoutGrid,
-  List,
+  Sheet,
   Search,
   SignalHigh,
   X,
@@ -32,7 +32,7 @@ import { DUE_FILTERS, TASK_PRIORITIES, TASK_STATUSES } from '@/features/tasks/co
 const VIEWS = [
   { value: 'grid', label: <LayoutGrid className="size-3.75" aria-label="Grid" /> },
   { value: 'board', label: <Columns3 className="size-3.75" aria-label="Board" /> },
-  { value: 'list', label: <List className="size-3.75" aria-label="List" /> },
+  { value: 'table', label: <Sheet className="size-3.75" aria-label="Table" /> },
 ]
 
 /** Filter button (design 04a toolbar): icon, label or selection count, chevron. */

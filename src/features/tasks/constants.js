@@ -53,7 +53,7 @@ export const TASK_TABS = [
   })),
 ]
 
-export const TASK_VIEWS = ['grid', 'board', 'list']
+export const TASK_VIEWS = ['grid', 'board', 'table']
 
 /** Closed tasks older than this are hidden unless the Completed tab or a status filter asks. */
 export const DONE_WINDOW_DAYS = 30

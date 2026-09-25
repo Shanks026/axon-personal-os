@@ -70,6 +70,7 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
 | Backend | Supabase (Postgres, Auth, RLS, RPC, later Storage and Edge Functions) |
 | Editor | Tiptap (rich text for notes, journal, task descriptions and reports), with lowlight for code blocks |
 | Drag and drop | `@dnd-kit/core` and `@dnd-kit/sortable` |
+| Data tables | `@tanstack/react-table` **v9** (`useTable` + `tableFeatures`; v8 `useReactTable` examples don't apply) on shadcn `table` |
 | Dates | `date-fns` with `@date-fns/tz` (calendar maths runs in `profiles.timezone`) |
 | Charts | shadcn charts (built on Recharts) |
 | Command palette | `cmdk` (through the shadcn `command` component) |

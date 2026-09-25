@@ -3,7 +3,6 @@ import { taskLinkUrlSchema, taskSchema } from '@/features/tasks/schemas'
 import {
   boardStatuses,
   filterTasks,
-  groupTasksByStatus,
   linkHost,
   planBoardMove,
   tabCounts,
@@ -23,23 +22,6 @@ describe('weekEndISO', () => {
   })
   it('handles the last day of the week itself', () => {
     expect(weekEndISO('2026-09-27', 1)).toBe('2026-09-27')
-  })
-})
-
-describe('groupTasksByStatus', () => {
-  it('groups in the status order and sorts by position', () => {
-    const groups = groupTasksByStatus([t('a', 'done'), t('b', 'todo', 2000), t('c', 'todo', 1000)])
-    expect(groups.map((g) => g.status)).toEqual([
-      'todo',
-      'in_progress',
-      'in_review',
-      'blocked',
-      'on_hold',
-      'done',
-      'cancelled',
-    ])
-    expect(groups[0].tasks.map((x) => x.id)).toEqual(['c', 'b'])
-    expect(groups[5].tasks.map((x) => x.id)).toEqual(['a'])
   })
 })
 
@@ -121,7 +103,9 @@ describe('taskSchema', () => {
 
 describe('taskLinkUrlSchema', () => {
   it('accepts a full URL and rejects a bad one', () => {
-    expect(taskLinkUrlSchema.safeParse('https://gitlab.com/thmp/buyer/-/merge_requests/1431').success).toBe(true)
+    expect(
+      taskLinkUrlSchema.safeParse('https://gitlab.com/thmp/buyer/-/merge_requests/1431').success,
+    ).toBe(true)
     expect(taskLinkUrlSchema.safeParse('nope').success).toBe(false)
   })
 })

@@ -9,7 +9,7 @@ export function TaskTabs({ value, counts, onChange }) {
     <div
       role="tablist"
       aria-label="Task views"
-      className="flex gap-6 overflow-x-auto border-b scrollbar-none"
+      className="flex scrollbar-none gap-6 overflow-x-auto border-b"
     >
       {TASK_TABS.map((tab) => {
         const selected = tab.value === value

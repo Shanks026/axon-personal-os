@@ -263,10 +263,11 @@ Each of these maps to a shadcn primitive.
 - **Space switcher** (DropdownMenu). A 240px panel with rows 32px high. Global comes first (`layers` icon), then the spaces. Each row has a 20px icon tile in `space-soft`, the name, a check on the current space, and a shortcut hint rendered with `<Kbd>` (Feature 12). A separator, then "New space…" and "Manage spaces…".
 - **Primary button** uses `bg-primary`, which is black in light and white in dark. The accent is not used for buttons.
 - **Filter bar.** An unset filter is a dashed-border chip with an icon and label, e.g. "Status". A set filter is a filled `space-soft` chip with `text-space` and an ✕ to clear it, e.g. "Priority ≥ Medium". The search field sits on the right (180px).
-- **Task row** (44px). Priority icon, status icon, title, then flexible space, then tag pills, the MR icon and the mono due label.
-  - Rest: transparent.
-  - Hover: `bg-muted`.
-  - Keyboard-focused (J/K): `bg-accent` plus an inset 2px accent bar on the left.
+- **Task table** (the Tasks page's `?view=table`, replacing the grouped task-row list on 2026-09-25, which the user found "too chaotic"). It's a shadcn `Table` driven by TanStack Table v9 (`TaskTable` plus `taskTableColumns.jsx`), inside a rounded border.
+  - **Columns:** Task (title, with the description clamped to 2 lines in muted `text-xs` beneath it; the only flexible column), then Space (Global only), Status (pill, changed in place), Priority (pill, changed in place, "None" shown), Tags (3 + "+n"), Checklist, Due, Updated (relative), and actions (links and ⋮). Every other column is sized to its content (`w-px whitespace-nowrap`).
+  - **Sorting:** click a header to cycle through ascending, descending and off (one column at a time). The sort is kept in the URL (`?sort=due`, `?sort=-due`). Tasks with no due date sort last in both directions. Unsorted, rows keep the manual position order.
+  - **Rows** are 44px or taller with the default shadcn hover. Only the title is a button (it opens the task); the row itself isn't clickable.
+  - There's no row selection or pagination yet; add them when bulk actions arrive.
 - **Entity chip** (HoverCard). An inline pill 24px high with a 6px radius. Task chips use `space-soft` with an accent border and a status icon; note chips use `bg-muted` with a `file-text` icon. The hover card is 300px wide and shows status · priority · due, then the title.
 - **Grid task card** (revised 2026-09-25, the user's layout), from top to bottom:
   1. Status and priority pills, then the links button and ⋮.

@@ -113,6 +113,17 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Tasks list view replaced by a data table
+- **The grouped list is gone** (the user found it "too chaotic"). `?view=table` is now a shadcn `Table` driven by **TanStack Table v9**: `TaskTable.jsx` and `taskTableColumns.jsx`.
+  - Columns: Task (title with a 2-line description), Space (Global only), Status, Priority, Tags (3 + "+n"), Checklist, Due, Updated, and actions (links and ⋮). Status and priority change in place, and the title opens the task.
+  - Single-column sort cycles through ascending, descending and off, and lives in the URL (`?sort=due`, `?sort=-updated`). No-due-date tasks always sort last. `clear()` keeps the sort.
+  - The "last 30 days · Show all" hint for completed tasks is kept as a footer.
+- **The view value changed** from `list` to `table` (toolbar label "Table", with a `Sheet` icon). Old `?view=list` links, and a remembered `list` choice, fall back to the grid; there's no shim.
+- **Removed:** `TaskList`, `TaskRow.jsx`, and `groupTasksByStatus` (plus its test).
+- **New dependency:** `@tanstack/react-table` `^9.2.4`. It's v9, so its API differs from the v8 examples in shadcn's data-table guide: `useTable`, feature registration, `sortFn`, and `table.FlexRender`. The package ships usage docs under `node_modules/@tanstack/react-table/skills/`.
+- **New shadcn primitive:** `components/ui/table.jsx` (unedited).
+- **Tests:** 217. They cover the table's columns, sorting through the URL, and changing status in place.
+
 ### 2026-09-25: Card polish, full tag palette, checklist progress colours
 - **Card:** the footer shows "Updated 2d ago" instead of the created date. The title is clamped to 2 lines, with the full title on hover. `TaskLinksButton` widens into a pill with a count when a task has several links.
 - **Checklist progress** (on cards, rows, the board and the task dialog header): a fixed icon plus "3/7", and colour carries the progress. Muted means nothing checked, an emerald done count means partly done, and an all-emerald badge means complete. A filling ring was tried and dropped at the user's request. The old `ChecklistProgress` (count plus thin bar) is **removed**, and the dialog uses the badge.

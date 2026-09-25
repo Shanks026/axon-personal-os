@@ -25,7 +25,9 @@ export function TaskLinksButton({
           type="button"
           {...hoverProps}
           {...triggerProps}
-          aria-label={links.length === 1 ? `Open link (${linkHost(links[0].url)})` : `${links.length} links`}
+          aria-label={
+            links.length === 1 ? `Open link (${linkHost(links[0].url)})` : `${links.length} links`
+          }
           className={cn(
             'flex shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:text-foreground',
             size,
