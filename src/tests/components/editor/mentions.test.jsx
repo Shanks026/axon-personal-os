@@ -78,6 +78,35 @@ describe('[[task]] mentions', () => {
     await waitFor(() => expect(lastDoc(onChange)).toContain('"id":"t9"'))
   })
 
+  it('opens the same search with @ at the start of a word', async () => {
+    const user = userEvent.setup()
+    const search = vi.fn(async () => [{ id: 't1', label: 'Fix RFQ pagination' }])
+    const { editor, onChange } = renderEditor({ search, create: vi.fn() })
+    act(() => {
+      editor.commands.focus()
+      editor.commands.insertContent('Blocked by @fix')
+    })
+    await user.click(await screen.findByRole('option', { name: /Fix RFQ pagination/ }))
+    await waitFor(() => expect(lastDoc(onChange)).toContain('"id":"t1"'))
+    expect(search).toHaveBeenCalledWith('fix')
+  })
+
+  it('leaves @ alone inside an email address and when a space follows it', async () => {
+    const search = vi.fn(async () => [{ id: 't1', label: 'Fix RFQ pagination' }])
+    const { editor } = renderEditor({ search, create: vi.fn() })
+    act(() => {
+      editor.commands.focus()
+      editor.commands.insertContent('mail chris@thbs.com')
+    })
+    act(() => {
+      editor.commands.insertContent(' and @ later')
+    })
+    // Give the suggestion plugin a tick; the list must never have opened.
+    await new Promise((r) => setTimeout(r, 50))
+    expect(screen.queryByRole('listbox', { name: 'Tasks' })).not.toBeInTheDocument()
+    expect(search).not.toHaveBeenCalled()
+  })
+
   it('writes mentions to Markdown as [[label]]', () => {
     const doc = {
       type: 'doc',

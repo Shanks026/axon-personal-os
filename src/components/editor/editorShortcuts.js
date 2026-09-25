@@ -24,6 +24,7 @@ export const EDITOR_SHORTCUTS = [
       { label: 'Checklist', keys: 'mod+shift+9' },
       { label: 'Code block', keys: 'mod+alt+c' },
       { label: 'Block menu', text: '/' },
+      { label: 'Link a task', text: '@ or [[' },
     ],
   },
   {

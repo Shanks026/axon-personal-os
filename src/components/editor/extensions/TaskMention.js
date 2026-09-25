@@ -12,8 +12,8 @@ export const mentionNode = (task) => ({
 })
 
 /**
- * Inline `[[task]]` mentions (Feature 07 Phase 3). Typing `[[` opens a task search (spaces
- * allowed in the query); picking a task, or "Create task '…'", inserts an atom chip. The editor
+ * Inline task mentions (Feature 07 Phase 3). Typing `[[` or `@` (the user asked for both) opens a
+ * task search (spaces allowed in the query); picking a task, or "Create task '…'", inserts an atom chip. The editor
  * never imports feature code: `config` (from `features.taskMentions`) supplies
  * `search(query)`, `create(title)` and the chip's `NodeView`. The node reads as `[[label]]` in
  * plain text and Markdown. `editor.storage.taskMention.config` lets the bubble menu's
@@ -70,36 +70,45 @@ export const TaskMention = Node.create({
   addProseMirrorPlugins() {
     const config = this.options.config
     if (!config) return []
+    const editor = this.editor
+    const insert = (range, task) =>
+      editor
+        .chain()
+        .focus()
+        .insertContentAt(range, [mentionNode(task), { type: 'text', text: ' ' }])
+        .run()
+    const command = ({ range, props }) => {
+      if (!props.create) return insert(range, props)
+      // Create first, then put the chip where the trigger and query were.
+      config.create(props.create).then(
+        (task) => insert(range, task),
+        (err) => toast.error(err?.message ?? 'Couldn’t create the task'),
+      )
+    }
+    const shared = {
+      editor,
+      allowSpaces: true,
+      allow: ({ state, range }) => !state.doc.resolve(range.from).parent.type.spec.code,
+      items: ({ query }) => config.search(query),
+      command,
+      render: createSuggestionRenderer(MentionList),
+    }
     return [
+      // [[ anywhere (the wiki-link habit).
       Suggestion({
-        editor: this.editor,
+        ...shared,
         pluginKey: new PluginKey('taskMention'),
         char: '[[',
-        allowSpaces: true,
         allowedPrefixes: null,
-        allow: ({ state, range }) => !state.doc.resolve(range.from).parent.type.spec.code,
-        items: ({ query }) => config.search(query),
-        command: ({ editor, range, props }) => {
-          if (props.create) {
-            // Create first, then put the chip where the "[[query" was.
-            config.create(props.create).then(
-              (task) =>
-                editor
-                  .chain()
-                  .focus()
-                  .insertContentAt(range, [mentionNode(task), { type: 'text', text: ' ' }])
-                  .run(),
-              (err) => toast.error(err?.message ?? 'Couldn’t create the task'),
-            )
-            return
-          }
-          editor
-            .chain()
-            .focus()
-            .insertContentAt(range, [mentionNode(props), { type: 'text', text: ' ' }])
-            .run()
-        },
-        render: createSuggestionRenderer(MentionList),
+      }),
+      // @ only at the start of a word, and a space right after it closes the list, so emails,
+      // "@media" or "@tanstack/..." stay plain text.
+      Suggestion({
+        ...shared,
+        pluginKey: new PluginKey('taskMentionAt'),
+        char: '@',
+        allowedPrefixes: [' ', '(', '['],
+        shouldShow: ({ query }) => !query.startsWith(' '),
       }),
     ]
   },

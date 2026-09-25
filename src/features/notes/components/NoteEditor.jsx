@@ -242,6 +242,7 @@ export function NoteEditor({ note }) {
             onChange={changeContent}
             onEditorReady={handleReady}
             features={{ slash: true, onSave: flush, images, taskMentions }}
+            placeholder="Type '/' for commands, or @ to link a task"
             label="Note body"
             className="mt-7 text-base leading-7"
           />

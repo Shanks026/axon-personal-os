@@ -188,3 +188,11 @@ export function tintStyle(key) {
 export function hueVar(key) {
   return HUE_KEYS.includes(key) ? `var(--hue-${key})` : 'var(--hue-slate)'
 }
+
+/**
+ * Inline `[[task]]` / `@task` mention chips (the user's request, 2026-09-26): a blue badge with
+ * blue-700 medium text and icon, the same whether the chip is loading or loaded (no shade jump).
+ * The editor's prose link style skips `.axon-mention`, so it can't recolour the chip.
+ */
+export const MENTION_CLASSES =
+  'axon-mention bg-blue-100 font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:hover:bg-blue-500/30'

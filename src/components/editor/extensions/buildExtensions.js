@@ -53,6 +53,7 @@ export function buildExtensions({ placeholder, features = {} }) {
         exclude: [
           ...(features.compact ? ['heading-1', 'table'] : []),
           ...(features.images ? [] : ['image']),
+          ...(features.taskMentions ? [] : ['link-task']),
         ],
       }),
     )

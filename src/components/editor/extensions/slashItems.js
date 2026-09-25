@@ -4,6 +4,7 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  SquareCheckBig,
   ImageIcon,
   List,
   ListChecks,
@@ -96,6 +97,16 @@ export const SLASH_ITEMS = [
     icon: Minus,
     command: ({ editor, range }) =>
       editor.chain().focus().deleteRange(range).setHorizontalRule().run(),
+  },
+  {
+    id: 'link-task',
+    title: 'Link task',
+    hint: '@',
+    keywords: ['mention', 'task', 'link', 'reference'],
+    icon: SquareCheckBig,
+    // Leaves "@" behind, which opens the task search (TaskMention).
+    command: ({ editor, range }) =>
+      editor.chain().focus().deleteRange(range).insertContent('@').run(),
   },
   {
     id: 'image',

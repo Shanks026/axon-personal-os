@@ -37,14 +37,15 @@
   margin-top: 0;
 }
 
-.axon-prose a {
+/* Links in the text (not mention chips, which carry their own colours). */
+.axon-prose a:not(.axon-mention) {
   color: var(--foreground);
   text-decoration: underline;
   text-decoration-color: var(--border-strong);
   text-underline-offset: 3px;
   cursor: text;
 }
-.axon-prose a:hover {
+.axon-prose a:not(.axon-mention):hover {
   text-decoration-color: var(--foreground);
 }
 

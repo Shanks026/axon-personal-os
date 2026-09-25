@@ -117,6 +117,14 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-26: Mentions: @ as well as [[, blue chips, task-card hover
+- **Both `@` and `[[`** open the task search. `@` only triggers at the start of a word (after a space, `(` or `[`), and a space right after it closes the list, so emails and `@media` stay plain (tested).
+- **Discoverability:** the note placeholder reads "Type '/' for commands, or @ to link a task", the `/` menu has **Link task** (it leaves an `@`), and the shortcuts cheat sheet lists "Link a task: @ or [[".
+- **Mention chips:** blue-700 medium text and icon on a blue-100 badge, one common task icon, and no status (`MENTION_CLASSES`).
+  - The pale text and the shade change while adding came from the editor's prose link style overriding the chip; it now skips `.axon-mention`.
+- **Hover card:** matches the task card (352px), with the space emoji only in Global. The task summary now includes the description, versions, tags and updated time.
+- **Note rail:** linked tasks moved below the details.
+
 ### 2026-09-26: Link and mention chip colours
 - Inline `[[task]]` mention chips use the blue badge, and the note rail's linked tasks have no fill; neither uses the space accent (the user's request). `EntityLink` gains `tone` (`plain` | `blue`).
 - In linked lists, a mention link shows a small @ icon with a tooltip instead of the word "Mentioned".

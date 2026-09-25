@@ -1,5 +1,6 @@
 import { NodeViewWrapper } from '@tiptap/react'
-import { badgeClasses } from '@/lib/tint'
+import { SquareCheckBig } from 'lucide-react'
+import { MENTION_CLASSES } from '@/lib/tint'
 import { cn } from '@/lib/utils'
 import { EntityLink } from '@/components/shared/EntityLink'
 import { useTaskSummary } from '@/features/tasks/api'
@@ -7,8 +8,9 @@ import { useTaskSummary } from '@/features/tasks/api'
 /**
  * Node view for a `[[task]]` mention: an `EntityLink` chip with the task's **live** title and
  * status (it follows changes made elsewhere), falling back to the saved label while loading.
- * A task that's gone or in Trash reads muted and struck through. Mentions use the blue badge
- * (never the space colour, the user's request). Selected: the accent ring.
+ * A task that's gone or in Trash reads muted and struck through. Mentions use `MENTION_CLASSES`
+ * in both states (never the space colour, no status icon: the user's request); the hover card
+ * shows the status and details. Selected: the accent ring.
  */
 export function TaskMentionChip({ node, selected }) {
   const { id, label } = node.attrs
@@ -23,10 +25,11 @@ export function TaskMentionChip({ node, selected }) {
       {isLoading ? (
         <span
           className={cn(
-            'inline-flex h-6 items-center rounded-md px-2 align-middle text-sm leading-none',
-            badgeClasses('blue'),
+            'inline-flex h-6 items-center gap-1.5 rounded-md px-2 align-middle text-sm leading-none',
+            MENTION_CLASSES,
           )}
         >
+          <SquareCheckBig className="size-3.5 shrink-0" aria-hidden />
           {label}
         </span>
       ) : (

@@ -518,15 +518,17 @@ export function useTaskSearch(params, { enabled = true } = {}) {
   })
 }
 
-/** Just enough of a task for a chip's hover card. */
+/** A task for a chip and its hover card (laid out like the task card), without the rich description. */
 export async function fetchTaskSummary(id) {
   const { data, error } = await supabase
     .from('tasks')
-    .select('id, space_id, title, status, priority, due_date, completed_at, deleted_at')
+    .select(
+      'id, space_id, title, description_text, status, priority, due_date, completed_at, versions, updated_at, deleted_at, tag_ids:task_tags(tag_id)',
+    )
     .eq('id', id)
     .maybeSingle()
   if (error) throw error
-  return data
+  return data ? { ...data, tag_ids: data.tag_ids?.map((t) => t.tag_id) ?? [] } : null
 }
 
 export function useTaskSummary(id, { enabled = true } = {}) {
