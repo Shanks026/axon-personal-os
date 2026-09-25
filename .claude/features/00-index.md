@@ -117,6 +117,10 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-26: Note versions in the Details rail; tighter card menu
+- The note editor's versions move from the title row (and the "+ Version" pill in the tags row) to a **Versions row** in the Details rail, like the task page's rail (the user's request). `NoteVersionBadges` is now that row.
+- **Note card:** the version badge sits closer to the ⋮ menu. The menu button's padding had looked like space reserved for "+n"; nothing was actually reserved.
+
 ### 2026-09-26: One version badge, then +n
 - `VersionBadgeGroup` shows 1 version, then "+n", with a hover card listing every version, like `TagPillGroup` (the user's request). This applies to task and note cards, board cards, both tables, the task hover card and the note picker. Tested.
 

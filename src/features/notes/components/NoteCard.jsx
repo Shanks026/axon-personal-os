@@ -34,7 +34,7 @@ export function NoteCard({ note, to, space, showSpace, tags, onTogglePin, onDele
           {title}
         </h3>
         <VersionBadgeGroup versions={note.versions} className="pointer-events-auto mt-0.5" />
-        <span className="pointer-events-auto -mt-0.5 -mr-1.5">
+        <span className="pointer-events-auto -mt-0.5 -mr-1.5 -ml-1">
           <NoteActionsMenu
             note={note}
             onTogglePin={() => onTogglePin(note)}

@@ -30,7 +30,6 @@ import { useDiscardNote, useUpdateNote } from '@/features/notes/api'
 import { NoteActionsMenu } from '@/features/notes/components/NoteActionsMenu'
 import { NoteMetaRail } from '@/features/notes/components/NoteMetaRail'
 import { NoteTagsRow } from '@/features/notes/components/NoteTagsRow'
-import { NoteVersionBadges } from '@/features/notes/components/NoteVersionBadges'
 import { NOTE_AUTOSAVE_DELAY } from '@/features/notes/constants'
 import { useNoteActions } from '@/features/notes/hooks/useNoteActions'
 import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
@@ -234,7 +233,6 @@ export function NoteEditor({ note }) {
                 className="text-4xl"
               />
             </div>
-            <NoteVersionBadges note={note} />
           </div>
           <NoteTagsRow note={note} />
           <RichTextEditor

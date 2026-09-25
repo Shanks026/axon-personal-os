@@ -1,13 +1,9 @@
 import { useMemo } from 'react'
 import { Plus } from 'lucide-react'
 import { formatRelative } from '@/lib/dates'
-import { mergeVersions } from '@/lib/versions'
 import { TagPill } from '@/components/shared/TagPill'
 import { TagPicker } from '@/components/shared/TagPicker'
-import { VersionPicker } from '@/components/shared/VersionPicker'
-import { useNoteVersions, useSetNoteVersions } from '@/features/notes/api'
 import { useSetNoteTags, useTags } from '@/features/tags/api'
-import { useTaskVersions } from '@/features/tasks/api'
 
 function AddPill({ children, ...props }) {
   return (
@@ -23,27 +19,17 @@ function AddPill({ children, ...props }) {
 }
 
 /**
- * Under the title (design 07b): the note's tags (removable), dashed "+ Tag" and "+ Version"
- * pickers, and "Edited 2h ago" on its own line below them. The chosen versions sit at the end of the title row
- * (`NoteVersionBadges`). Tags can be created in the note's space;
- * versions are free text, suggested from the tasks and notes in that space (like the task card).
+ * Under the title (design 07b): the note's tags (removable), a dashed "+ Tag" picker (tags can be
+ * created in the note's space), and "Edited 2h ago" on its own line below. Versions live in the
+ * Details rail (`NoteVersionBadges`).
  */
 export function NoteTagsRow({ note }) {
   const spaceIds = useMemo(() => [note.space_id], [note.space_id])
   const { data: tags = [] } = useTags({ spaceIds })
-  const { data: taskVersions = [] } = useTaskVersions({ spaceIds })
-  const { data: noteVersions = [] } = useNoteVersions({ spaceIds })
   const setTags = useSetNoteTags()
-  const setVersions = useSetNoteVersions()
   const byId = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags])
-  const knownVersions = useMemo(
-    () => mergeVersions(taskVersions, noteVersions),
-    [taskVersions, noteVersions],
-  )
   const selected = note.tag_ids.map((id) => byId.get(id)).filter(Boolean)
-  const versions = note.versions ?? []
   const saveTags = (tagIds) => setTags.mutate({ noteId: note.id, tagIds })
-  const saveVersions = (next) => setVersions.mutate({ id: note.id, versions: next })
 
   return (
     <div className="mt-3.5">
@@ -62,12 +48,6 @@ export function NoteTagsRow({ note }) {
           spaceIds={spaceIds}
           createSpaceId={note.space_id}
           trigger={<AddPill>Tag</AddPill>}
-        />
-        <VersionPicker
-          value={versions}
-          onChange={saveVersions}
-          known={knownVersions}
-          trigger={<AddPill>Version</AddPill>}
         />
       </div>
       {/* Its own line, so it never wraps in tight against the pills. */}
