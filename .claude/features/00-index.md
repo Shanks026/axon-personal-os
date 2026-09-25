@@ -119,7 +119,7 @@ Newest first. One entry per landed phase or planning change.
 
 ### 2026-09-26: Note tags in the rail; wider detail rails
 - **Note editor:** tags move from under the title into the Details rail as a **Tags** row (pills + "+ Tag"), next to Versions, so all of a note's metadata sits in one place, as on the task page (the user's decision). The "Edited …" line under the title is gone (the rail shows Updated), and the title now sits directly above the body.
-- **Rails:** the task and note detail rails, and their Sheets below `lg`, are both 352px (`w-88`), up from 320 and 280 (the user's request).
+- **Rails:** the task and note detail rails, and their Sheets below `lg`, are both **256px (`w-64`), the sidebar's width**, for a symmetric frame (the user's request; 352px was tried first, the same day).
 
 ### 2026-09-26: Note versions in the Details rail; tighter card menu
 - The note editor's versions move from the title row (and the "+ Version" pill in the tags row) to a **Versions row** in the Details rail, like the task page's rail (the user's request). `NoteVersionBadges` is now that row.
