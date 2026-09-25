@@ -19,6 +19,7 @@ describe('isNoteEmpty', () => {
   it('keeps a note that only has tags or versions', () => {
     expect(isNoteEmpty({ title: '', content_text: '', tag_ids: ['t1'] })).toBe(false)
     expect(isNoteEmpty({ title: '', content_text: '', versions: ['v1'] })).toBe(false)
+    expect(isNoteEmpty({ title: '', content_text: '', link_count: 1 })).toBe(false)
     expect(isNoteEmpty({ title: '', content_text: '', tag_ids: [], versions: [] })).toBe(true)
   })
 

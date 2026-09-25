@@ -22,7 +22,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | ✅ Complete |
 | 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | ✅ Complete |
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | ✅ Complete |
-| 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🟡 In progress (Phase 1 ✅) |
+| 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🟡 In progress (Phases 1–2 ✅; Phase 3 next) |
 | **Wave 3: Time** | | | | |
 | 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | 🔵 Planned |
 | 09 | Daily Journal / Work Log | [09-journal.md](09-journal.md) | 06, 07 | 🔵 Planned |
@@ -89,7 +89,8 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `notes.versions` (text[] + GIN index) | 06 | ✅ | Free-text versions like `tasks.versions`. Migration `20260925104452` |
 | Storage bucket `attachments` + owner-only `storage.objects` policies | 15 | ✅ | Private; `{user_id}/{space_id}/{uuid}.{ext}`; images only (10 MB) in Phase 1. Migration `20260925123002` |
 | `task_activity` (+ log trigger) | 07 | ✅ | Auto history plus manual work-log comments. Migration `20260925130331` (15 backfilled `created` rows) |
-| `note_task_links` + `sync_note_mentions()` | 07 | ⬜ | Sources: manual or mention |
+| `note_task_links` (+ activity log trigger) | 07 | ✅ | Sources: manual or mention. Migration `20260925180253` |
+| `sync_note_mentions()` | 07 | ⬜ | Phase 3 |
 | `events` | 08 | ⬜ | Optional `task_id` / `note_id` |
 | `notes.kind`, `notes.journal_date` | 09 | ⬜ | One journal entry per space per day |
 | `week_start_of()`, `dashboard_summary()` | 10 | ⬜ | RPCs; they read the profile's time zone and week start |
@@ -115,6 +116,15 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-26: Feature 07 Phase 2: Manual note ↔ task links
+- **Database:** `note_task_links` (manual now, mention in Phase 3) with a trigger logging "Linked note / Unlinked note" into the task's activity. Migration `20260925180253`.
+- **Task page:** a **Linked notes** section (2-column excerpt cards, ✕ to unlink) with **Link note** (a search picker, any space) and **New linked note** (created with the task's title, linked, opened).
+- **Note editor:** **Linked tasks** at the top of the Details rail: chips with a status icon and a hover preview, the due label and unlink, **Link task** (picker) and a **New task…** field. A blank note that's been linked isn't discarded on leave.
+- **Cards:** note cards show the linked-task count, and task cards show the linked-note count in the meta row.
+- **New shared:** `EntityLink` + `EntityPreviewCard` (`components/shared/`). **New feature:** `features/links/` (`api.js`, `LinkedNotesPanel`, `LinkedTasksSection`, `NotePickerDialog`, `TaskPickerDialog`). Tasks API: `searchTasks`, `useTaskSummary` and `note_count`. Notes API: `link_count` and `useNotesByIds`.
+- **Tests:** vitest now runs with `maxWorkers: 2` (`vite.config.js`) after parallel runs timed out at random on this machine; the suite is stable at 308 tests.
+- **Manual steps for you:** none.
 
 ### 2026-09-25: Feature 07 Phase 1: Task detail page
 - **Database:** `task_activity` + the `tasks_log_activity` trigger (created, status, priority, due date, title and space changes; reorders don't log) + a backfill. Migration `20260925130331`.

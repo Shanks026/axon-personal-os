@@ -22,6 +22,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { LinkedNotesPanel } from '@/features/links/components/LinkedNotesPanel'
 import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
 import { ActivityTimeline } from '@/features/tasks/components/ActivityTimeline'
 import { TaskDescription } from '@/features/tasks/components/TaskDescription'
@@ -160,6 +161,7 @@ export function TaskDetail({ task }) {
             <TaskDescription task={task} onStatusChange={onStatusChange} />
           </div>
           <ChecklistSection taskId={task.id} spaceId={task.space_id} className="border-none p-0" />
+          <LinkedNotesPanel task={task} />
           <ActivityTimeline taskId={task.id} />
         </div>
       </div>

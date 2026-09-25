@@ -11,15 +11,23 @@ export const noteKeys = {
   details: () => [...noteKeys.all, 'detail'],
   detail: (id) => [...noteKeys.details(), id],
   versions: (spaceIds) => [...noteKeys.all, 'versions', spaceIds], // version suggestions
+  byIds: (ids) => [...noteKeys.all, 'by-ids', ids], // titles for activity sentences
 }
 
 // `excerpt` (generated, 280 chars) keeps list payloads small: never select content_text here.
 const LIST_COLUMNS =
-  'id, space_id, title, excerpt, versions, pinned_at, created_at, updated_at, tag_ids:note_tags(tag_id)'
+  'id, space_id, title, excerpt, versions, pinned_at, created_at, updated_at, tag_ids:note_tags(tag_id), link_count:note_task_links(count)'
 
-/** Flattens the embedded `note_tags(tag_id)` rows into a plain `tag_ids: string[]`. */
+/**
+ * Flattens the embedded `note_tags(tag_id)` rows into a plain `tag_ids: string[]`, and the
+ * linked-tasks embed count (list rows only) into `link_count`.
+ */
 function mapRow(row) {
-  return { ...row, tag_ids: row.tag_ids?.map((t) => t.tag_id) ?? [] }
+  return {
+    ...row,
+    tag_ids: row.tag_ids?.map((t) => t.tag_id) ?? [],
+    ...(row.link_count && { link_count: row.link_count[0]?.count ?? 0 }),
+  }
 }
 
 /**
@@ -216,7 +224,10 @@ export function useDeleteNote() {
       ctx?.lists.forEach(([key, data]) => qc.setQueryData(key, data))
       toast.error(err.message ?? 'Could not delete note')
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: noteKeys.all }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: noteKeys.all })
+      qc.invalidateQueries({ queryKey: ['links'] }) // linkKeys.all: tasks' linked-notes panels
+    },
   })
 }
 
@@ -224,7 +235,10 @@ export function useRestoreNote() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: restoreNote,
-    onSettled: () => qc.invalidateQueries({ queryKey: noteKeys.all }),
+    onSettled: () => {
+      qc.invalidateQueries({ queryKey: noteKeys.all })
+      qc.invalidateQueries({ queryKey: ['links'] }) // linkKeys.all
+    },
     onError: (err) => toast.error(err.message ?? 'Could not restore note'),
   })
 }
@@ -239,5 +253,20 @@ export function useDiscardNote() {
       qc.invalidateQueries({ queryKey: noteKeys.lists() })
     },
     onError: (err) => console.error('Could not discard empty note', err),
+  })
+}
+
+/** Titles (and Trash state) for a set of notes: the task activity's "Linked note '…'" lines. */
+export async function fetchNotesByIds(ids) {
+  const { data, error } = await supabase.from('notes').select('id, title, deleted_at').in('id', ids)
+  if (error) throw error
+  return data
+}
+
+export function useNotesByIds(ids) {
+  return useQuery({
+    queryKey: noteKeys.byIds(ids),
+    queryFn: () => fetchNotesByIds(ids),
+    enabled: ids?.length > 0,
   })
 }

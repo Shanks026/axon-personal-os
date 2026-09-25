@@ -16,20 +16,24 @@ export const taskKeys = {
   versions: (spaceIds) => [...taskKeys.all, 'versions', spaceIds], // version suggestions
   activities: () => [...taskKeys.all, 'activity'],
   activity: (taskId) => [...taskKeys.activities(), taskId],
+  search: (params) => [...taskKeys.all, 'search', params], // { spaceIds, q }
+  summary: (id) => [...taskKeys.all, 'summary', id], // hover previews
 }
 
 const LIST_COLUMNS =
-  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, versions, position, pinned_at, created_at, updated_at, tag_ids:task_tags(tag_id), links:task_links(id, url, label, position)'
+  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, versions, position, pinned_at, created_at, updated_at, tag_ids:task_tags(tag_id), links:task_links(id, url, label, position), note_count:note_task_links(count)'
 
 const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
 
 /**
- * Flattens the embedded `task_tags(tag_id)` rows into a plain `tag_ids: string[]`, and orders
- * `links` by position (PostgREST doesn't order a nested embed for us).
+ * Flattens the embedded `task_tags(tag_id)` rows into a plain `tag_ids: string[]`, orders
+ * `links` by position (PostgREST doesn't order a nested embed for us), and turns the linked-notes
+ * embed count into `note_count` (it counts links to notes in Trash too).
  */
 function mapRow(row) {
   return {
     ...row,
+    note_count: row.note_count?.[0]?.count ?? 0,
     tag_ids: row.tag_ids?.map((t) => t.tag_id) ?? [],
     links: [...(row.links ?? [])].sort((a, b) => a.position - b.position),
   }
@@ -283,10 +287,11 @@ export function useDeleteTask() {
       ctx?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data))
       toast.error(err.message ?? 'Could not delete task')
     },
-    // The trigger soft-deletes checklist todos along with the task.
+    // The trigger soft-deletes checklist todos along with the task; linked notes' panels drop it.
     onSettled: () => {
       qc.invalidateQueries({ queryKey: taskKeys.all })
       qc.invalidateQueries({ queryKey: todoKeys.all })
+      qc.invalidateQueries({ queryKey: ['links'] }) // linkKeys.all
     },
   })
 }
@@ -298,6 +303,7 @@ export function useRestoreTask() {
     onSettled: () => {
       qc.invalidateQueries({ queryKey: taskKeys.all })
       qc.invalidateQueries({ queryKey: todoKeys.all })
+      qc.invalidateQueries({ queryKey: ['links'] }) // linkKeys.all
     },
     onError: (err) => toast.error(err.message ?? 'Could not restore task'),
   })
@@ -476,5 +482,56 @@ export function useDeleteTaskComment() {
     mutationFn: deleteTaskComment,
     onSuccess: () => qc.invalidateQueries({ queryKey: taskKeys.activities() }),
     onError: (err) => toast.error(err.message ?? 'Could not delete the entry'),
+  })
+}
+
+// Search and summaries for links (the task picker, chip hover previews).
+const SEARCH_LIMIT = 8
+
+/**
+ * Tasks whose title contains `q` (any of `spaceIds`, not in Trash): open ones first, then the
+ * most recently updated. An empty `q` lists the most recent.
+ */
+export async function searchTasks({ spaceIds, q }) {
+  let query = supabase
+    .from('tasks')
+    .select('id, space_id, title, status, due_date, completed_at, updated_at')
+    .in('space_id', spaceIds)
+    .is('deleted_at', null)
+    .order('updated_at', { ascending: false })
+    .limit(SEARCH_LIMIT * 3)
+  if (q?.trim()) query = query.ilike('title', `%${escapeLike(q.trim())}%`)
+  const { data, error } = await query
+  if (error) throw error
+  const closed = (t) => (t.status === 'done' || t.status === 'cancelled' ? 1 : 0)
+  return [...data].sort((a, b) => closed(a) - closed(b)).slice(0, SEARCH_LIMIT)
+}
+
+export function useTaskSearch(params, { enabled = true } = {}) {
+  return useQuery({
+    queryKey: taskKeys.search(params),
+    queryFn: () => searchTasks(params),
+    enabled: enabled && params.spaceIds?.length > 0,
+    placeholderData: keepPreviousData,
+  })
+}
+
+/** Just enough of a task for a chip's hover card. */
+export async function fetchTaskSummary(id) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('id, space_id, title, status, priority, due_date, completed_at, deleted_at')
+    .eq('id', id)
+    .maybeSingle()
+  if (error) throw error
+  return data
+}
+
+export function useTaskSummary(id, { enabled = true } = {}) {
+  return useQuery({
+    queryKey: taskKeys.summary(id),
+    queryFn: () => fetchTaskSummary(id),
+    enabled: enabled && !!id,
+    staleTime: 60_000,
   })
 }

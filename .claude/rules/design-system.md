@@ -296,6 +296,11 @@ Each of these maps to a shadcn primitive.
   - **Description:** the rich editor at `text-sm leading-6`, only as tall as its content (the user's request, 2026-09-25).
   - Then the checklist, then "Activity": one oldest-first stream on a thin line with 24px round icon markers, automatic entries as sentences with a faint relative time (absolute date in a tooltip), and manual entries as `bg-card` cards labelled "Work log". The composer card is at the bottom.
   - **Rail:** **320px** (`w-80`; the user asked for a little wider than the design's 300) with 84px labels (`w-21`), and a Sheet below `lg`. Link cards are 36px bordered rows (an icon, "!1431 · group/project", ↗). The footer has a Pinned switch and a `destructive` "Move to Trash".
+- **Links** (Feature 07 Phase 2):
+  - On the task page, "Linked notes" is a 2-column grid of excerpt cards (`rounded-xl`, a file icon + title, a 2-line `text-xs` excerpt, faint "Updated …"; the whole card links; ✕ on hover unlinks).
+  - In the note rail, "Linked tasks" come first: entity chips with a due label and a hover ✕, then "Link task" and a "New task…" field.
+  - Pickers are command dialogs with a `SpaceBadge` per result.
+  - Counts: note card footer right (`square-check-big` + n); task card meta row (`file-text` + n).
 - **Editor popups:** the bubble menu is a 36px `bg-popover` bar (`rounded-lg`, `shadow-md`) of 28px icon buttons with tooltips and `aria-pressed`, then a "Turn into" menu; link editing swaps an inline URL field into the bar. The `/` menu is a 280px panel (`rounded-xl`, `shadow-md`) titled "Blocks", with 36px rows: a 24px bordered icon tile, the label, and the markdown hint in mono faint. Highlight marks use `--warn` at 28%.
 - **Date picker** (Popover + Calendar), 260px wide. Quick chips first: Today, Tomorrow, Fri, Next week. The selected day is `bg-primary`; today uses red text with a muted background.
 - **Tag picker** (Popover + Command). Selected tags appear as chips inside the search input. Each option is the tag's **actual badge** (`TagPill size="md"`), not a colour dot plus plain text. It doesn't show the tag's space or scope, and selected tags get a **check icon on the right**. The highlighted row gets **no background** (all the user's requests, 2026-09-25). It ends with "Create "…"".

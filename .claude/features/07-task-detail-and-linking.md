@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/07-task-detail-and-linking.md`
-**Status**: 🟡 In progress (Phase 1 ✅ 2026-09-25)
+**Status**: 🟡 In progress (Phases 1–2 ✅ 2026-09-26; Phase 3 next)
 **Depends on**: 05, 06
 **Last Updated**: September 2026
 
@@ -233,7 +233,12 @@ src/features/tasks/
 
 ---
 
-## Phase 2: Manual Links
+## Phase 2: Manual Links ✅ Complete (2026-09-26)
+
+### Design fold (delta 07 and screen 07b, folded on 2026-09-26)
+- **Task page:** the section is **"Linked notes"**, shown as **excerpt cards in two columns** (title with a file icon, a 2-line excerpt, "Updated …"; the card opens the note; ✕ unlinks on hover), with **Link note** and **New linked note** buttons.
+- **Note editor:** linked tasks go at the **top of the existing Details rail** (design 07b rail: Linked tasks, then the metadata), instead of the planned separate collapsible side panel. The rail is already a Sheet below `lg`.
+- **Cards:** note cards show the linked-task count (`square-check-big`) on the right of the footer. Task cards show the linked-notes count in the meta row, beside checklist progress (planned in the design system).
 
 ### Goal
 On a task, the user sees its linked notes, links an existing note through a search picker, or creates a new linked note in one click. In the note editor, a collapsible side panel shows the note's linked tasks and can link an existing task or create one. Links show as chips with the entity's icon or status and a hover preview. Note cards show how many tasks they link to, and link changes appear in the task's activity log.
@@ -353,15 +358,32 @@ Pickers list results with `SpaceBadge` (links may cross spaces), keyboard-first,
 - A graph view of links: backlog
 
 ### 2.7 Checklist: Before Marking Complete
-- [ ] `create_note_task_links` is applied and mirrored; the log trigger and the purge-safety checks pass; advisors are clean
-- [ ] Link, unlink and "New linked note" work from a task; link, unlink and "New task…" work from a note
-- [ ] Both sides update without reload; the task timeline shows "Linked note …" / "Unlinked note …"
-- [ ] Chips navigate to the right space URL, show hover previews, and render deleted targets muted
-- [ ] Soft-deleting a note hides it from the task panel; Undo brings it back
-- [ ] Note cards show link counts
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` DB registry, status, changelog (new shared `EntityLink`) and `axon-data-patterns.md` §10 are updated
+- [x] `create_note_task_links` is applied and mirrored; the log trigger and the purge-safety checks pass; advisors are clean
+- [x] Link, unlink and "New linked note" work from a task; link, unlink and "New task…" work from a note
+- [x] Both sides update without reload; the task timeline shows "Linked note …" / "Unlinked note …"
+- [x] Chips navigate to the right space URL, show hover previews, and render deleted targets muted
+- [x] Soft-deleting a note hides it from the task panel; Undo brings it back (`!inner` + `deleted_at is null`; delete and restore invalidate `['links']`)
+- [x] Note cards show link counts (and task cards show linked-note counts)
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` DB registry, status, changelog (new shared `EntityLink`) and `axon-data-patterns.md` §10 are updated
+
+### 2.8 Implementation Notes
+- **Migration `20260925180253`** (`create_note_task_links`). Verified in a rolled-back transaction:
+  - A link logs one `note_linked` row, and upserting the same pair logs no second one.
+  - An unlink logs one `note_unlinked` row.
+  - Hard-deleting a linked task cascades cleanly; the trigger skips logging when the task is gone.
+  - Advisors show nothing new.
+- **PostgREST shapes verified** against the live API: `notes!inner(...)` with `note.deleted_at=is.null`, and embedded counts `note_task_links(count)` on both notes and tasks.
+- **No import cycle:** `links/api.js` imports `taskKeys` and `noteKeys`, while `tasks/api.js` and `notes/api.js` invalidate `['links']` by value (commented).
+  - Link mutations invalidate `linkKeys.all`, `taskKeys.activities()`, `taskKeys.lists()` (note counts) and `noteKeys.lists()` (link counts).
+- **Counts** come from embedded `note_task_links(count)`, so they include links to items in Trash (PostgREST can't filter an embedded count by the other table). Worth tightening with Feature 14.
+- **`describeActivity`** gains `note_linked` / `note_unlinked`, with titles from `useNotesByIds` over the ids in the loaded activity. It reads "a note" while titles load, and "a deleted note" for one that's gone. Tested.
+- **`EntityLink`** (shared): a 24px chip (a status icon for a task, a file icon for a note) linking to the entity's own space URL, with a `HoverCard` preview (`EntityPreviewCard`, which fetches only while open via `useTaskSummary` / `useNote`). Deleted or unknown-space targets render muted and struck through.
+- **Pickers** (`NotePickerDialog`, `TaskPickerDialog`): a `CommandDialog` with `shouldFilter={false}` and a 200ms debounced query, over all active spaces (links cross spaces), with a `SpaceBadge` per row. `searchTasks` sorts open tasks first, then the most recently updated (limit 8).
+- **The note editor's leave check** also counts task links: a blank new note that's been linked isn't discarded (`isNoteEmpty` `link_count`, tested).
+- **Tests:** activity sentences for links, detail-page link and unlink flows (picker → card → activity), and the note rail's linked-task chip and unlink.
+- **Test runner:** `vite.config.js` sets `test.maxWorkers: 2`. With more workers, the heavy jsdom suites timed out at random on this busy machine (a different set each run); with 2, the suite is deterministic: 308/308, about 4.3 minutes.
 
 **Stop here. Show the result and wait for approval.**
 

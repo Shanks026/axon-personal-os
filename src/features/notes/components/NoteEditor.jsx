@@ -23,6 +23,7 @@ import {
 } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { useImageHandlers } from '@/features/attachments/api'
+import { useTasksForNote } from '@/features/links/api'
 import { useDiscardNote, useUpdateNote } from '@/features/notes/api'
 import { NoteActionsMenu } from '@/features/notes/components/NoteActionsMenu'
 import { NoteMetaRail } from '@/features/notes/components/NoteMetaRail'
@@ -80,10 +81,18 @@ export function NoteEditor({ note }) {
     content: note.content,
   })
   const deletedRef = useRef(false)
-  // Tags and versions save on their own (not through autosave); keep them for the leave check.
+  // Tags, versions and task links save on their own (not through autosave); keep them for the
+  // leave check, so a blank note that's linked or tagged isn't discarded.
+  const { data: taskLinks } = useTasksForNote(note.id)
+  const linkCount = taskLinks?.length ?? 0
   useEffect(() => {
-    latest.current = { ...latest.current, tag_ids: note.tag_ids, versions: note.versions }
-  }, [note.tag_ids, note.versions])
+    latest.current = {
+      ...latest.current,
+      tag_ids: note.tag_ids,
+      versions: note.versions,
+      link_count: linkCount,
+    }
+  }, [note.tag_ids, note.versions, linkCount])
   const mountedRef = useRef(false)
 
   const { schedule, flush, status } = useAutosave({

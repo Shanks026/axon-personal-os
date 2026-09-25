@@ -1,13 +1,14 @@
 import { isDocEmpty } from '@/lib/richText'
 
 /**
- * True when a note has nothing worth keeping: no title, no text, no tags or versions, and no
+ * True when a note has nothing worth keeping: no title, no text, no tags, versions or task
+ * links, and no
  * blocks that carry no text of their own (a table, a divider). Used to discard a brand-new note
  * the user left blank.
  */
-export function isNoteEmpty({ title, content_text, content, tag_ids, versions }) {
+export function isNoteEmpty({ title, content_text, content, tag_ids, versions, link_count }) {
   if (title?.trim() || content_text?.trim()) return false
-  if (tag_ids?.length || versions?.length) return false
+  if (tag_ids?.length || versions?.length || link_count) return false
   return isDocEmpty(content)
 }
 

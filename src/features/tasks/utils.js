@@ -1,5 +1,5 @@
 import { endOfWeek } from 'date-fns'
-import { ArrowRightLeft, CalendarDays, Pencil, Plus, SignalHigh } from 'lucide-react'
+import { ArrowRightLeft, CalendarDays, Link2, Pencil, Plus, SignalHigh, Unlink } from 'lucide-react'
 import { formatDateShort, parseISODate, toISODate } from '@/lib/dates'
 import { needsRebalance, positionBetween } from '@/lib/position'
 import { textClasses } from '@/lib/tint'
@@ -139,11 +139,18 @@ const priorityLabel = (v) => TASK_PRIORITY_MAP[v]?.label ?? v
  * "Created in THMP", "Status In progress → In review", "Priority Low → High",
  * "Due date set to 26 Sep" / "Due date 20 Sep → 26 Sep" / "Due date cleared",
  * "Renamed from 'Old title'", "Moved from THMP to Personal". Comments aren't described here
- * (they render as Work log cards). `note_linked` / `note_unlinked` arrive in Phase 2.
+ * (they render as Work log cards). "Linked note ‘Sprint 14 retro’" / "Unlinked note ‘…’" read
+ * titles from `noteTitleById` (a note that's gone reads "a deleted note").
  */
-export function describeActivity(entry, { spaceById } = {}) {
+export function describeActivity(entry, { spaceById, noteTitleById } = {}) {
   const { kind, from_value: from, to_value: to } = entry
   const spaceName = (id) => spaceById?.get(id)?.name ?? 'a deleted space'
+  const noteName = (id) => {
+    if (!noteTitleById) return 'a note' // titles still loading
+    const title = noteTitleById.get(id)
+    if (title === undefined) return 'a deleted note'
+    return `‘${title || 'Untitled'}’`
+  }
 
   switch (kind) {
     case 'created':
@@ -183,6 +190,18 @@ export function describeActivity(entry, { spaceById } = {}) {
         icon: ArrowRightLeft,
         iconClassName: 'text-muted-foreground',
         text: `Moved from ${spaceName(from)} to ${spaceName(to)}`,
+      }
+    case 'note_linked':
+      return {
+        icon: Link2,
+        iconClassName: 'text-muted-foreground',
+        text: `Linked note ${noteName(to)}`,
+      }
+    case 'note_unlinked':
+      return {
+        icon: Unlink,
+        iconClassName: 'text-muted-foreground',
+        text: `Unlinked note ${noteName(from)}`,
       }
     default:
       return { icon: ArrowRightLeft, iconClassName: 'text-muted-foreground', text: kind }

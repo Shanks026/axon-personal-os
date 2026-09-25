@@ -10,7 +10,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import TaskDetailPage from '@/features/tasks/pages/TaskDetailPage'
 
-const db = vi.hoisted(() => ({ tasks: [], activity: [], calls: [] }))
+const db = vi.hoisted(() => ({ tasks: [], activity: [], calls: [], notes: [], links: [] }))
 
 vi.mock('@/context/AuthContext', () => ({
   AuthProvider: ({ children }) => children,
@@ -22,7 +22,7 @@ vi.mock('@/lib/supabase', () => {
   const withEmbeds = (t) => ({ ...t, tag_ids: [], links: [] })
 
   function builder(table) {
-    const state = { op: 'select', patch: null, id: null, taskId: null, single: false }
+    const state = { op: 'select', patch: null, id: null, taskId: null, noteId: null, single: false }
     const b = {
       select: () => b,
       in: () => b,
@@ -35,11 +35,13 @@ vi.mock('@/lib/supabase', () => {
       eq: (col, val) => {
         if (col === 'id') state.id = val
         if (col === 'task_id') state.taskId = val
+        if (col === 'note_id') state.noteId = val
         return b
       },
       insert: (values) => ((state.op = 'insert'), (state.patch = values), b),
       update: (patch) => ((state.op = 'update'), (state.patch = patch), b),
       delete: () => ((state.op = 'delete'), b),
+      upsert: (values) => ((state.op = 'upsert'), (state.patch = values), b),
       single: () => ((state.single = true), b),
       maybeSingle: () => ((state.single = true), b),
       then: (resolve, reject) => run().then(resolve, reject),
@@ -67,6 +69,40 @@ vi.mock('@/lib/supabase', () => {
           return result(t ? withEmbeds(t) : null)
         }
         return result(db.tasks.map(withEmbeds))
+      }
+      if (table === 'note_task_links') {
+        if (state.op === 'upsert') {
+          db.calls.push(['link', state.patch.note_id, state.patch.task_id])
+          db.links.push({ ...state.patch, created_at: '2026-09-25T14:00:00Z' })
+          db.activity.push({
+            id: `a${db.activity.length + 1}`,
+            kind: 'note_linked',
+            to_value: state.patch.note_id,
+            created_at: '2026-09-25T14:00:00Z',
+            updated_at: '2026-09-25T14:00:00Z',
+          })
+          return result(null)
+        }
+        if (state.op === 'delete') {
+          db.calls.push(['unlink', state.noteId, state.taskId])
+          db.links = db.links.filter(
+            (l) => !(l.note_id === state.noteId && l.task_id === state.taskId),
+          )
+          return result(null)
+        }
+        return result(
+          db.links
+            .filter((l) => l.task_id === state.taskId)
+            .map((l) => ({
+              source: l.source,
+              created_at: l.created_at,
+              note: db.notes.find((n) => n.id === l.note_id),
+            })),
+        )
+      }
+      if (table === 'notes') {
+        if (state.single) return result(db.notes.find((n) => n.id === state.id) ?? null)
+        return result(db.notes.map((n) => ({ ...n, tag_ids: [] })))
       }
       if (table === 'task_activity') {
         if (state.op === 'insert') {
@@ -165,6 +201,25 @@ function renderPage(path = '/s/thmp/tasks/t1', state) {
 beforeEach(() => {
   localStorage.clear()
   db.calls = []
+  db.links = []
+  db.notes = [
+    {
+      id: 'n1',
+      space_id: SPACE.id,
+      title: 'Pagination bug RCA',
+      excerpt: 'Root cause: local page state.',
+      updated_at: '2026-09-24T10:00:00Z',
+      deleted_at: null,
+    },
+    {
+      id: 'n2',
+      space_id: SPACE.id,
+      title: 'Sprint 42 planning',
+      excerpt: 'Committed work.',
+      updated_at: '2026-09-23T10:00:00Z',
+      deleted_at: null,
+    },
+  ]
   db.tasks = [
     task('t1', 'Buyer portal: fix RFQ pagination', {
       description_text: 'Reset page to 1 when the filter hash changes.',
@@ -277,5 +332,40 @@ describe('TaskDetailPage', () => {
   it('shows a missing task as not found', async () => {
     renderPage('/s/thmp/tasks/nope')
     expect(await screen.findByText('This task doesn’t exist or is in Trash')).toBeInTheDocument()
+  })
+
+  it('links a note from the picker, shows it as a card and logs it', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    const section = await screen.findByRole('region', { name: 'Linked notes' })
+    expect(
+      await within(section).findByText('No linked notes. Link one or start a new note.'),
+    ).toBeInTheDocument()
+
+    await user.click(within(section).getByRole('button', { name: 'Link note' }))
+    const picker = await screen.findByRole('dialog', { name: 'Link a note' })
+    await user.click(await within(picker).findByText('Pagination bug RCA'))
+
+    await waitFor(() => expect(db.calls).toContainEqual(['link', 'n1', 't1']))
+    expect(
+      await within(section).findByRole('link', { name: 'Open note Pagination bug RCA' }),
+    ).toHaveAttribute('href', '/s/thmp/notes/n1')
+    expect(await screen.findByText('Linked note ‘Pagination bug RCA’')).toBeInTheDocument()
+  })
+
+  it('unlinks a linked note', async () => {
+    db.links = [
+      { note_id: 'n2', task_id: 't1', source: 'manual', created_at: '2026-09-24T10:00:00Z' },
+    ]
+    const user = userEvent.setup()
+    renderPage()
+    const section = await screen.findByRole('region', { name: 'Linked notes' })
+    await user.click(
+      await within(section).findByRole('button', { name: 'Unlink Sprint 42 planning' }),
+    )
+    await waitFor(() => expect(db.calls).toContainEqual(['unlink', 'n2', 't1']))
+    expect(
+      await within(section).findByText('No linked notes. Link one or start a new note.'),
+    ).toBeInTheDocument()
   })
 })

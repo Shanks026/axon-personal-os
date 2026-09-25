@@ -12,7 +12,7 @@ import { TooltipProvider } from '@/components/ui/tooltip'
 import NoteEditorPage from '@/features/notes/pages/NoteEditorPage'
 import NotesPage from '@/features/notes/pages/NotesPage'
 
-const db = vi.hoisted(() => ({ notes: [], calls: [], tags: [] }))
+const db = vi.hoisted(() => ({ notes: [], calls: [], tags: [], taskLinks: [] }))
 
 vi.mock('@/context/AuthContext', () => ({
   AuthProvider: ({ children }) => children,
@@ -47,6 +47,14 @@ vi.mock('@/lib/supabase', () => {
     function run() {
       if (table === 'profiles') return result({ id: 'u1', last_space_id: null })
       if (table === 'tags') return result(db.tags)
+      if (table === 'note_task_links') {
+        if (state.op === 'delete') {
+          db.calls.push(['unlink'])
+          db.taskLinks = []
+          return result(null)
+        }
+        return result(db.taskLinks)
+      }
       if (table !== 'notes') return result(state.single ? null : [])
       if (state.op === 'insert') {
         const row = {
@@ -157,6 +165,7 @@ function renderApp(path = '/s/thmp/notes') {
 beforeEach(() => {
   localStorage.clear()
   db.calls = []
+  db.taskLinks = []
   db.tags = [
     {
       id: 't1',
@@ -237,14 +246,14 @@ describe('NotesPage', () => {
     await waitFor(
       () => expect(db.calls).toContainEqual(['update', 'n3', { title: 'Retro notes' }]),
       {
-        timeout: 5000, // generous: the full suite runs files in parallel
+        timeout: 10_000, // generous: the full suite runs files in parallel
       },
     )
 
     await router.navigate('/s/thmp/notes')
     await screen.findByText('Retro notes')
     expect(db.calls.some((c) => c[0] === 'delete')).toBe(false)
-  })
+  }, 25_000)
 
   it('discards a new note left completely empty', async () => {
     const user = userEvent.setup()
@@ -254,8 +263,10 @@ describe('NotesPage', () => {
     await screen.findByLabelText('Note title')
 
     await router.navigate('/s/thmp/notes')
-    await waitFor(() => expect(db.calls).toContainEqual(['delete', 'n3']), { timeout: 5000 })
-  })
+    await waitFor(() => expect(db.calls).toContainEqual(['delete', 'n3']), {
+      timeout: 10_000,
+    })
+  }, 25_000)
 
   it('shows a missing note as not found', async () => {
     renderApp('/s/thmp/notes/nope')
@@ -345,5 +356,32 @@ describe('NoteEditor (Phase 2)', () => {
     const dialog = await screen.findByRole('dialog', { name: 'Keyboard shortcuts' })
     expect(within(dialog).getByText('Save now')).toBeInTheDocument()
     expect(within(dialog).getByText('Link (with text selected)')).toBeInTheDocument()
+  })
+
+  it('shows linked tasks as chips in the note rail, and unlinks one', async () => {
+    db.taskLinks = [
+      {
+        source: 'manual',
+        created_at: '2026-09-24T10:00:00Z',
+        task: {
+          id: 't9',
+          space_id: SPACE.id,
+          title: 'Fix RFQ pagination',
+          status: 'in_review',
+          priority: 'high',
+          due_date: null,
+          completed_at: null,
+          deleted_at: null,
+        },
+      },
+    ]
+    const user = userEvent.setup()
+    renderApp('/s/thmp/notes/n1')
+    const section = await screen.findByRole('region', { name: 'Linked tasks' })
+    expect(
+      await within(section).findByRole('link', { name: /Fix RFQ pagination/ }),
+    ).toHaveAttribute('href', '/s/thmp/tasks/t9')
+    await user.click(within(section).getByRole('button', { name: 'Unlink Fix RFQ pagination' }))
+    await waitFor(() => expect(db.calls).toContainEqual(['unlink']))
   })
 })

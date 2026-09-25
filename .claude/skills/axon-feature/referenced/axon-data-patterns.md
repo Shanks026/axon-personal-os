@@ -212,7 +212,8 @@ export function useTaskFilters() {
 | `TitleTextarea` (auto-growing single-line title; `ref` and extra props pass through) | `components/shared/` | 06, shared in 07 |
 | `useAutosave({ save, delay })` → `{ schedule, flush, status }` | `hooks/` | 06 Phase 1 |
 | `usePageHeader({ parent })` middle crumb; `SaveIndicator onRetry` | `components/layout/`, `components/shared/` | 06 Phase 1 |
-| `EntityLink` (task/note chip with hover preview) | `components/shared/` | 07 |
+| `EntityLink` + `EntityPreviewCard` (task/note chip with hover preview; deleted targets muted) | `components/shared/` | 07 Phase 2 |
+| Link pickers `NotePickerDialog` / `TaskPickerDialog` (CommandDialog, debounced, cross-space) | `features/links/components/` | 07 Phase 2 |
 
 | Mention-id collector (`collectTaskMentionIds`) | `components/editor/` | 07/09 |
 | `useNow` | `hooks/` | 08 |

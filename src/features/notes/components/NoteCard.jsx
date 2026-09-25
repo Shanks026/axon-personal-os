@@ -1,3 +1,4 @@
+import { SquareCheckBig } from 'lucide-react'
 import { Link } from 'react-router'
 import { formatRelative } from '@/lib/dates'
 import { cn } from '@/lib/utils'
@@ -9,7 +10,7 @@ import { NoteActionsMenu } from '@/features/notes/components/NoteActionsMenu'
 /**
  * Grid card (design 07a, with the Tasks card decisions): a 2-line semibold title (full title
  * on hover) with its versions at the right end of the title row (like the task card), a 2-line excerpt, then, pinned to the bottom, up to 3 tags (+n) and a dashed footer
- * with "Updated 2d ago". `showSpace` (Global) adds the space's emoji before it. The whole card
+ * with "Updated 2d ago" and, on the right, how many tasks it's linked to. `showSpace` (Global) adds the space's emoji before it. The whole card
  * is a link to the editor; the ⋮ menu sits above that link.
  */
 export function NoteCard({ note, to, space, showSpace, tags, onTogglePin, onDelete }) {
@@ -61,6 +62,16 @@ export function NoteCard({ note, to, space, showSpace, tags, onTogglePin, onDele
         <span className="text-xs whitespace-nowrap text-muted-foreground">
           Updated {formatRelative(note.updated_at)}
         </span>
+        <div className="flex-1" />
+        {note.link_count > 0 && (
+          <span
+            className="flex items-center gap-1 text-xs text-muted-foreground tabular-nums"
+            aria-label={`Linked to ${note.link_count} ${note.link_count === 1 ? 'task' : 'tasks'}`}
+          >
+            <SquareCheckBig className="size-3.25" aria-hidden />
+            {note.link_count}
+          </span>
+        )}
       </footer>
     </article>
   )

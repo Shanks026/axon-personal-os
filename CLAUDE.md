@@ -22,13 +22,13 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
 | 04 Tasks | ✅ Complete, plus many browser-feedback follow-ups on 2026-09-25 (see the changelog) |
 | 05 Todos | ✅ Complete (page, groups, reorder, task checklists) |
 | 06 Notes | ✅ Complete (editor, list, autosave, pinning, versions, tag chips, code highlight, tables, Markdown, shortcuts, rich task descriptions) |
-| 07 Task detail and linking | 🟡 Phase 1 ✅ (task detail page, activity and work log); **Phase 2 (manual note ↔ task links) is next** |
+| 07 Task detail and linking | 🟡 Phases 1–2 ✅ (task detail page, activity and work log, manual note ↔ task links); **Phase 3 (`[[` mentions) is next** |
 | 08–14 | Planned (docs in `.claude/features/`) |
 | 15 Attachments and Media | 🟡 Phase 1 ✅ (images in notes and task descriptions, private bucket, signed URLs); Phases 2–3 later |
 
 ### Resume here (session handoff)
 
-1. **Next step: Feature 07 Phase 2 (manual note ↔ task links), after the user approves Phase 1.** Feature 15 Phases 2–3 (task file attachments, space images) wait until later.
+1. **Next step: Feature 07 Phase 3 (`[[task]]` mentions, `sync_note_mentions`, "Make task" in the bubble menu per D2), after the user approves Phase 2.** Tests run with `maxWorkers: 2` (the suite takes about 4 minutes). Feature 15 Phases 2–3 (task file attachments, space images) wait until later.
    - Run the `axon-feature` skill, Step 4, on `.claude/features/06-notes.md`. Phase 1's Implementation Notes (§1.8) cover the Tiptap 3.31 specifics.
    - Phase 2 covers the tag filter, table controls, lowlight code blocks, Copy as Markdown, Ctrl+S and the shortcuts cheat sheet. Phase 3 turns the task dialog's description into a compact `RichTextEditor`; pass the suggestion `container` option inside the Dialog.
    - **Still to confirm in the browser:**

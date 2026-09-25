@@ -1,3 +1,4 @@
+import { FileText } from 'lucide-react'
 import { formatRelative } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { DueLabel } from '@/components/shared/DueLabel'
@@ -91,10 +92,19 @@ export function TaskCard({
           {task.description_text}
         </p>
       )}
-      {/* Meta row: checklist progress now; linked-notes count joins it in Feature 07. */}
-      {progress?.total > 0 && (
+      {/* Meta row: checklist progress and the linked-notes count, only when there's something. */}
+      {(progress?.total > 0 || task.note_count > 0) && (
         <div className="pointer-events-none relative mt-2.5 flex items-center gap-3">
-          <ChecklistProgressBadge progress={progress} />
+          {progress?.total > 0 && <ChecklistProgressBadge progress={progress} />}
+          {task.note_count > 0 && (
+            <span
+              className="flex items-center gap-1 text-xs text-muted-foreground tabular-nums"
+              aria-label={`${task.note_count} linked ${task.note_count === 1 ? 'note' : 'notes'}`}
+            >
+              <FileText className="size-3.25" aria-hidden />
+              {task.note_count}
+            </span>
+          )}
         </div>
       )}
       <div className="flex-1" />

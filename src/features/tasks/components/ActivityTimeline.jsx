@@ -1,7 +1,9 @@
+import { useMemo } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { listItem } from '@/components/motion/presets'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useNotesByIds } from '@/features/notes/api'
 import { useTaskActivity } from '@/features/tasks/api'
 import { ActivityEntry } from '@/features/tasks/components/ActivityEntry'
 import { CommentComposer } from '@/features/tasks/components/CommentComposer'
@@ -14,6 +16,23 @@ import { CommentEntry } from '@/features/tasks/components/CommentEntry'
  */
 export function ActivityTimeline({ taskId }) {
   const { data: entries, isLoading, error, refetch } = useTaskActivity(taskId)
+  // Titles for "Linked note ‘…’" lines; a note missing here has been deleted for good.
+  const noteIds = useMemo(
+    () =>
+      [
+        ...new Set(
+          (entries ?? [])
+            .filter((e) => e.kind === 'note_linked' || e.kind === 'note_unlinked')
+            .map((e) => e.to_value ?? e.from_value),
+        ),
+      ].sort(),
+    [entries],
+  )
+  const { data: notes } = useNotesByIds(noteIds)
+  const noteTitleById = useMemo(
+    () => (notes ? new Map(notes.map((n) => [n.id, n.title])) : undefined),
+    [notes],
+  )
 
   return (
     <section aria-labelledby="task-activity">
@@ -50,7 +69,7 @@ export function ActivityTimeline({ taskId }) {
                 {entry.kind === 'comment' ? (
                   <CommentEntry entry={entry} />
                 ) : (
-                  <ActivityEntry entry={entry} />
+                  <ActivityEntry entry={entry} noteTitleById={noteTitleById} />
                 )}
               </motion.div>
             ))}
