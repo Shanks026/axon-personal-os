@@ -6,6 +6,7 @@ import { TagPillGroup } from '@/components/shared/TagPill'
 import { PriorityMenu, StatusMenu, TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
 import { TaskLinksButton } from '@/features/tasks/components/TaskLinksButton'
 import { TaskPriorityPill, TaskStatusPill } from '@/features/tasks/components/TaskPills'
+import { VersionBadgeGroup } from '@/features/tasks/components/VersionBadge'
 import { isClosed } from '@/features/tasks/utils'
 import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
 
@@ -64,14 +65,17 @@ export function TaskCard({ task, space, showSpace, tags, progress, onEdit, onSet
         </span>
       </div>
 
-      <h3
-        className={cn(
-          'pointer-events-none relative mt-3.5 line-clamp-2 text-base leading-snug font-semibold tracking-tight text-pretty',
-          closed && 'text-muted-foreground line-through decoration-faint',
-        )}
-      >
-        {task.title}
-      </h3>
+      <div className="pointer-events-none relative mt-3.5 flex items-start gap-2">
+        <h3
+          className={cn(
+            'line-clamp-2 min-w-0 flex-1 text-base leading-snug font-semibold tracking-tight text-pretty',
+            closed && 'text-muted-foreground line-through decoration-faint',
+          )}
+        >
+          {task.title}
+        </h3>
+        <VersionBadgeGroup versions={task.versions} className="mt-0.5" />
+      </div>
       {task.description_text && (
         <p className="pointer-events-none relative mt-1.5 line-clamp-2 leading-relaxed text-muted-foreground">
           {task.description_text}
@@ -96,11 +100,16 @@ export function TaskCard({ task, space, showSpace, tags, progress, onEdit, onSet
             <span className="sr-only">{space?.name}</span>
           </span>
         )}
-        <span className="font-mono text-xs whitespace-nowrap text-muted-foreground">
+        <span className="text-xs whitespace-nowrap text-muted-foreground">
           Updated {formatRelative(task.updated_at)}
         </span>
         <div className="flex-1" />
-        <DueLabel date={task.due_date} completedAt={task.completed_at} closed={closed} />
+        <DueLabel
+          date={task.due_date}
+          completedAt={task.completed_at}
+          closed={closed}
+          className="font-sans"
+        />
       </footer>
     </article>
   )

@@ -3,6 +3,7 @@ import {
   CalendarDays,
   ChevronDown,
   CircleDashed,
+  GitBranch,
   Columns3,
   LayoutGrid,
   Sheet,
@@ -27,6 +28,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import { useTaskVersions } from '@/features/tasks/api'
 import { DUE_FILTERS, TASK_PRIORITIES, TASK_STATUSES } from '@/features/tasks/constants'
 
 const VIEWS = [
@@ -59,9 +61,10 @@ function FilterButton({ icon: Icon, label, count, active, children }) {
 
 const toggle = (list, v) => (list.includes(v) ? list.filter((x) => x !== v) : [...list, v])
 
-/** Search on the left; Status / Priority / Tags / Due filters and the view switch on the right. */
+/** Search on the left; Status / Priority / Tags / Version / Due filters and the view switch on the right. */
 export function TaskToolbar({ filters, setFilter, clear, hasFilters }) {
   const { scopeSpaceIds } = useSpace()
+  const { data: versions = [] } = useTaskVersions({ spaceIds: scopeSpaceIds })
   // Local text so typing stays instant; the URL updates after a short pause.
   const [text, setText] = useState(filters.q)
   const pushQuery = useDebouncedCallback((v) => setFilter('q', v), 250)
@@ -157,6 +160,29 @@ export function TaskToolbar({ filters, setFilter, clear, hasFilters }) {
         onChange={(ids) => setFilter('tag', ids)}
         spaceIds={scopeSpaceIds}
       />
+
+      <FilterButton
+        icon={GitBranch}
+        label="Version"
+        count={filters.version.length}
+        active={filters.version.length > 0}
+      >
+        <DropdownMenuLabel className="text-xs text-faint">Version (any of)</DropdownMenuLabel>
+        {versions.length === 0 && (
+          <p className="px-2 py-1.5 text-muted-foreground">No versions yet.</p>
+        )}
+        {versions.map((v) => (
+          <DropdownMenuCheckboxItem
+            key={v}
+            checked={filters.version.includes(v)}
+            onCheckedChange={() => setFilter('version', toggle(filters.version, v))}
+            onSelect={(e) => e.preventDefault()}
+            className="tabular-nums"
+          >
+            {v}
+          </DropdownMenuCheckboxItem>
+        ))}
+      </FilterButton>
 
       <FilterButton icon={CalendarDays} label={dueLabel ?? 'Due'} active={!!filters.due}>
         <DropdownMenuLabel className="text-xs text-faint">Due</DropdownMenuLabel>

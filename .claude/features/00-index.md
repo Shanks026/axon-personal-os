@@ -83,6 +83,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `tasks` (+ completed_at trigger) | 04 | ✅ | Seven statuses (`on_hold` added `20260925061559`), five priorities, fractional `position`. Migration `20260923181804` |
 | `tags`, `task_tags` | 04 | ✅ | Tag `space_id` NULL means available in all spaces |
 | `task_links` | 04 | ✅ | Replaces `tasks.external_url`; a task can carry any number of links. Migration `20260925061612` |
+| `tasks.versions` (text[] + GIN index) | 04 | ✅ | Free-text versions, several per task. Migration `20260925085654` |
 | `todos` (+ cascade triggers) | 05 | ✅ | `task_id` set means a checklist item |
 | `notes`, `note_tags` | 06 | ⬜ | Tiptap JSON plus `content_text`; generated `excerpt` (280 characters) for list cards |
 | `task_activity` (+ log trigger) | 07 | ⬜ | Auto history plus manual work-log comments |
@@ -112,6 +113,14 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-25: Task versions, version filter, sans card footer
+- **Migration `20260925085654_tasks_add_versions`:** `tasks.versions text[] not null default '{}'`, capped at 10 entries and 400 characters in total, with a GIN index for the filter. It was applied through the Management API because the MCP tools weren't loaded, and verified in a rolled-back transaction. The advisors show only the 3 pre-existing warnings.
+- **Versions are free text**, and a task can have several. The dialog's new **Version** chip (`VersionsChip`) suggests versions already used in that space (`useTaskVersions` / `fetchTaskVersions`, sorted newest first with a numeric-aware sort), and "Add …" adds a new one. Commas, braces and quotes are rejected, since they would break the Postgres array filter.
+- **Display:** a `VersionBadge` (shadcn `secondary`, tag rounding) at the right end of the title row on the card and in the dialog, beside ⋮ in the table, and in the board card's top row.
+- **Filter:** a "Version" toolbar filter (any-of, `?version=v3.9.0`, using PostgREST `overlaps`). It's included in `hasFilters` and `clear()`.
+- **Card footer** now uses the normal font instead of mono.
+- **Tests:** 220.
 
 ### 2026-09-25: Hover to see every tag
 - `TagPillGroup`: when some tags are hidden behind "+n", hovering the pills or the count opens a HoverCard (shadcn `hover-card`) listing all of them. It applies to grid cards, table rows and board cards. The grid card's tag row now accepts the pointer only when there's something hidden.

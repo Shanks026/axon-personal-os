@@ -6,6 +6,7 @@ import { TagPillGroup } from '@/components/shared/TagPill'
 import { TaskLinksButton } from '@/features/tasks/components/TaskLinksButton'
 import { PriorityMenu, StatusMenu, TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
 import { TaskPriorityPill, TaskStatusPill } from '@/features/tasks/components/TaskPills'
+import { VersionBadgeGroup } from '@/features/tasks/components/VersionBadge'
 import { TASK_PRIORITY_MAP, TASK_STATUSES } from '@/features/tasks/constants'
 import { isClosed } from '@/features/tasks/utils'
 import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
@@ -155,6 +156,7 @@ export function buildTaskColumns({
       meta: { className: fit },
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1">
+          <VersionBadgeGroup versions={row.original.versions} className="mr-1" />
           <TaskLinksButton links={row.original.links} size="size-6" className="bg-transparent" />
           <TaskActionsMenu
             task={row.original}

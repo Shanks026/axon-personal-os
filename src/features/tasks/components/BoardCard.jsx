@@ -7,6 +7,7 @@ import { TagPillGroup } from '@/components/shared/TagPill'
 import { TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
 import { TaskLinksButton } from '@/features/tasks/components/TaskLinksButton'
 import { TaskPriorityPill } from '@/features/tasks/components/TaskPills'
+import { VersionBadgeGroup } from '@/features/tasks/components/VersionBadge'
 import { isClosed } from '@/features/tasks/utils'
 import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
 
@@ -32,7 +33,7 @@ export function BoardCard({
   overlay = false,
 }) {
   const closed = isClosed(task)
-  const hasTop = task.priority !== 'none' || task.links?.length > 0
+  const hasTop = task.priority !== 'none' || task.links?.length > 0 || task.versions?.length > 0
   return (
     <article
       className={cn(
@@ -44,6 +45,7 @@ export function BoardCard({
         <div className="flex h-5.5 items-center gap-1.5">
           <TaskPriorityPill priority={task.priority} className="h-5.5" />
           <div className="flex-1" />
+          <VersionBadgeGroup versions={task.versions} />
           <TaskLinksButton
             links={task.links}
             size="size-5.5"

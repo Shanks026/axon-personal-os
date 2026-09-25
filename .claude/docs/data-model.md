@@ -153,6 +153,8 @@ create table public.tasks (
   start_date        date,
   due_date          date,
   completed_at      timestamptz,
+  versions          text[] not null default '{}'         -- free-text versions (v3.9.0), several allowed
+                    check (cardinality(versions) <= 10 and char_length(array_to_string(versions, '')) <= 400),
   position          double precision not null default 0,
   pinned_at         timestamptz,
   deleted_at        timestamptz,
@@ -172,6 +174,7 @@ create index tasks_due_idx    on public.tasks (user_id, due_date) where deleted_
 create index tasks_done_idx   on public.tasks (user_id, completed_at) where completed_at is not null;
 create index tasks_search_idx on public.tasks using gin (search);
 create index tasks_title_trgm on public.tasks using gin (title extensions.gin_trgm_ops);
+create index tasks_versions_idx on public.tasks using gin (versions);
 
 -- completed_at bookkeeping
 create or replace function public.tasks_set_completed_at()

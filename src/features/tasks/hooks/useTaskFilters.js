@@ -7,7 +7,7 @@ const TABS = TASK_TABS.map((t) => t.value)
 
 /**
  * Tasks page state in the URL (shareable, survives reloads): tab, view, status[], priority[],
- * tag[], due, q, and the table view's sort. The last view is also remembered per device and used
+ * tag[], version[], due, q, and the table view's sort. The last view is also remembered per device and used
  * when the URL has none. Clearing filters keeps tab, view and sort.
  */
 export function useTaskFilters() {
@@ -23,6 +23,7 @@ export function useTaskFilters() {
       status: params.getAll('status'),
       priority: params.getAll('priority'),
       tag: params.getAll('tag'),
+      version: params.getAll('version'),
       due: params.get('due') ?? '',
       q: params.get('q') ?? '',
       sort: params.get('sort') ?? '', // table view: 'due' or '-due' (descending)
@@ -65,6 +66,7 @@ export function useTaskFilters() {
     filters.status.length > 0 ||
     filters.priority.length > 0 ||
     filters.tag.length > 0 ||
+    filters.version.length > 0 ||
     !!filters.due ||
     !!filters.q
 

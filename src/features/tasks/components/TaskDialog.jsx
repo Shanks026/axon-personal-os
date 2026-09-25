@@ -32,6 +32,8 @@ import {
   TagsChip,
 } from '@/features/tasks/components/TaskDialogChips'
 import { PriorityMenu, StatusMenu } from '@/features/tasks/components/TaskMenus'
+import { VersionBadge } from '@/features/tasks/components/VersionBadge'
+import { VersionsChip } from '@/features/tasks/components/VersionsChip'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP } from '@/features/tasks/constants'
 import { taskSchema } from '@/features/tasks/schemas'
 import { textToDoc } from '@/features/tasks/utils'
@@ -84,6 +86,7 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
     priority: 'medium',
     start_date: null,
     due_date: null,
+    versions: [],
   }
   const form = useForm({
     resolver: zodResolver(taskSchema),
@@ -96,10 +99,15 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
           priority: task.priority,
           start_date: task.start_date,
           due_date: task.due_date,
+          versions: task.versions ?? [],
         }
       : { ...blank, ...initialValues, space_id: defaultSpace },
   })
-  const [status, priority] = useWatch({ control: form.control, name: ['status', 'priority'] })
+  const [status, priority, versions] = useWatch({
+    control: form.control,
+    name: ['status', 'priority', 'versions'],
+  })
+  const setVersions = (v) => form.setValue('versions', v, { shouldDirty: true })
   const errors = form.formState.errors
   const pending = create.isPending || update.isPending
 
@@ -167,21 +175,35 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-3 px-5 pt-4">
           <div>
-            <Controller
-              name="title"
-              control={form.control}
-              render={({ field }) => (
-                <input
-                  {...field}
-                  placeholder="Task title"
-                  aria-label="Task title"
-                  aria-invalid={!!errors.title}
-                  autoFocus
-                  autoComplete="off"
-                  className="w-full bg-transparent text-xl font-semibold tracking-tight outline-none placeholder:text-faint"
-                />
+            {/* Versions sit at the far right of the title row, as on the card. */}
+            <div className="flex items-center gap-3">
+              <Controller
+                name="title"
+                control={form.control}
+                render={({ field }) => (
+                  <input
+                    {...field}
+                    placeholder="Task title"
+                    aria-label="Task title"
+                    aria-invalid={!!errors.title}
+                    autoFocus
+                    autoComplete="off"
+                    className="min-w-0 flex-1 bg-transparent text-xl font-semibold tracking-tight outline-none placeholder:text-faint"
+                  />
+                )}
+              />
+              {versions.length > 0 && (
+                <div className="flex max-w-1/2 shrink-0 flex-wrap justify-end gap-1">
+                  {versions.map((v) => (
+                    <VersionBadge
+                      key={v}
+                      version={v}
+                      onRemove={(x) => setVersions(versions.filter((y) => y !== x))}
+                    />
+                  ))}
+                </div>
               )}
-            />
+            </div>
             {errors.title && (
               <p className="mt-1 text-xs text-destructive">{errors.title.message}</p>
             )}
@@ -240,6 +262,7 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
             weekStartsOn={weekStartsOn}
           />
           <TagsChip spaceId={defaultSpace} value={tagIds} onChange={setTagIds} />
+          <VersionsChip spaceId={defaultSpace} value={versions} onChange={setVersions} />
         </div>
         {(errors.due_date || errors.space_id) && (
           <p className="-mt-2 px-5 pb-3 text-xs text-destructive">

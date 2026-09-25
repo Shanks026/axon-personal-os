@@ -9,13 +9,14 @@ import { todoKeys } from '@/features/todos/api'
 export const taskKeys = {
   all: ['tasks'],
   lists: () => [...taskKeys.all, 'list'],
-  list: (params) => [...taskKeys.lists(), params], // { spaceIds, priority, due, q, tag, today, weekEnd, allClosed }
+  list: (params) => [...taskKeys.lists(), params], // { spaceIds, priority, due, q, tag, version, today, weekEnd, allClosed }
   details: () => [...taskKeys.all, 'detail'],
   detail: (id) => [...taskKeys.details(), id],
+  versions: (spaceIds) => [...taskKeys.all, 'versions', spaceIds], // version suggestions
 }
 
 const LIST_COLUMNS =
-  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, position, pinned_at, created_at, updated_at, tag_ids:task_tags(tag_id), links:task_links(id, url, label, position)'
+  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, versions, position, pinned_at, created_at, updated_at, tag_ids:task_tags(tag_id), links:task_links(id, url, label, position)'
 
 const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
 
@@ -33,7 +34,7 @@ function mapRow(row) {
 
 /**
  * Scoped task list. Tab and status filtering happen on the client (so tab counts stay live);
- * priority, due window, tag and search run here. Closed tasks older than DONE_WINDOW_DAYS are
+ * priority, due window, tag, version and search run here. Closed tasks older than DONE_WINDOW_DAYS are
  * left out unless `allClosed` (Completed tab or an explicit status filter).
  *
  * `tag` (any-of) joins `task_tags` a second time under its own alias, so the filter doesn't trim
@@ -45,6 +46,7 @@ export async function fetchTasks({
   due,
   q,
   tag = [],
+  version = [],
   today,
   weekEnd,
   allClosed,
@@ -58,6 +60,7 @@ export async function fetchTasks({
 
   if (priority.length) query = query.in('priority', priority)
   if (tag.length) query = query.in('tag_match.tag_id', tag)
+  if (version.length) query = query.overlaps('versions', version) // any of
   if (due === 'overdue') query = query.lt('due_date', today).not('status', 'in', '(done,cancelled)')
   if (due === 'today') query = query.eq('due_date', today)
   if (due === 'week') query = query.gte('due_date', today).lte('due_date', weekEnd)
@@ -120,11 +123,39 @@ export function useTasks(params) {
   })
 }
 
+/**
+ * Every version already used on a live task in these spaces, newest-looking first ("v3.10.0"
+ * before "v3.9.0"): the suggestions in the dialog's version picker. Versions are free text, so
+ * this is the only "list" of them.
+ */
+export async function fetchTaskVersions({ spaceIds }) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('versions')
+    .in('space_id', spaceIds)
+    .is('deleted_at', null)
+    .not('versions', 'eq', '{}')
+  if (error) throw error
+  const unique = [...new Set(data.flatMap((r) => r.versions ?? []))]
+  return unique.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
+}
+
+export function useTaskVersions({ spaceIds }) {
+  return useQuery({
+    queryKey: taskKeys.versions(spaceIds),
+    queryFn: () => fetchTaskVersions({ spaceIds }),
+    enabled: spaceIds?.length > 0,
+  })
+}
+
 export function useCreateTask() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: createTask,
-    onSuccess: () => qc.invalidateQueries({ queryKey: taskKeys.lists() }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: taskKeys.lists() })
+      qc.invalidateQueries({ queryKey: [...taskKeys.all, 'versions'] })
+    },
     onError: (err) => toast.error(err.message ?? 'Could not create task'),
   })
 }
@@ -137,6 +168,7 @@ export function useUpdateTask() {
     onSuccess: (row, { patch }) => {
       qc.invalidateQueries({ queryKey: taskKeys.lists() })
       qc.setQueryData(taskKeys.detail(row.id), row)
+      if ('versions' in patch) qc.invalidateQueries({ queryKey: [...taskKeys.all, 'versions'] })
       // A space move cascades to checklist todos (tasks_cascade_to_todos).
       if ('space_id' in patch) qc.invalidateQueries({ queryKey: todoKeys.all })
     },

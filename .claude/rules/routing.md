@@ -18,7 +18,7 @@ paths:
 /s/:spaceSlug                      ← SpaceBoundary (404 guard) inside AppShell (sidebar shown); index → dashboard
     dashboard
     inbox
-    tasks            tasks/:taskId        (?tab=all|<status>&view=grid|board|table&sort=<col>|-<col>)
+    tasks            tasks/:taskId        (?tab=all|<status>&view=grid|board|table&sort=<col>|-<col>&version=…)
     todos                                  (standalone Todos page, Feature 05; ?highlight=<id>)
     notes            notes/:noteId
     journal          journal/:date        (date = yyyy-MM-dd)

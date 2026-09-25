@@ -84,6 +84,7 @@ describe('taskSchema', () => {
     priority: 'none',
     start_date: null,
     due_date: null,
+    versions: [],
   }
 
   it('accepts a minimal task', () => {
@@ -94,6 +95,12 @@ describe('taskSchema', () => {
     const r = taskSchema.safeParse({ ...base, start_date: '2026-09-30', due_date: '2026-09-01' })
     expect(r.success).toBe(false)
     expect(r.error.issues[0].path).toEqual(['due_date'])
+  })
+
+  it('accepts several versions and rejects ones that would break the array filter', () => {
+    expect(taskSchema.safeParse({ ...base, versions: ['v3.9.0', 'v3.10.0'] }).success).toBe(true)
+    expect(taskSchema.safeParse({ ...base, versions: ['v3,9'] }).success).toBe(false)
+    expect(taskSchema.safeParse({ ...base, versions: Array(11).fill('v1') }).success).toBe(false)
   })
 
   it('rejects an empty title', () => {

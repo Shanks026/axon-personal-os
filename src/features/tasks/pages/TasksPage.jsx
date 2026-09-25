@@ -39,6 +39,7 @@ export default function TasksPage() {
     spaceIds: scopeSpaceIds,
     priority: filters.priority,
     tag: filters.tag,
+    version: filters.version,
     due: filters.due,
     q: filters.q,
     today,

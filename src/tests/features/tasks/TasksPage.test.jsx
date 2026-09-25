@@ -57,6 +57,10 @@ vi.mock('@/lib/supabase', () => {
         return b
       },
       ilike: () => b,
+      overlaps: (col, vals) => {
+        state.filters.push({ col: `ov:${col}`, vals })
+        return b
+      },
       or: (expr) => {
         state.filters.push({ col: 'or', vals: expr })
         return b
@@ -118,6 +122,10 @@ vi.mock('@/lib/supabase', () => {
         live = live.filter((t) =>
           db.taskTags.some((tt) => tt.task_id === t.id && tagFilter.vals.includes(tt.tag_id)),
         )
+      }
+      const versionFilter = state.filters.find((f) => f.col === 'ov:versions')
+      if (versionFilter) {
+        live = live.filter((t) => (t.versions ?? []).some((v) => versionFilter.vals.includes(v)))
       }
       live = live.map(attachTagIds)
       return result(state.single ? (live.at(-1) ?? null) : live)
@@ -395,6 +403,48 @@ describe('TasksPage', () => {
       expect.objectContaining({ task_id: created.id, url: 'https://gitlab.com/mr/1' }),
       expect.objectContaining({ task_id: created.id, url: 'https://jira.example.com/T-2' }),
     ])
+  })
+
+  it('adds free-text versions in the dialog and saves them with the task', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Storefront: lazy-load images')
+    await user.click(screen.getByRole('button', { name: 'New task' }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByLabelText('Task title'), 'Release banner')
+    await user.click(within(dialog).getByRole('button', { name: 'Version' }))
+    const input = await screen.findByPlaceholderText('Find or add a version…')
+    await user.type(input, 'v3.9.0{Enter}')
+    await user.type(input, 'v3.10.0')
+    await user.click(await screen.findByRole('button', { name: 'Add “v3.10.0”' }))
+    await user.keyboard('{Escape}')
+    expect(
+      within(dialog).getByRole('button', { name: 'Remove version v3.9.0' }),
+    ).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /create task/i }))
+
+    await waitFor(() => expect(db.calls.some((c) => c[0] === 'insert')).toBe(true))
+    expect(db.calls.find((c) => c[0] === 'insert')[1].versions).toEqual(['v3.9.0', 'v3.10.0'])
+  })
+
+  it('shows versions on the card and filters by version through the URL', async () => {
+    db.tasks[0].versions = ['v3.9.0']
+    db.tasks[1].versions = ['v3.10.0']
+    const user = userEvent.setup()
+    const router = renderPage()
+    const card = (await screen.findByText('Buyer portal: fix RFQ pagination')).closest('article')
+    expect(within(card).getByText('v3.9.0')).toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Version' }))
+    // Newest-looking first: v3.10.0 sorts before v3.9.0.
+    const items = await screen.findAllByRole('menuitemcheckbox')
+    expect(items.map((i) => i.textContent)).toEqual(['v3.10.0', 'v3.9.0'])
+    await user.click(items[1])
+    await waitFor(() => expect(router.state.location.search).toBe('?version=v3.9.0'))
+    await waitFor(() =>
+      expect(screen.queryByText('Vendor portal: migrate product form')).not.toBeInTheDocument(),
+    )
+    expect(screen.getByText('Buyer portal: fix RFQ pagination')).toBeInTheDocument()
   })
 
   it('validates the title and dates before saving', async () => {

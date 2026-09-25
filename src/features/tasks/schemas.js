@@ -12,6 +12,15 @@ export const taskLinkUrlSchema = z
   .trim()
   .pipe(z.url('Enter a full link, e.g. https://gitlab.com/…'))
 
+/** One free-text version a task is linked to, e.g. "v3.9.0" (a task can have several). */
+export const taskVersionSchema = z
+  .string()
+  .trim()
+  .min(1)
+  .max(40, 'Up to 40 characters')
+  // Commas, braces and quotes would break the Postgres array literal the version filter sends.
+  .regex(/^[^,{}"]+$/, 'No commas, braces or quotes')
+
 export const taskSchema = z
   .object({
     space_id: z.uuid('Pick a space'),
@@ -21,6 +30,7 @@ export const taskSchema = z
     priority: z.enum(TASK_PRIORITIES.map((p) => p.value)),
     start_date: isoDate,
     due_date: isoDate,
+    versions: z.array(taskVersionSchema).max(10, 'Up to 10 versions'),
   })
   .refine((v) => !v.start_date || !v.due_date || v.start_date <= v.due_date, {
     path: ['due_date'],
