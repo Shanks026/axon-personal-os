@@ -152,7 +152,10 @@ beforeEach(() => {
   db.calls = []
   db.notes = [
     note('n1', 'Sprint 42 planning', { pinned_at: '2026-09-24T11:00:00Z', excerpt: 'Committed…' }),
-    note('n2', 'Pagination bug RCA', { excerpt: 'usePagination kept its own page state' }),
+    note('n2', 'Pagination bug RCA', {
+      excerpt: 'usePagination kept its own page state',
+      versions: ['v3.9.0'],
+    }),
   ]
 })
 
@@ -163,6 +166,7 @@ describe('NotesPage', () => {
     expect(screen.getByText('Pinned')).toBeInTheDocument()
     expect(screen.getByText('All notes')).toBeInTheDocument()
     expect(screen.getByText('usePagination kept its own page state')).toBeInTheDocument()
+    expect(screen.getByText('v3.9.0')).toBeInTheDocument()
   })
 
   it('shows the empty state with a New note action', async () => {

@@ -1,15 +1,18 @@
 import { Link } from 'react-router'
 import { formatRelative } from '@/lib/dates'
 import { cn } from '@/lib/utils'
+import { EmptyCell } from '@/components/shared/EmptyCell'
 import { SpaceBadge } from '@/components/shared/SpaceBadge'
 import { TagPillGroup } from '@/components/shared/TagPill'
+import { VersionBadgeGroup } from '@/components/shared/VersionBadge'
 import { NoteActionsMenu } from '@/features/notes/components/NoteActionsMenu'
 
 // Cells shrink to their content; only the title column takes the remaining width.
 const fit = 'w-px whitespace-nowrap'
 
 /**
- * Column definitions for `NotesTable` (TanStack Table v9, the same pattern as the Tasks table).
+ * Column definitions for `NotesTable` (TanStack Table v9, the same pattern as the Tasks table,
+ * including a muted `-` for an empty cell).
  * There's no sorting: notes arrive newest edit first. `meta.className` sizes a column.
  */
 export function buildNoteColumns({ isGlobal, spaceById, tagsById, noteHref, actions }) {
@@ -46,12 +49,21 @@ export function buildNoteColumns({ isGlobal, spaceById, tagsById, noteHref, acti
       id: 'tags',
       header: 'Tags',
       meta: { className: fit },
-      cell: ({ row }) => (
-        <TagPillGroup
-          tags={row.original.tag_ids.map((id) => tagsById.get(id)).filter(Boolean)}
-          max={3}
-        />
-      ),
+      cell: ({ row }) => {
+        const tags = row.original.tag_ids.map((id) => tagsById.get(id)).filter(Boolean)
+        return tags.length ? <TagPillGroup tags={tags} max={3} /> : <EmptyCell />
+      },
+    },
+    {
+      id: 'version',
+      header: 'Version',
+      meta: { className: fit },
+      cell: ({ row }) =>
+        row.original.versions?.length ? (
+          <VersionBadgeGroup versions={row.original.versions} />
+        ) : (
+          <EmptyCell />
+        ),
     },
     {
       id: 'updated',

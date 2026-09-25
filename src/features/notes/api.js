@@ -1,6 +1,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
+import { mergeVersions } from '@/lib/versions'
 import { sanitizeSearch } from '@/features/notes/utils'
 
 export const noteKeys = {
@@ -9,11 +10,12 @@ export const noteKeys = {
   list: (params) => [...noteKeys.lists(), params], // { spaceIds, q }
   details: () => [...noteKeys.all, 'detail'],
   detail: (id) => [...noteKeys.details(), id],
+  versions: (spaceIds) => [...noteKeys.all, 'versions', spaceIds], // version suggestions
 }
 
 // `excerpt` (generated, 280 chars) keeps list payloads small: never select content_text here.
 const LIST_COLUMNS =
-  'id, space_id, title, excerpt, pinned_at, created_at, updated_at, tag_ids:note_tags(tag_id)'
+  'id, space_id, title, excerpt, versions, pinned_at, created_at, updated_at, tag_ids:note_tags(tag_id)'
 
 /** Flattens the embedded `note_tags(tag_id)` rows into a plain `tag_ids: string[]`. */
 function mapRow(row) {
@@ -81,6 +83,26 @@ export async function discardNote(id) {
   if (error) throw error
 }
 
+/** Every version used on a live note in these spaces, newest first (version suggestions). */
+export async function fetchNoteVersions({ spaceIds }) {
+  const { data, error } = await supabase
+    .from('notes')
+    .select('versions')
+    .in('space_id', spaceIds)
+    .is('deleted_at', null)
+    .not('versions', 'eq', '{}')
+  if (error) throw error
+  return mergeVersions(data.flatMap((r) => r.versions ?? []))
+}
+
+export function useNoteVersions({ spaceIds }) {
+  return useQuery({
+    queryKey: noteKeys.versions(spaceIds),
+    queryFn: () => fetchNoteVersions({ spaceIds }),
+    enabled: spaceIds?.length > 0,
+  })
+}
+
 export function useNotes(params) {
   return useQuery({
     queryKey: noteKeys.list(params),
@@ -122,6 +144,29 @@ export function useUpdateNote() {
     onSuccess: (row) => {
       qc.setQueryData(noteKeys.detail(row.id), (old) => (old ? { ...old, ...row } : row))
       qc.invalidateQueries({ queryKey: noteKeys.lists() })
+    },
+  })
+}
+
+/** The editor's versions row: optimistic on the note's detail, so badges appear straight away. */
+export function useSetNoteVersions() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, versions }) => updateNote(id, { versions }),
+    onMutate: async ({ id, versions }) => {
+      await qc.cancelQueries({ queryKey: noteKeys.detail(id) })
+      const detail = qc.getQueryData(noteKeys.detail(id))
+      if (detail) qc.setQueryData(noteKeys.detail(id), { ...detail, versions })
+      return { detail }
+    },
+    onError: (err, { id }, ctx) => {
+      if (ctx?.detail) qc.setQueryData(noteKeys.detail(id), ctx.detail)
+      toast.error(err.message ?? 'Could not save versions')
+    },
+    onSettled: (_row, _err, { id }) => {
+      qc.invalidateQueries({ queryKey: noteKeys.lists() })
+      qc.invalidateQueries({ queryKey: noteKeys.detail(id) })
+      qc.invalidateQueries({ queryKey: [...noteKeys.all, 'versions'] })
     },
   })
 }

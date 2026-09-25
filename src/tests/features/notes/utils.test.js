@@ -6,14 +6,20 @@ const doc = (...content) => ({ type: 'doc', content })
 describe('isNoteEmpty', () => {
   it('is empty with no title, no text and only empty paragraphs', () => {
     expect(isNoteEmpty({ title: '', content_text: '', content: null })).toBe(true)
-    expect(isNoteEmpty({ title: '  ', content_text: '\n', content: doc({ type: 'paragraph' }) })).toBe(
-      true,
-    )
+    expect(
+      isNoteEmpty({ title: '  ', content_text: '\n', content: doc({ type: 'paragraph' }) }),
+    ).toBe(true)
   })
 
   it('keeps a note with only a title, or only content', () => {
     expect(isNoteEmpty({ title: 'Plan', content_text: '' })).toBe(false)
     expect(isNoteEmpty({ title: '', content_text: 'body' })).toBe(false)
+  })
+
+  it('keeps a note that only has tags or versions', () => {
+    expect(isNoteEmpty({ title: '', content_text: '', tag_ids: ['t1'] })).toBe(false)
+    expect(isNoteEmpty({ title: '', content_text: '', versions: ['v1'] })).toBe(false)
+    expect(isNoteEmpty({ title: '', content_text: '', tag_ids: [], versions: [] })).toBe(true)
   })
 
   it('keeps a note whose only blocks carry no text (a divider, a table)', () => {

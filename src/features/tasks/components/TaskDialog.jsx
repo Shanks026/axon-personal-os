@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { useDefaultSpaceId } from '@/hooks/useDefaultSpaceId'
 import { Kbd } from '@/components/shared/Kbd'
 import { PropertyChip } from '@/components/shared/PropertyChip'
+import { VersionBadge } from '@/components/shared/VersionBadge'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -32,7 +33,6 @@ import {
   TagsChip,
 } from '@/features/tasks/components/TaskDialogChips'
 import { PriorityMenu, StatusMenu } from '@/features/tasks/components/TaskMenus'
-import { VersionBadge } from '@/features/tasks/components/VersionBadge'
 import { VersionsChip } from '@/features/tasks/components/VersionsChip'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP } from '@/features/tasks/constants'
 import { taskSchema } from '@/features/tasks/schemas'

@@ -86,6 +86,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `tasks.versions` (text[] + GIN index) | 04 | ✅ | Free-text versions, several per task. Migration `20260925085654` |
 | `todos` (+ cascade triggers) | 05 | ✅ | `task_id` set means a checklist item |
 | `notes`, `note_tags` | 06 | ✅ | Tiptap JSON plus `content_text`; generated `excerpt` (280 characters) for list cards. Migration `20260925100223` |
+| `notes.versions` (text[] + GIN index) | 06 | ✅ | Free-text versions like `tasks.versions`. Migration `20260925104452` |
 | `task_activity` (+ log trigger) | 07 | ⬜ | Auto history plus manual work-log comments |
 | `note_task_links` + `sync_note_mentions()` | 07 | ⬜ | Sources: manual or mention |
 | `events` | 08 | ⬜ | Optional `task_id` / `note_id` |
@@ -113,6 +114,16 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-25: Versions on notes
+- **Database:** `notes.versions` (text[], at most 10, GIN index), migration `notes_add_versions` (`20260925104452`), the same shape as `tasks.versions`. Advisors show no new warnings.
+- **Notes:**
+  - The editor's tags row gains version badges (removable) and a dashed "+ Version" picker, saved straight away (`useSetNoteVersions`, optimistic).
+  - Cards show versions at the right end of the title row, like task cards.
+  - The notes table gains a **Version** column, and its empty Tags and Version cells show the muted `-`.
+  - A new note with only tags or versions is no longer discarded as empty.
+- **Suggestions:** version suggestions now combine tasks and notes in the space, in both the task dialog's Version chip and the note editor (`useNoteVersions` + `useTaskVersions` via `mergeVersions`).
+- **Moved to shared** (now used by two features): `VersionBadge`/`VersionBadgeGroup` and `EmptyCell` go to `components/shared/`, and there's a new `VersionPicker` (the Command list that `VersionsChip` now wraps). `lib/versions.js` holds `versionSchema`, `MAX_VERSIONS` and `mergeVersions` (tested); `taskVersionSchema` reuses it.
 
 ### 2026-09-25: Note editor keeps the sidebar as is
 - The editor no longer auto-collapses the sidebar (the user's request after browser testing: "the user can collapse if they want"). `AppShell` is back to its pre-06 state; `design-system.md`, `design-deltas.md` and `06-notes.md` record the reversal.

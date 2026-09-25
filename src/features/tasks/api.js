@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { daysAgoISO } from '@/lib/dates'
 import { positionAfterLast } from '@/lib/position'
+import { mergeVersions } from '@/lib/versions'
 import { DONE_WINDOW_DAYS } from '@/features/tasks/constants'
 import { todoKeys } from '@/features/todos/api'
 
@@ -136,8 +137,7 @@ export async function fetchTaskVersions({ spaceIds }) {
     .is('deleted_at', null)
     .not('versions', 'eq', '{}')
   if (error) throw error
-  const unique = [...new Set(data.flatMap((r) => r.versions ?? []))]
-  return unique.sort((a, b) => b.localeCompare(a, undefined, { numeric: true }))
+  return mergeVersions(data.flatMap((r) => r.versions ?? []))
 }
 
 export function useTaskVersions({ spaceIds }) {

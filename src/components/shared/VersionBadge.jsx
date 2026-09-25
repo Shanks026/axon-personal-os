@@ -3,9 +3,9 @@ import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 
 /**
- * A version a task is linked to ("v3.9.0"): shadcn's secondary badge with the tags' square-ish
+ * A version a task or note is linked to ("v3.9.0"): shadcn's secondary badge with the tags' square-ish
  * `rounded-sm` (the user's request, 2026-09-25), so versions read as labels next to tags without
- * competing with their colours. `onRemove` adds a labelled ✕ (the task dialog).
+ * competing with their colours. `onRemove` adds a labelled ✕ (the task dialog, the note editor).
  */
 export function VersionBadge({ version, onRemove, className }) {
   return (
@@ -30,7 +30,7 @@ export function VersionBadge({ version, onRemove, className }) {
 }
 
 /**
- * A task's versions in a row (cards, table rows, board cards): up to `max`, then "+n" with the
+ * A task's or note's versions in a row (cards, table rows, board cards): up to `max`, then "+n" with the
  * full list on hover. Renders nothing without any.
  */
 export function VersionBadgeGroup({ versions, max = 2, className }) {

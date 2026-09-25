@@ -205,6 +205,7 @@ export function useTaskFilters() {
 | `useDefaultSpaceId` | `hooks/` | 04 Phase 1, moved here in 05 Phase 1 |
 | `RichTextEditor` (+ `EditorBubbleMenu`, `SlashCommandMenu`, `buildExtensions`, `slashItems`, `editor.css`) | `components/editor/` | 06 Phase 1 |
 | `createSuggestionRenderer(Component)` (ReactRenderer + the suggestion's `mount()`; reuse for `[[` mentions) | `components/editor/suggestionRenderer.js` | 06 Phase 1 |
+| `VersionBadge`/`VersionBadgeGroup`, `VersionPicker`, `EmptyCell`; `lib/versions.js` (`versionSchema`, `mergeVersions`) | `components/shared/`, `lib/` | 04, shared in 06 |
 | `useAutosave({ save, delay })` → `{ schedule, flush, status }` | `hooks/` | 06 Phase 1 |
 | `usePageHeader({ parent })` middle crumb; `SaveIndicator onRetry` | `components/layout/`, `components/shared/` | 06 Phase 1 |
 | `EntityLink` (task/note chip with hover preview) | `components/shared/` | 07 |

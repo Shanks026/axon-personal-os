@@ -15,7 +15,7 @@ import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
 
 const features = tableFeatures({})
 
-/** The Notes page's table view (decision A): Note + excerpt, Space (Global), Tags, Updated, ⋮. */
+/** The Notes page's table view (decision A): Note + excerpt, Space (Global), Tags, Version, Updated, ⋮. */
 export function NotesTable({ notes, tagsById, actions }) {
   const { isGlobal, spaceById } = useSpace()
   const p = useSpacePaths()

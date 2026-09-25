@@ -302,6 +302,8 @@ create table public.notes (
   content       jsonb,                                  -- tiptap doc
   content_text  text not null default '',
   excerpt       text generated always as (left(content_text, 280)) stored,   -- list previews without the full text
+  versions      text[] not null default '{}'             -- free-text versions (v3.9.0), like tasks (added 2026-09-25)
+                check (cardinality(versions) <= 10 and char_length(array_to_string(versions, '')) <= 400),
   pinned_at     timestamptz,
   deleted_at    timestamptz,
   created_at    timestamptz not null default now(),
@@ -316,6 +318,7 @@ create table public.notes (
 create index notes_scope_idx  on public.notes (user_id, space_id, updated_at desc) where deleted_at is null;
 create index notes_search_idx on public.notes using gin (search);
 create index notes_title_trgm on public.notes using gin (title extensions.gin_trgm_ops);
+create index notes_versions_idx on public.notes using gin (versions);
 -- + updated_at trigger, RLS owner policy
 
 -- Feature 09 (journal):

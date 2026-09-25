@@ -3,11 +3,12 @@ import { formatRelative } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import { TagPillGroup } from '@/components/shared/TagPill'
+import { VersionBadgeGroup } from '@/components/shared/VersionBadge'
 import { NoteActionsMenu } from '@/features/notes/components/NoteActionsMenu'
 
 /**
  * Grid card (design 07a, with the Tasks card decisions): a 2-line semibold title (full title
- * on hover), a 2-line excerpt, then, pinned to the bottom, up to 3 tags (+n) and a dashed footer
+ * on hover) with its versions at the right end of the title row (like the task card), a 2-line excerpt, then, pinned to the bottom, up to 3 tags (+n) and a dashed footer
  * with "Updated 2d ago". `showSpace` (Global) adds the space's emoji before it. The whole card
  * is a link to the editor; the ⋮ menu sits above that link.
  */
@@ -31,6 +32,7 @@ export function NoteCard({ note, to, space, showSpace, tags, onTogglePin, onDele
         >
           {title}
         </h3>
+        <VersionBadgeGroup versions={note.versions} className="pointer-events-auto mt-0.5" />
         <span className="pointer-events-auto -mt-0.5 -mr-1.5">
           <NoteActionsMenu
             note={note}

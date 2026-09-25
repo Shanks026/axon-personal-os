@@ -71,6 +71,10 @@ export function NoteEditor({ note }) {
     content: note.content,
   })
   const deletedRef = useRef(false)
+  // Tags and versions save on their own (not through autosave); keep them for the leave check.
+  useEffect(() => {
+    latest.current = { ...latest.current, tag_ids: note.tag_ids, versions: note.versions }
+  }, [note.tag_ids, note.versions])
   const mountedRef = useRef(false)
 
   const { schedule, flush, status } = useAutosave({

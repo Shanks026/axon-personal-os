@@ -274,6 +274,11 @@ src/features/notes/
 - **Sidebar auto-collapse** was built, then removed after browser review (the user's request, 2026-09-25): the editor leaves the sidebar as it is. `AppShell` is unchanged from before Phase 1.
 - **Tags:** `setNoteTags` and `useSetNoteTags` (optimistic on the note detail) live in `features/tags/api.js` next to `setTaskTags`, so that module can invalidate `noteKeys` without an import cycle (`notes/api.js` doesn't import tags).
 - **Bundle:** Tiptap and ProseMirror go to a cached `editor` chunk (`vite.config.js`), about 490 kB raw and 154 kB gzip.
+- **Follow-up (2026-09-25, the user's request): versions on notes.**
+  - `notes.versions` (migration `20260925104452`), edited from a "+ Version" pill in the tags row.
+  - Shown on cards (title row) and as a table column.
+  - Suggestions merge task and note versions in the space.
+  - `VersionBadge`, `VersionPicker` and `EmptyCell` are now shared.
 - **Deferred:**
   - Browser verification of the bubble, slash and "Turn into" menus, and StrictMode discard in the real dev server. It's covered by the jsdom flow test, but the user should confirm it.
   - `Mod+K` for links, Ctrl+S, tables controls and the tag filter (Phase 2).
