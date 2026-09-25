@@ -117,6 +117,10 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-26: Sample notes; note picker scrolls
+- **Data (the user's request):** 3 sample notes inserted into THMP with rich content and existing tags and versions: "Buyer portal: RFQ list pagination RCA" (Buyer, Bug · v3.8.0), "Vendor onboarding: product form migration plan" (Vendor, Improvement, All Portals · v3.9.0) and "Admin: store management role permissions" (Admin, Store Management · v3.6.4, v3.0.7). No task or note links were created.
+- **Link a note:** the results scroll in their own area (themed scrollbar; the command list hides its own), capped at 480px and at the viewport, so the dialog never grows with the number of notes.
+
 ### 2026-09-26: Notes tag filter uses the Tasks-style picker
 - The inline tag chips on the Notes toolbar are replaced by the Tasks page's Tags filter (`TagPicker mode="filter"`: searchable, multi-select, a count on the button), so many tags stay manageable. A "Clear" button appears when search or tags are active. `NoteTagFilter` is removed. Tested.
 

@@ -52,7 +52,8 @@ function NoteOption({ note, tags, space, showSpace }) {
 /**
  * "Link a note" from the task detail page: a proper dialog (the user's request, 2026-09-26) with
  * a search box and the matching notes (any active space: links cross spaces) as card-like rows,
- * so their tags and versions are visible while choosing. Arrow keys move, Enter links.
+ * so their tags and versions are visible while choosing. Arrow keys move, Enter links. The list
+ * scrolls inside the dialog (at most 480px tall, and never past the viewport).
  * `spaceId` is the task's space: a note from another space shows its space emoji.
  */
 export function NotePickerDialog({ open, onOpenChange, excludeIds = [], onPick, spaceId }) {
@@ -85,42 +86,46 @@ export function NotePickerDialog({ open, onOpenChange, excludeIds = [], onPick, 
           <div className="shrink-0 border-y px-4 pt-2 pb-3">
             <CommandInput placeholder="Search notes…" value={query} onValueChange={setQuery} />
           </div>
-          <CommandList className="max-h-none min-h-0 flex-1 overflow-y-auto p-3">
-            {isLoading ? (
-              <div className="flex flex-col gap-3" aria-hidden>
-                <Skeleton className="h-24 rounded-xl" />
-                <Skeleton className="h-24 rounded-xl" />
-              </div>
-            ) : (
-              <>
-                <CommandEmpty>No notes found.</CommandEmpty>
-                <div className="flex flex-col gap-2">
-                  {notes.map((note) => (
-                    <CommandItem
-                      key={note.id}
-                      value={note.id}
-                      onSelect={() => {
-                        onPick(note)
-                        close(false)
-                      }}
-                      className={cn(
-                        // The item's built-in check icon is its last child: not wanted on a card.
-                        'items-start rounded-xl border bg-card px-5 py-4 text-left *:last:hidden',
-                        'data-selected:border-border-strong data-selected:bg-card data-selected:shadow-xs',
-                      )}
-                    >
-                      <NoteOption
-                        note={note}
-                        tags={note.tag_ids.map((id) => tagsById.get(id)).filter(Boolean)}
-                        space={spaceById.get(note.space_id)}
-                        showSpace={isGlobal || note.space_id !== spaceId}
-                      />
-                    </CommandItem>
-                  ))}
+          {/* Our own scroll area (themed scrollbar; the command list hides its own), capped so the
+              dialog never grows with the number of notes. */}
+          <div className="max-h-120 min-h-0 flex-1 overflow-y-auto p-3">
+            <CommandList className="max-h-none overflow-visible">
+              {isLoading ? (
+                <div className="flex flex-col gap-3" aria-hidden>
+                  <Skeleton className="h-24 rounded-xl" />
+                  <Skeleton className="h-24 rounded-xl" />
                 </div>
-              </>
-            )}
-          </CommandList>
+              ) : (
+                <>
+                  <CommandEmpty>No notes found.</CommandEmpty>
+                  <div className="flex flex-col gap-2">
+                    {notes.map((note) => (
+                      <CommandItem
+                        key={note.id}
+                        value={note.id}
+                        onSelect={() => {
+                          onPick(note)
+                          close(false)
+                        }}
+                        className={cn(
+                          // The item's built-in check icon is its last child: not wanted on a card.
+                          'items-start rounded-xl border bg-card px-5 py-4 text-left *:last:hidden',
+                          'data-selected:border-border-strong data-selected:bg-card data-selected:shadow-xs',
+                        )}
+                      >
+                        <NoteOption
+                          note={note}
+                          tags={note.tag_ids.map((id) => tagsById.get(id)).filter(Boolean)}
+                          space={spaceById.get(note.space_id)}
+                          showSpace={isGlobal || note.space_id !== spaceId}
+                        />
+                      </CommandItem>
+                    ))}
+                  </div>
+                </>
+              )}
+            </CommandList>
+          </div>
         </Command>
       </DialogContent>
     </Dialog>
