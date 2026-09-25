@@ -117,6 +117,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-26: Rail Tags and Versions rows stacked; square add buttons
+- In the task and note rails, Tags and Versions put the label on its own line with the badges below (the user's request: side by side looked cramped). The "+ Tag" / "+ Version" buttons are `h-5 rounded-sm`, like the badges. The user also set both detail rails to `w-76` (304px) by hand; the Sheets stay `w-80`. (Uncommitted: the user now approves commits.)
+
 ### 2026-09-26: Note tags in the rail; wider detail rails
 - **Note editor:** tags move from under the title into the Details rail as a **Tags** row (pills + "+ Tag"), next to Versions, so all of a note's metadata sits in one place, as on the task page (the user's decision). The "Edited …" line under the title is gone (the rail shows Updated), and the title now sits directly above the body.
 - **Rails:** the task and note detail rails, and their Sheets below `lg`, are both **320px (`w-80`)** (the user's final choice the same day, after trying 256px to match the sidebar (too small) and 352px (too wide)).

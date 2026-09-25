@@ -18,9 +18,9 @@ export function NoteTagsRow({ note }) {
   const save = (tagIds) => setTags.mutate({ noteId: note.id, tagIds })
 
   return (
-    <div className="flex items-start gap-2">
-      <span className="flex-1 pt-0.5 text-muted-foreground">Tags</span>
-      <div className="flex max-w-3/5 flex-wrap items-center justify-end gap-1">
+    <div className="flex flex-col gap-1.5">
+      <span className="text-muted-foreground">Tags</span>
+      <div className="flex flex-wrap items-center gap-1">
         {selected.map((tag) => (
           <TagPill
             key={tag.id}
@@ -33,11 +33,10 @@ export function NoteTagsRow({ note }) {
           onChange={save}
           spaceIds={spaceIds}
           createSpaceId={note.space_id}
-          align="end"
           trigger={
             <button
               type="button"
-              className="flex h-6 items-center gap-1 rounded-full border border-dashed border-border-strong px-2 text-xs text-faint outline-none hover:border-faint hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+              className="flex h-5 items-center gap-1 rounded-sm border border-dashed border-border-strong px-1.75 text-xs text-faint outline-none hover:border-faint hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
             >
               <Plus className="size-3" aria-hidden />
               Tag

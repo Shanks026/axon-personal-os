@@ -167,7 +167,7 @@ export function TaskDetail({ task }) {
       </div>
 
       {railOpen && (
-        <aside className="hidden w-80 shrink-0 border-l p-5 lg:block">
+        <aside className="hidden w-76 shrink-0 border-l p-5 lg:block">
           <div className="sticky top-5">
             <TaskMetaRail task={task} onDelete={remove} />
           </div>

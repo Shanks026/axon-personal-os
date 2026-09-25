@@ -37,7 +37,7 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
    - Supabase MCP tools didn't load in the 2026-09-25 session; the Management API fallback worked (see item 3).
 2. **Workflow the user expects:**
    - Build one phase, verify it (lint, tests, build, the `axon-rules` audit), and update the feature doc, `00-index.md` and the patterns catalogue.
-   - **Then commit and push to `main`** (github.com/Shanks026/axon-personal-os), and stop for approval.
+   - **Then ask before committing and pushing to `main`** (github.com/Shanks026/axon-personal-os), and stop for approval. **Never commit each small change**: leave UI tweaks uncommitted and batch them when the user says so (their request, 2026-09-26).
    - The user tests in the browser and reports UI issues, often several at once, mid-turn. Fix them promptly and record each preference in `.claude/rules/`.
 3. **Database access:**
    - Use the Supabase MCP tools (they load at session start).

@@ -55,11 +55,22 @@ function ValueButton({ empty, children, ...props }) {
   )
 }
 
+/** A label on its own line with its badges wrapping below (tags, versions: side by side looked cramped). */
+function StackedRow({ label, children }) {
+  return (
+    <div className="flex flex-col gap-1.5 py-1.5">
+      <span className="text-muted-foreground">{label}</span>
+      <div className="flex flex-wrap items-center gap-1">{children}</div>
+    </div>
+  )
+}
+
+/** "+ Tag" / "+ Version": the same height and `rounded-sm` as the badges it adds. */
 function AddPill({ children, ...props }) {
   return (
     <button
       type="button"
-      className="flex h-6 items-center gap-1 rounded-full border border-dashed border-border-strong px-2 text-xs text-faint outline-none hover:border-faint hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+      className="flex h-5 items-center gap-1 rounded-sm border border-dashed border-border-strong px-1.75 text-xs text-faint outline-none hover:border-faint hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
       {...props}
     >
       <Plus className="size-3" aria-hidden />
@@ -166,7 +177,7 @@ export function TaskMetaRail({ task, onDelete }) {
 
       <div className="my-3 border-t" />
 
-      <Row label="Tags" align="start">
+      <StackedRow label="Tags">
         {selectedTags.map((tag) => (
           <TagPill
             key={tag.id}
@@ -181,8 +192,8 @@ export function TaskMetaRail({ task, onDelete }) {
           createSpaceId={task.space_id}
           trigger={<AddPill>Tag</AddPill>}
         />
-      </Row>
-      <Row label="Versions" align="start">
+      </StackedRow>
+      <StackedRow label="Versions">
         {versions.map((v) => (
           <VersionBadge
             key={v}
@@ -196,7 +207,7 @@ export function TaskMetaRail({ task, onDelete }) {
           known={knownVersions}
           trigger={<AddPill>Version</AddPill>}
         />
-      </Row>
+      </StackedRow>
 
       <div className="mt-3">
         <p className="mb-1.5 text-muted-foreground">Links</p>

@@ -246,7 +246,7 @@ export function NoteEditor({ note }) {
       </div>
 
       {railOpen && (
-        <aside className="hidden w-80 shrink-0 border-l p-5 lg:block">
+        <aside className="hidden w-76 shrink-0 border-l p-5 lg:block">
           <NoteMetaRail note={note} space={space} words={words} className="sticky top-5" />
         </aside>
       )}
