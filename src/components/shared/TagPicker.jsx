@@ -1,7 +1,6 @@
 import { forwardRef, useState } from 'react'
 import { Check, ChevronDown, Plus, Tag as TagIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useSpace } from '@/context/SpaceContext'
 import { ManageTagsDialog } from '@/components/shared/ManageTagsDialog'
 import { TagPill } from '@/components/shared/TagPill'
 import { Button } from '@/components/ui/button'
@@ -55,7 +54,6 @@ export function TagPicker({
   onOpenChange: onOpenChangeProp,
   contentProps,
 }) {
-  const { spaceById } = useSpace()
   const [internalOpen, setInternalOpen] = useState(false)
   const open = openProp ?? internalOpen
   const setOpen = onOpenChangeProp ?? setInternalOpen
@@ -92,20 +90,18 @@ export function TagPicker({
               <CommandEmpty>No tags found.</CommandEmpty>
               <CommandGroup>
                 {tags.map((tag) => (
-                  <CommandItem key={tag.id} value={tag.name} onSelect={() => toggle(tag.id)}>
-                    <Check
-                      className={cn(
-                        'size-3.5',
-                        value.includes(tag.id) ? 'opacity-100' : 'opacity-0',
-                      )}
-                      aria-hidden
-                    />
+                  <CommandItem
+                    key={tag.id}
+                    value={tag.name}
+                    onSelect={() => toggle(tag.id)}
+                    className="data-selected:bg-transparent"
+                  >
                     <span className="flex min-w-0 flex-1">
                       <TagPill tag={tag} size="md" className="max-w-full truncate" />
                     </span>
-                    <span className="text-xs text-faint">
-                      {tag.space_id ? spaceById.get(tag.space_id)?.name : 'All spaces'}
-                    </span>
+                    {value.includes(tag.id) && (
+                      <Check className="size-4 text-foreground" aria-label="Selected" />
+                    )}
                   </CommandItem>
                 ))}
               </CommandGroup>

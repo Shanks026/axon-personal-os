@@ -78,7 +78,7 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
     title: '',
     description_text: '',
     status: 'todo',
-    priority: 'high',
+    priority: 'medium',
     start_date: null,
     due_date: null,
   }

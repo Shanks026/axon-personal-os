@@ -213,7 +213,7 @@ describe('TodoChecklist (in TaskDialog)', () => {
 
     await waitFor(() => expect(db.calls.some((c) => c[0] === 'insert:bulk')).toBe(true))
     const created = db.tasks.at(-1)
-    expect(created).toMatchObject({ title: 'New admin menu', priority: 'high' })
+    expect(created).toMatchObject({ title: 'New admin menu', priority: 'medium' })
     expect(db.calls.find((c) => c[0] === 'insert:bulk')[1]).toEqual([
       { task_id: created.id, space_id: SPACE.id, title: 'Wire the API', position: 1000 },
       { task_id: created.id, space_id: SPACE.id, title: 'Add tests', position: 2000 },

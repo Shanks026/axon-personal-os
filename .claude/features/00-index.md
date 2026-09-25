@@ -113,6 +113,11 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Feature 04 follow-up 4: menu flicker fix, Medium default, tag picker selection
+- **Bug fix (user-reported):** the task dialog's hover-opened Status and Priority menus flickered non-stop. Radix DropdownMenu is modal by default, so it blocked pointer events on its own trigger, which fired mouseleave and closed it, then mouseenter reopened it. Hover-driven menus are now `modal={false}`, and this is recorded as a rule in `components.md`.
+- **New tasks default to Medium priority** (the user changed it from High).
+- **Tag picker:** the space/scope label is gone, and a selected tag shows a check icon on the right. The highlighted row no longer gets a background.
+
 ### 2026-09-25: Feature 04 follow-up 3: priority default, tag picker badges, checklist on create
 - **New tasks default to High priority** in the dialog. The DB default and board quick-add are unchanged (`none`).
 - **Priority chip dot** shrunk to 8px. It was inheriting the chip's 14px icon size.

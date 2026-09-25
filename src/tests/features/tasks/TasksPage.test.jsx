@@ -357,7 +357,7 @@ describe('TasksPage', () => {
       title: 'Admin: role-based menu',
       space_id: '6f1c2b58-2f0c-4a8e-9a1a-3c2b1d0e9f11',
       status: 'todo',
-      priority: 'high',
+      priority: 'medium',
       description_text: 'Waiting on API\ncontract',
     })
     expect(inserted.description.content).toHaveLength(2)

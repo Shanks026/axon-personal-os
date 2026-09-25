@@ -271,13 +271,13 @@ Each of these maps to a shadcn primitive.
 - **Kanban card / task card.** `bg-card`, a border, 9–10px radius and 12px padding. Status icon and title on the first line; priority, tag pills and a mono due date on the second. The columns are `bg-muted` wells.
 - **Note card.** `bg-card`, 12px radius, padding 14×16. Title (600), then a 2-line muted preview, then tags on the left and a mono relative time on the right.
 - **Date picker** (Popover + Calendar), 260px wide. Quick chips first: Today, Tomorrow, Fri, Next week. The selected day is `bg-primary`; today uses red text with a muted background.
-- **Tag picker** (Popover + Command). Selected tags appear as chips inside the search input. Each option has a checkbox, then the tag's **actual badge** (`TagPill size="md"`), not a colour dot plus plain text (the user's request, 2026-09-25), then its scope on the right. It ends with "Create "…"".
+- **Tag picker** (Popover + Command). Selected tags appear as chips inside the search input. Each option is the tag's **actual badge** (`TagPill size="md"`), not a colour dot plus plain text. It doesn't show the tag's space or scope, and selected tags get a **check icon on the right**. The highlighted row gets **no background** (all the user's requests, 2026-09-25). It ends with "Create "…"".
 - **Task dialog** (revised 2026-09-25 after the user reviewed it in the browser; they found the text "so small and heavy"):
   - The header is shadcn's default title and description (see `components.md`), with a ghost `icon-sm` close button beside it.
   - The title input is `text-xl font-medium tracking-tight`, not semibold. The description is default `text-sm`.
   - Under the description come the selected tags (`TagPill size="md"`: 26px tall, `text-sm`, removable), then the inline links field.
   - Property chips (`PropertyChip`) are **32px tall with `text-sm`**, never `text-xs`. The priority chip's dot is `size-2` (8px), smaller than the chip's 14px icons.
-  - A new task's priority defaults to **High** in the dialog. The database default stays `none`, so board quick-add still creates tasks with no priority.
+  - A new task's priority defaults to **Medium** in the dialog (the user changed it from High, 2026-09-25). The database default stays `none`, so board quick-add still creates tasks with no priority.
   - The checklist section appears in **both** modes. When creating a task, items are staged in the dialog (`StagedChecklist`) and bulk-inserted after the task is saved (`useCreateChecklistItems`).
   - The checklist has one disclosure header, "Checklist" in `font-medium`, followed by its progress, or "· saves as you go" while it's empty. There's no second title.
   - **Weight rule for dialog and form text:** use `font-medium` for titles and headings. Keep `font-semibold` for page, section and card titles only.

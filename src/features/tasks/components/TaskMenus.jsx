@@ -20,7 +20,9 @@ import { linkHost } from '@/features/tasks/utils'
  */
 export function StatusMenu({ value, onChange, children, align = 'start', hoverOpen = false }) {
   const { open, setOpen, hoverProps } = useHoverOpen()
-  const controlled = hoverOpen ? { open, onOpenChange: setOpen } : {}
+  // Non-modal when hover-driven: a modal menu blocks pointer events on its trigger, which fires
+  // mouseleave, closes it, unblocks, fires mouseenter and reopens it: an endless flicker.
+  const controlled = hoverOpen ? { open, onOpenChange: setOpen, modal: false } : {}
   return (
     <DropdownMenu {...controlled}>
       <DropdownMenuTrigger asChild {...(hoverOpen ? hoverProps : {})}>
@@ -43,7 +45,9 @@ export function StatusMenu({ value, onChange, children, align = 'start', hoverOp
 /** Pick a priority. `children` is the trigger (rendered asChild). See `StatusMenu` for `hoverOpen`. */
 export function PriorityMenu({ value, onChange, children, align = 'start', hoverOpen = false }) {
   const { open, setOpen, hoverProps } = useHoverOpen()
-  const controlled = hoverOpen ? { open, onOpenChange: setOpen } : {}
+  // Non-modal when hover-driven: a modal menu blocks pointer events on its trigger, which fires
+  // mouseleave, closes it, unblocks, fires mouseenter and reopens it: an endless flicker.
+  const controlled = hoverOpen ? { open, onOpenChange: setOpen, modal: false } : {}
   return (
     <DropdownMenu {...controlled}>
       <DropdownMenuTrigger asChild {...(hoverOpen ? hoverProps : {})}>
