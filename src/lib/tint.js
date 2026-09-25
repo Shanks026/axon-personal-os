@@ -191,12 +191,12 @@ export function hueVar(key) {
 
 /**
  * Inline `@task` / `[[task]]` mentions (the user's request, 2026-09-26): no fill, a readable
- * blue (700; 400 in dark) in medium weight, and a dotted underline on the label that turns solid
- * on hover. The same classes while loading and loaded (no shade jump). The editor's prose link
+ * blue in medium weight (600: 5.25:1 on white, WCAG AA; 400 in dark: 7.46:1), and a dotted
+ * underline on the label that turns solid on hover. The same classes while loading and loaded (no shade jump). The editor's prose link
  * style skips `.axon-mention`, so it can't recolour it.
  */
 export const MENTION_CLASSES =
-  'axon-mention group/mention px-0.5 font-medium text-blue-700 dark:text-blue-400'
+  'axon-mention group/mention px-0.5 font-medium text-blue-600 dark:text-blue-400'
 
 /** The mention's label: the dotted underline (with room below it, since the label truncates). */
 export const MENTION_LABEL_CLASSES =
