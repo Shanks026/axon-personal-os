@@ -426,8 +426,8 @@ create table public.events (
   space_id     uuid not null,
   title        text not null check (char_length(btrim(title)) between 1 and 200),
   description  text check (char_length(description) <= 5000),
-  location     text,
-  url          text,                                    -- meeting link
+  location     text check (char_length(location) <= 200),
+  url          text check (char_length(url) <= 2000),   -- meeting link
   starts_at    timestamptz not null,
   ends_at      timestamptz not null,
   all_day      boolean not null default false,
@@ -443,8 +443,12 @@ create table public.events (
   foreign key (note_id, user_id) references public.notes(id, user_id) on delete set null (note_id)
 );
 create index events_range_idx on public.events (user_id, starts_at, ends_at) where deleted_at is null;
+create index events_space_idx on public.events (space_id);
+create index events_task_idx  on public.events (task_id) where task_id is not null;
+create index events_note_idx  on public.events (note_id) where note_id is not null;
 create index events_title_trgm on public.events using gin (title extensions.gin_trgm_ops);
--- + updated_at trigger, RLS owner policy
+-- + updated_at trigger, RLS owner policy. Applied as migration 20260925201716_create_events.
+-- All-day convention: starts_at = 00:00 on the first day, ends_at = 23:59:59.999 on the last, in profiles.timezone.
 ```
 
 ## reports (Feature 11)

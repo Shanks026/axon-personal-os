@@ -43,6 +43,7 @@ paths:
 - In Global scope, every create dialog includes a required **SpacePicker** field. Inside a space, the space is implied and the picker is hidden.
   - **Exception: tags.** Neither the tag picker nor Manage tags has a space selector (the user's decision, 2026-09-25). A new tag goes to the picker's space, else the current space, else everywhere (Global). An existing tag's space can't be changed.
   - **Exception: the task dialog** (the user's decision, 2026-09-25). A task's space is fixed at creation — there is no picker anywhere, including Global. It's resolved via `useDefaultSpaceId` (the initial value, the current space, the last active space, or the first active space) and shown read-only as an icon + name under the title.
+  - **Exception: events** (Feature 08, following the same rule): `EventDialog` resolves the space with `useDefaultSpaceId` and shows it as a read-only row; no picker.
   - **Exception: notes** (decision B, 2026-09-25). "New note" never asks for a space: in Global it creates the note in `useDefaultSpaceId()` silently (`useCreateAndOpenNote`), and the editor's Details rail shows the note's space.
 - `Ctrl/Cmd+Enter` submits any dialog form. `Esc` closes it (shadcn handles that).
 - **Dialog headers use shadcn's `DialogHeader` / `DialogTitle` / `DialogDescription` with no extra classes** (the user's request, 2026-09-25). The description is a plain sentence about the dialog's purpose, not data such as the space name. Layout (padding, a close button beside it) goes on a wrapper, never on the components themselves.

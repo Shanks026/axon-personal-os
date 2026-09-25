@@ -24,7 +24,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | ✅ Complete |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | ✅ Complete (UI refinements pending) |
 | **Wave 3: Time** | | | | |
-| 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | 🔵 Planned |
+| 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | 🟡 Phase 1 ✅ (Phases 2–3 next) |
 | 09 | Daily Journal / Work Log | [09-journal.md](09-journal.md) | 06, 07 | 🔵 Planned |
 | **Wave 4: Insight** | | | | |
 | 10 | Dashboard (per space and Global) | [10-dashboard.md](10-dashboard.md) | 08, 09 | 🔵 Planned |
@@ -91,7 +91,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `task_activity` (+ log trigger) | 07 | ✅ | Auto history plus manual work-log comments. Migration `20260925130331` (15 backfilled `created` rows) |
 | `note_task_links` (+ activity log trigger) | 07 | ✅ | Sources: manual or mention. Migration `20260925180253` |
 | `sync_note_mentions()` | 07 | ✅ | RPC, security invoker; migration `20260925184644` |
-| `events` | 08 | ⬜ | Optional `task_id` / `note_id` |
+| `events` | 08 | ✅ | Optional `task_id` / `note_id`. Migration `20260925201716` |
 | `notes.kind`, `notes.journal_date` | 09 | ⬜ | One journal entry per space per day |
 | `week_start_of()`, `dashboard_summary()` | 10 | ⬜ | RPCs; they read the profile's time zone and week start |
 | `reports` + `report_stats()` | 11 | ⬜ | `space_id` NULL means a Global report; "at end" statuses are rebuilt from `task_activity` |
@@ -116,6 +116,15 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-26: Feature 08 Phase 1 — Calendar: Month, Agenda and events CRUD
+- **Folded:** the Calendar design deltas (no space picker, colours from `lib/tint.js` by space colour, a Tasks-style title row with a fiscal subtitle, a `⋯` layers menu, the dot/square legend, a 6-row grid, the read-style event dialog). `design-deltas.md` 08 is marked folded.
+- **Migration `20260925201716_create_events`:** the `events` table (owner RLS, composite FKs to spaces/tasks/notes, `set null` on task/note delete, range, space, FK and trigram indexes, length checks on location and url). Applied through the Management API (the MCP tools didn't load). Verified in a rolled-back transaction: ends-before-starts is rejected, another user's task is rejected, and deleting a task nulls `task_id` and keeps `user_id`. Advisors show only the 3 pre-existing warnings.
+- **New dependency:** `@date-fns/tz` (^1.5.0).
+- **New:** `features/calendar/` (api, constants, schemas, utils, `useCalendarState` / `useCalendarLayers` / `useCalendarItems`, `CalendarToolbar`, `MonthView`, `MonthDayCell`, `CalendarChip`, `ItemMarker`, `MoreItemsPopover`, `AgendaView`, `EventDialog`), and `CalendarPage` replaces the placeholder. Time-zone helpers in `lib/dates.js`, plus the `slideX` motion preset.
+- **Changed shared pieces:** `SegmentedControl` (`disabled` / `hint` options), `Kbd` and `shortcutLabel` (arrow keys), and `TaskPickerDialog` (`spaceIds`, `description`). `fetchTasks` and `fetchTodos` take `dueFrom` / `dueTo`; `useTasks` and `useTodos` take `{ enabled }`.
+- **Deviation:** no `EventPopover`. The event dialog is the view (see the 08 implementation notes).
+- **Tests:** 350 (+32: calendar utils, date helpers, and an `EventDialog` / `CalendarPage` component test).
 
 ### 2026-09-26: Detail rail animates like the sidebar
 - The task and note detail rails no longer mount and unmount. A new shared `components/layout/DetailRail` animates its width (200ms `ease-linear`, the sidebar's timing) with the contents at a fixed width and fading, and is `inert` when closed. It uses `overflow-x-clip`, so the sticky contents keep working. Reduced motion skips the animation.

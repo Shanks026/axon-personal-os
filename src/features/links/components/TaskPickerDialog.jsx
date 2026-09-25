@@ -18,15 +18,22 @@ import { useTaskSearch } from '@/features/tasks/api'
 import { TASK_STATUS_MAP } from '@/features/tasks/constants'
 
 /**
- * Pick a task to link (any active space). Title search as you type (debounced); open tasks come
- * first, then the most recently updated. `excludeIds` (already linked) are left out.
+ * Pick a task to link (any active space, or just `spaceIds`). Title search as you type (debounced);
+ * open tasks come first, then the most recently updated. `excludeIds` (already linked) are left out.
  */
-export function TaskPickerDialog({ open, onOpenChange, excludeIds = [], onPick }) {
+export function TaskPickerDialog({
+  open,
+  onOpenChange,
+  excludeIds = [],
+  onPick,
+  spaceIds,
+  description = 'Search your tasks and pick one to link to this note.',
+}) {
   const { activeSpaces, spaceById } = useSpace()
   const [query, setQuery] = useState('')
   const [q] = useDebounce(query, 200)
   const { data = [], isLoading } = useTaskSearch(
-    { spaceIds: activeSpaces.map((s) => s.id), q },
+    { spaceIds: spaceIds ?? activeSpaces.map((s) => s.id), q },
     { enabled: open },
   )
   const tasks = data.filter((t) => !excludeIds.includes(t.id))
@@ -39,7 +46,7 @@ export function TaskPickerDialog({ open, onOpenChange, excludeIds = [], onPick }
         if (!o) setQuery('')
       }}
       title="Link a task"
-      description="Search your tasks and pick one to link to this note."
+      description={description}
     >
       <Command shouldFilter={false}>
         <CommandInput placeholder="Search tasks…" value={query} onValueChange={setQuery} />

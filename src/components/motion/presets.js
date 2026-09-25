@@ -51,6 +51,17 @@ export const scaleIn = {
   exit: { opacity: 0, scale: 0.98, transition: exit() },
 }
 
+/**
+ * Calendar navigation: the new range fades in from the side it came from (`direction` -1 = back,
+ * 1 = forward, 0 = a jump: fade only). Enter only, like the page transition, so stepping is instant.
+ */
+export function slideX(direction = 0) {
+  return {
+    initial: { opacity: 0, x: direction * 12 },
+    animate: { opacity: 1, x: 0, transition: enter() },
+  }
+}
+
 /** Indeterminate progress sweep (splash bar). */
 export const progressSweep = {
   initial: { x: '-100%' },

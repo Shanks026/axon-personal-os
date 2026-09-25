@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/08-calendar.md`
-**Status**: 🔵 Planned
+**Status**: 🟡 Phase 1 ✅, Phase 2 next
 **Depends on**: 07
 **Last Updated**: September 2026
 
@@ -33,10 +33,20 @@ Phase 3: Meeting notes
 
 ---
 
-## Phase 1: Month, Agenda and Events CRUD
+## Phase 1: Month, Agenda and Events CRUD ✅ Complete
 
 ### Goal
 At `/s/:slug/calendar` the user sees a Month view (6-week grid) or an Agenda view (next 30 days, grouped by day), navigates with Today / previous / next, and switches views; the view and date live in the URL. They can create, edit and soft-delete events (with Undo), by clicking a day or the "New event" button. Tasks and todos with a due date appear as all-day chips, toggleable with a "Show tasks / todos" filter. In Global, events from every active space appear, coloured by space accent, and the create dialog requires a space.
+
+### Design deltas and later decisions (✅ folded 2026-09-26)
+These override anything below that disagrees with them.
+- **No space picker** (the user's rule since 2026-09-25: an item's space is fixed at creation). `EventDialog` resolves the space with `useDefaultSpaceId(initialValues?.space_id ?? event?.space_id)`, as `TaskDialog` and `TodoDialog` do, and shows it as a read-only row (emoji + name). Every `SpacePickerField` mention below is void.
+- **Colours come from `lib/tint.js`, never the space accent variable.** An event chip's dot uses `dotClasses(space.color)` (a space's `color` is one of the 10 `HUE_KEYS`, which `tint.js` covers). So in Global each space's events keep their own colour, and inside a space they share that space's colour. Due items use `textClasses(space.color)` on a hollow square.
+- **Header** (G4: 48px breadcrumb header): the page follows the Tasks page layout. The title row shows the range title (`text-3xl`, "September 2026") with a mono subtitle ("Q2 FY 2026–27 · W13", plus "· Global" in Global; fiscal week from `getFiscalWeek`, D4). On the right: Today, ‹ ›, a `SegmentedControl` (Month / Week / Day / Agenda; Week and Day disabled until Phase 2), a `⋯` layers menu, and "New event". The breadcrumb header gets no actions.
+- **Layers menu:** the "Show tasks / todos" toggles live in a small `⋯` `DropdownMenu` (checkbox items), not a "Show" button.
+- **Legend:** a filled dot marks an event; a hollow square marks a due item (task or todo). A todo's square is its checkbox. Done todos strike through; done tasks keep full contrast (no strike-through, the 2026-09-25 rule) and fill their square with a check.
+- **Month grid:** 6 rows (the design's 5 rows are wrong for 6-week months). Weekend cells get a faint tint (`bg-muted/40`; the design's `bg-sidebar` now equals the page background). Today's number is a filled destructive circle with white text.
+- **EventDialog** follows the Overlays "event" design: a large title (`TitleTextarea`), then read-style icon rows (15px muted icons, 38px rows): clock (dates and times, with an All day switch on the right), map-pin (location), video (meeting link), align-left (description), square-check-big (linked task, "Link a task…" opens `TaskPickerDialog` from `features/links/components/`), then the space row. Footer: Delete (edit mode, `destructive`), a spacer, Cancel, Save with the `Kbd` hint. The shadcn default `DialogHeader` stays (the house rule), and the dialog uses `max-h-dialog` with a scrolling body. "Create meeting note" joins the footer in Phase 3.
 
 ### Before Starting: Confirm With Codebase
 1. Feature 07 is complete. Confirm these exist and note their exact names: `fetchTasks`/`useTasks`/`useUpdateTask`/`taskKeys` (`features/tasks/api.js`), `fetchTodos`/`useTodos`/`useToggleTodo`/`todoKeys` (`features/todos/api.js`), `EntityLink`, `SpaceBadge`, `SpacePickerField`, `DatePickerField` (`components/shared/`), and a task picker combobox from 07's manual linking (if it lives in `features/tasks/components/`, import it from there; don't copy it).
@@ -197,19 +207,28 @@ src/features/calendar/
 - Spanning bars for multi-day events in Month (chips repeat per day instead)
 
 ### 1.8 Checklist: Before Marking Complete
-- [ ] The migration is applied and mirrored; advisors are clean; the constraint and FK checks above are verified
-- [ ] `buildMonthGrid`, `getViewRange`, `formatRangeTitle`, `groupItemsByDay`, `toEventTimestamps`/`fromEvent` and the new `lib/dates.js` helpers have passing tests (including leap years, week start 0/1 and DST)
-- [ ] `?view` and `?date` round-trip; invalid values fall back to Month and today; back/forward steps through months
-- [ ] An event spanning midnight or several days appears on every day it touches; one ending exactly at 00:00 next day does not spill over
-- [ ] Creating, editing and deleting (with Undo) an event works; in Global the space picker is required and chips show space colours
-- [ ] `/s/<slug>/calendar?event=<id>` jumps to the event's date and opens it, even from a different month; closing removes the param
-- [ ] `EventDialog` renders and creates an event when mounted outside `CalendarPage` (verified with a component test that renders it inside providers only), honouring `initialValues` and calling `onSuccess(row)`
-- [ ] Tasks and todos with a due date appear as all-day chips; the Show filter hides them and persists across reloads; toggling a todo chip is optimistic
-- [ ] With the profile time zone set differently from the browser, events render in the profile zone
-- [ ] "+N more" shows every item for the day; Agenda groups by day and shows its empty state
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` DB registry, status and changelog (including the `@date-fns/tz` dependency) are updated
+- [x] The migration is applied and mirrored; advisors are clean; the constraint and FK checks above are verified
+- [x] `buildMonthGrid`, `getViewRange`, `formatRangeTitle`, `groupItemsByDay`, `toEventTimestamps`/`fromEvent` and the new `lib/dates.js` helpers have passing tests (including leap years, week start 0/1 and DST)
+- [x] `?view` and `?date` round-trip; invalid values fall back to Month and today (tested); back/forward steps through months (navigation pushes history; **confirm in the browser**)
+- [x] An event spanning midnight or several days appears on every day it touches; one ending exactly at 00:00 next day does not spill over
+- [x] Creating, editing and deleting (with Undo) an event works (tested); chips show space colours. There's no space picker (superseded, see the folded deltas)
+- [x] `/s/<slug>/calendar?event=<id>` jumps to the event's date and opens it, even from a different month; closing removes the param
+- [x] `EventDialog` renders and creates an event when mounted outside `CalendarPage` (verified with a component test that renders it inside providers only), honouring `initialValues` and calling `onSuccess(row)`
+- [x] Tasks and todos with a due date appear as all-day chips; the layers menu hides them and persists (localStorage); toggling a todo chip uses the optimistic `useToggleTodo` (**confirm in the browser**)
+- [x] With the profile time zone set differently from the browser, events render in the profile zone (unit and page tests use `Asia/Kolkata`)
+- [x] "+N more" shows every item for the day; Agenda groups by day and shows its empty state
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files (one accepted should-fix: `EventDialog` length)
+- [x] `00-index.md` DB registry, status and changelog (including the `@date-fns/tz` dependency) are updated
+
+### 1.9 Implementation Notes (2026-09-26)
+- **`EventPopover` dropped.** The design's event dialog (Overlays → event) is read-style, so it serves as the view and the editor. Clicking a chip sets `?event=<id>` and opens `EventDialog` in edit mode. This removes the popover anchoring problem for multi-day chips and chips hidden behind "+N more". The meeting link shows a **Join** button, and the linked task shows as an `EntityLink`.
+- **No space picker** in `EventDialog` (the folded rule). Events use `useDefaultSpaceId`, and the space shows as a read-only row. The task picker is limited to that space (`TaskPickerDialog` gained optional `spaceIds` and `description` props).
+- **Time zone:** new `lib/dates.js` helpers (`todayISO`, `zonedInstant`, `zonedDayRange`, `zonedParts`, `formatTime`, `formatTimeRange`, `formatWeekdayDate`) run on `@date-fns/tz`'s `TZDate`. Grid maths runs on plain `yyyy-MM-dd` strings. `toDate` now also accepts epoch milliseconds.
+- **API:** the list select includes `description` (up to 5000 characters), so the dialog opens without a second fetch. `useEvent(id)` exists for deep links, and `fetchEvent` filters out trashed rows (a trashed link just closes). The delete is optimistic, and the Undo toast shows at once: the dialog unmounts on close, so per-call `mutate` callbacks would never fire. A test caught this. `useTasks` and `useTodos` take a second `{ enabled }` argument. With `dueFrom`/`dueTo`, `fetchTodos` skips its done window, so done todos stay on their due day.
+- **Migration extras:** length checks on `location` (200) and `url` (2000), plus indexes on `space_id`, `task_id` and `note_id`. `data-model.md` is updated to match.
+- **UI:** hotkeys `t`, `←`, `→`, `m`, `a`, and `n` for a new event (not in the plan). `SegmentedControl` options take `disabled` and `hint`, so Week and Day show as "Coming soon". `Kbd` renders `left`/`right` as arrow icons. A new `slideX(direction)` preset is enter-only. Views cross-fade with `fadeIn`. `formatAgendaDay` also says "Yesterday".
+- **Browser checks still to do:** back/forward through months, the todo-chip toggle, dark mode, and the dialog's native time inputs.
 
 **Stop here. Show the result and wait for approval.**
 

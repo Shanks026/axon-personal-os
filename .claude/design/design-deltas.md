@@ -117,7 +117,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
   - The footer has a **Pinned switch** (pin UI moves forward from 14 for tasks) and "Move to Trash".
 - **Layout:** main column max-width 720 with padding 40/56. The rail is 300px with 84px labels. The checklist has a 120px progress bar.
 
-### 08 Calendar
+### 08 Calendar (✅ folded into 08 Phase 1 on 2026-09-26; week-view items at Phase 2, the meeting-note button at Phase 3)
 - **Adopt:**
   - The header doubles as the toolbar: title, a mono subtitle ("W13 · Global"), Today, ‹ ›, the Month/Week/Day/Agenda segments, and "+ Event".
   - Legend: a filled dot marks an event, a hollow square a due item.

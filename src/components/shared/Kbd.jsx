@@ -1,10 +1,18 @@
-import { ArrowBigUp, Command, CornerDownLeft, Option } from 'lucide-react'
+import { ArrowBigUp, ArrowLeft, ArrowRight, Command, CornerDownLeft, Option } from 'lucide-react'
 import { shortcutLabel } from '@/lib/platform'
 import { cn } from '@/lib/utils'
 
 // Modifiers render as icons, not font glyphs: Geist Mono has no ⌃ and some platforms draw ⌘
 // tiny. The design shows "⌘K" everywhere, so the primary modifier is the Command icon.
-const ICONS = { mod: Command, cmd: Command, shift: ArrowBigUp, alt: Option, enter: CornerDownLeft }
+const ICONS = {
+  mod: Command,
+  cmd: Command,
+  shift: ArrowBigUp,
+  alt: Option,
+  enter: CornerDownLeft,
+  left: ArrowLeft,
+  right: ArrowRight,
+}
 
 /**
  * Shortcut hint (design: "⌘K"): <Kbd shortcut="mod+k" />. Icons for modifiers, mono letters

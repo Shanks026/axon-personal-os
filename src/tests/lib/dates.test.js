@@ -6,9 +6,16 @@ import {
   formatDateShort,
   formatDueLabel,
   formatRelative,
+  formatTime,
+  formatWeekdayDate,
+  formatTimeRange,
   isOverdue,
   parseISODate,
   toISODate,
+  todayISO,
+  zonedDayRange,
+  zonedInstant,
+  zonedParts,
 } from '@/lib/dates'
 
 // Wed 23 Sep 2026, 14:00 local
@@ -69,5 +76,56 @@ describe('due dates', () => {
 describe('daysAgoISO', () => {
   it('crosses month boundaries', () => {
     expect(daysAgoISO('2026-10-05', 30)).toBe('2026-09-05')
+  })
+})
+
+describe('time-zone helpers', () => {
+  it('todayISO reads the date in the given zone, not the browser zone', () => {
+    const instant = new Date('2026-09-23T20:00:00Z')
+    expect(todayISO('Asia/Kolkata', instant)).toBe('2026-09-24') // 01:30 next day
+    expect(todayISO('America/New_York', instant)).toBe('2026-09-23')
+  })
+
+  it('zonedDayRange covers the local day as UTC instants', () => {
+    expect(zonedDayRange('2026-09-23', 'Asia/Kolkata')).toEqual({
+      from: '2026-09-22T18:30:00.000Z',
+      to: '2026-09-23T18:30:00.000Z',
+    })
+    expect(zonedDayRange('2026-12-01', 'Europe/London')).toEqual({
+      from: '2026-12-01T00:00:00.000Z',
+      to: '2026-12-02T00:00:00.000Z',
+    })
+  })
+
+  it('a DST change day is 23 or 25 hours long', () => {
+    const spring = zonedDayRange('2026-03-29', 'Europe/London')
+    expect(new Date(spring.to) - new Date(spring.from)).toBe(23 * 3600_000)
+    const autumn = zonedDayRange('2026-10-25', 'Europe/London')
+    expect(new Date(autumn.to) - new Date(autumn.from)).toBe(25 * 3600_000)
+  })
+
+  it('zonedInstant and zonedParts round-trip across BST and GMT', () => {
+    const summer = zonedInstant('2026-07-01', '09:30', 'Europe/London')
+    expect(summer.toISOString()).toBe('2026-07-01T08:30:00.000Z')
+    expect(zonedParts(summer, 'Europe/London')).toEqual({ isoDate: '2026-07-01', time: '09:30' })
+    const winter = zonedInstant('2026-12-01', '09:30', 'Europe/London')
+    expect(winter.toISOString()).toBe('2026-12-01T09:30:00.000Z')
+    expect(zonedParts(winter, 'Asia/Kolkata')).toEqual({ isoDate: '2026-12-01', time: '15:00' })
+  })
+
+  it('formats times and ranges in the zone', () => {
+    const start = '2026-09-23T03:30:00Z'
+    const end = '2026-09-23T05:00:00Z'
+    expect(formatTime(start, 'Asia/Kolkata')).toBe('09:00')
+    expect(formatTimeRange(start, end, 'Asia/Kolkata')).toBe('09:00–10:30')
+    expect(formatTime(null, 'UTC')).toBe('')
+  })
+})
+
+describe('formatWeekdayDate', () => {
+  it('shows the weekday, and the year only outside this year', () => {
+    expect(formatWeekdayDate('2026-09-25', now)).toBe('Fri 25 Sep')
+    expect(formatWeekdayDate('2027-01-05', now)).toBe('Tue 5 Jan 2027')
+    expect(formatWeekdayDate(null, now)).toBe('')
   })
 })

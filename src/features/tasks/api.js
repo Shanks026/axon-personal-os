@@ -10,7 +10,7 @@ import { todoKeys } from '@/features/todos/api'
 export const taskKeys = {
   all: ['tasks'],
   lists: () => [...taskKeys.all, 'list'],
-  list: (params) => [...taskKeys.lists(), params], // { spaceIds, priority, due, q, tag, version, today, weekEnd, allClosed }
+  list: (params) => [...taskKeys.lists(), params], // { spaceIds, priority, due, q, tag, version, today, weekEnd, allClosed, dueFrom, dueTo }
   details: () => [...taskKeys.all, 'detail'],
   detail: (id) => [...taskKeys.details(), id],
   versions: (spaceIds) => [...taskKeys.all, 'versions', spaceIds], // version suggestions
@@ -46,6 +46,8 @@ function mapRow(row) {
  *
  * `tag` (any-of) joins `task_tags` a second time under its own alias, so the filter doesn't trim
  * the `tag_ids` a task actually has (an inner-joined single alias would).
+ *
+ * `dueFrom` / `dueTo` ('yyyy-MM-dd', inclusive) limit to a due-date window (the calendar).
  */
 export async function fetchTasks({
   spaceIds,
@@ -57,6 +59,8 @@ export async function fetchTasks({
   today,
   weekEnd,
   allClosed,
+  dueFrom,
+  dueTo,
 }) {
   let query = supabase
     .from('tasks')
@@ -72,6 +76,8 @@ export async function fetchTasks({
   if (due === 'today') query = query.eq('due_date', today)
   if (due === 'week') query = query.gte('due_date', today).lte('due_date', weekEnd)
   if (due === 'none') query = query.is('due_date', null)
+  if (dueFrom) query = query.gte('due_date', dueFrom)
+  if (dueTo) query = query.lte('due_date', dueTo)
   if (q?.trim()) query = query.ilike('title', `%${escapeLike(q.trim())}%`)
   if (!allClosed && today) {
     query = query.or(
@@ -144,11 +150,11 @@ export function useTask(id) {
   })
 }
 
-export function useTasks(params) {
+export function useTasks(params, { enabled = true } = {}) {
   return useQuery({
     queryKey: taskKeys.list(params),
     queryFn: () => fetchTasks(params),
-    enabled: params.spaceIds?.length > 0,
+    enabled: enabled && params.spaceIds?.length > 0,
     placeholderData: keepPreviousData,
   })
 }

@@ -6,7 +6,8 @@ import { cn } from '@/lib/utils'
 /**
  * Segmented control (design: "Week starts on", view toggles). The selected thumb slides
  * between options on the snappy spring.
- * @param {{ value: string, onChange: (v: string) => void, options: { value: string, label: React.ReactNode, icon?: any }[], label: string }} props
+ * An option with `disabled` can't be picked; its `hint` shows as the native tooltip.
+ * @param {{ value: string, onChange: (v: string) => void, options: { value: string, label: React.ReactNode, icon?: any, disabled?: boolean, hint?: string }[], label: string }} props
  */
 export function SegmentedControl({ value, onChange, options, label, className }) {
   const id = useId()
@@ -25,10 +26,13 @@ export function SegmentedControl({ value, onChange, options, label, className })
             type="button"
             role="radio"
             aria-checked={selected}
+            disabled={opt.disabled}
+            title={opt.hint}
             onClick={() => onChange(opt.value)}
             className={cn(
               'relative flex h-7 items-center gap-1.5 rounded-md px-3 transition-colors outline-none focus-visible:ring-2 focus-visible:ring-ring',
               selected ? 'text-foreground' : 'text-muted-foreground hover:text-foreground',
+              'disabled:cursor-not-allowed disabled:text-faint disabled:hover:text-faint',
             )}
           >
             {selected && (
