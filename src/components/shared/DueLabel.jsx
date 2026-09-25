@@ -12,8 +12,17 @@ const TONE_CLASS = {
  * Due date in its tone (design-system.md → due labels): overdue red, today amber, otherwise
  * muted; closed items read "Completed 18 Sep" in a darker emerald (emerald-700; 400 in dark), a
  * step deeper than the emerald Completed status pill. Mono so columns line up (sans on cards).
+ * `completedPrefix={false}` shows just the date (the task table: the status column and the
+ * emerald colour already say "completed").
  */
-export function DueLabel({ date, completedAt, closed = false, showEmpty = true, className }) {
+export function DueLabel({
+  date,
+  completedAt,
+  closed = false,
+  showEmpty = true,
+  completedPrefix = true,
+  className,
+}) {
   if (closed && completedAt) {
     return (
       <span
@@ -22,7 +31,8 @@ export function DueLabel({ date, completedAt, closed = false, showEmpty = true, 
           className,
         )}
       >
-        Completed {formatDateShort(completedAt)}
+        {completedPrefix && 'Completed '}
+        {formatDateShort(completedAt)}
       </span>
     )
   }

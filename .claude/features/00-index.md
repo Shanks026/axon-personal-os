@@ -114,6 +114,11 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Task table tidy-up
+- **Versions** get their own **Version** column; the actions cell is now just links and ⋮.
+- **Empty cells** (Tags, Version, Checklist, Due) show a muted `-` (new `EmptyCell`).
+- **Completed tasks' Due cell** shows just the emerald completion date, with no "Completed" word (a new `DueLabel completedPrefix` prop). Cards keep "Completed 25 Sep".
+
 ### 2026-09-25: Task sorting; readable closed titles
 - **Sort for the grid and table** (default **Created, newest first**, shown as a plain "Sort" button; the last choice is remembered in localStorage under `axon:tasks:sort`, and a `?sort=` in the URL wins; "Manual order" is `?sort=manual`): a new `TaskSortMenu` in the toolbar and the table headers share `?sort=`. Fields are Created, Updated, Priority, Due date, Status and Title, plus Space from the Global table header. The pure `sortTasks(tasks, sort, { spaceName })` is tested. Tasks without a due date always sort last, and ties fall back to position. The table is now `manualSorting` (no per-column `sortFn`). The board keeps its manual order, so the menu is hidden there.
 - **Completed and cancelled task titles** are no longer muted or struck through (grid card, board card, table row). Todos keep their strike-through.

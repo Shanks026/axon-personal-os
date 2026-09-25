@@ -496,11 +496,18 @@ describe('TasksPage', () => {
       'Status',
       'Priority',
       'Tags',
+      'Version',
       'Checklist',
       'Due',
       'Updated',
       'Actions',
     ])
+    // Empty cells show a dash; a completed task's Due cell is just its date (no "Completed").
+    const storefront = within(table).getByText('Storefront: lazy-load images').closest('tr')
+    expect(within(storefront).getAllByLabelText('None')).toHaveLength(4) // tags, version, checklist, due
+    const kyc = within(table).getByText('Onboarding: KYC upload UI').closest('tr')
+    expect(within(kyc).getByText('20 Sep')).toBeInTheDocument()
+    expect(within(kyc).queryByText(/Completed 20 Sep/)).not.toBeInTheDocument()
     expect(within(table).getAllByRole('row')).toHaveLength(5) // header + 4 tasks
     expect(localStorage.getItem('axon:tasks:view')).toBe('"table"')
   })

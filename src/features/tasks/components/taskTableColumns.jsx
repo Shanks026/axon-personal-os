@@ -3,6 +3,7 @@ import { cn } from '@/lib/utils'
 import { DueLabel } from '@/components/shared/DueLabel'
 import { SpaceBadge } from '@/components/shared/SpaceBadge'
 import { TagPillGroup } from '@/components/shared/TagPill'
+import { EmptyCell } from '@/features/tasks/components/EmptyCell'
 import { TaskLinksButton } from '@/features/tasks/components/TaskLinksButton'
 import { PriorityMenu, StatusMenu, TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
 import { TaskPriorityPill, TaskStatusPill } from '@/features/tasks/components/TaskPills'
@@ -95,33 +96,52 @@ export function buildTaskColumns({
       header: 'Tags',
       enableSorting: false,
       meta: { className: fit },
-      cell: ({ row }) => (
-        <TagPillGroup
-          tags={row.original.tag_ids?.map((id) => tagsById.get(id)).filter(Boolean)}
-          max={3}
-        />
-      ),
+      cell: ({ row }) => {
+        const tags = row.original.tag_ids?.map((id) => tagsById.get(id)).filter(Boolean)
+        return tags?.length ? <TagPillGroup tags={tags} max={3} /> : <EmptyCell />
+      },
+    },
+    {
+      id: 'version',
+      header: 'Version',
+      enableSorting: false,
+      meta: { className: fit },
+      cell: ({ row }) =>
+        row.original.versions?.length ? (
+          <VersionBadgeGroup versions={row.original.versions} />
+        ) : (
+          <EmptyCell />
+        ),
     },
     {
       id: 'checklist',
       header: 'Checklist',
       enableSorting: false,
       meta: { className: fit },
-      cell: ({ row }) => <ChecklistProgressBadge progress={progressByTask?.get(row.original.id)} />,
+      cell: ({ row }) => {
+        const progress = progressByTask?.get(row.original.id)
+        return progress?.total ? <ChecklistProgressBadge progress={progress} /> : <EmptyCell />
+      },
     },
     {
       id: 'due',
       header: 'Due',
       accessorFn: (t) => t.due_date,
       meta: { className: fit },
-      cell: ({ row }) => (
-        <DueLabel
-          date={row.original.due_date}
-          completedAt={row.original.completed_at}
-          closed={isClosed(row.original)}
-          showEmpty={false}
-        />
-      ),
+      // A completed task shows just its (emerald) completion date: the status says "completed".
+      cell: ({ row }) => {
+        const task = row.original
+        const closed = isClosed(task)
+        if (!task.due_date && !(closed && task.completed_at)) return <EmptyCell />
+        return (
+          <DueLabel
+            date={task.due_date}
+            completedAt={task.completed_at}
+            closed={closed}
+            completedPrefix={false}
+          />
+        )
+      },
     },
     {
       id: 'updated',
@@ -142,7 +162,6 @@ export function buildTaskColumns({
       meta: { className: fit },
       cell: ({ row }) => (
         <div className="flex items-center justify-end gap-1">
-          <VersionBadgeGroup versions={row.original.versions} className="mr-1" />
           <TaskLinksButton links={row.original.links} size="size-6" className="bg-transparent" />
           <TaskActionsMenu
             task={row.original}
