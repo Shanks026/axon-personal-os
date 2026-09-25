@@ -1,6 +1,6 @@
 import { NodeViewWrapper } from '@tiptap/react'
 import { SquareCheckBig } from 'lucide-react'
-import { MENTION_CLASSES } from '@/lib/tint'
+import { MENTION_CLASSES, MENTION_LABEL_CLASSES } from '@/lib/tint'
 import { cn } from '@/lib/utils'
 import { EntityLink } from '@/components/shared/EntityLink'
 import { useTaskSummary } from '@/features/tasks/api'
@@ -25,12 +25,12 @@ export function TaskMentionChip({ node, selected }) {
       {isLoading ? (
         <span
           className={cn(
-            'inline-flex h-6 items-center gap-1.5 rounded-md px-2 align-middle text-sm leading-none',
+            'inline-flex h-6 items-center gap-1.5 rounded-md align-middle text-sm leading-none',
             MENTION_CLASSES,
           )}
         >
           <SquareCheckBig className="size-3.5 shrink-0" aria-hidden />
-          {label}
+          <span className={cn('truncate', MENTION_LABEL_CLASSES)}>{label}</span>
         </span>
       ) : (
         <EntityLink

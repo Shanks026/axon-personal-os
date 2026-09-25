@@ -1,7 +1,7 @@
 import { FileText, SquareCheckBig } from 'lucide-react'
 import { Link } from 'react-router'
 import { paths } from '@/lib/paths'
-import { MENTION_CLASSES, textClasses } from '@/lib/tint'
+import { MENTION_CLASSES, MENTION_LABEL_CLASSES, textClasses } from '@/lib/tint'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { EntityPreviewCard } from '@/components/shared/EntityPreviewCard'
@@ -14,7 +14,7 @@ import { TASK_STATUS_MAP } from '@/features/tasks/constants'
  * cross spaces). With `preview`, hovering shows `EntityPreviewCard` (the chip itself is a normal
  * link, so keyboards and screen readers lose nothing). A `deleted` target renders muted and
  * struck through, and isn't a link. `tone`: `plain` (no fill, the status icon: linked lists) or
- * `blue` (inline mentions: the blue badge with darker blue text and one common task icon, no
+ * `blue` (inline mentions: blue text with a dotted underline, no fill, one common task icon, no
  * status; the hover card has the details). Never the space accent (the user's request, 2026-09-26).
  * @param {{ kind: 'task' | 'note', id: string, spaceId: string, label: string, status?: string, deleted?: boolean, preview?: boolean, tone?: 'plain' | 'blue', className?: string }} props
  */
@@ -47,7 +47,9 @@ export function EntityLink({
         )}
         aria-hidden
       />
-      <span className="truncate">{label || (kind === 'note' ? 'Untitled' : 'Task')}</span>
+      <span className={cn('truncate', mention && MENTION_LABEL_CLASSES)}>
+        {label || (kind === 'note' ? 'Untitled' : 'Task')}
+      </span>
     </>
   )
 

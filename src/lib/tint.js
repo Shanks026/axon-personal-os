@@ -190,9 +190,14 @@ export function hueVar(key) {
 }
 
 /**
- * Inline `[[task]]` / `@task` mention chips (the user's request, 2026-09-26): a blue badge with
- * blue-700 medium text and icon, the same whether the chip is loading or loaded (no shade jump).
- * The editor's prose link style skips `.axon-mention`, so it can't recolour the chip.
+ * Inline `@task` / `[[task]]` mentions (the user's request, 2026-09-26): no fill, a readable
+ * blue (700; 400 in dark) in medium weight, and a dotted underline on the label that turns solid
+ * on hover. The same classes while loading and loaded (no shade jump). The editor's prose link
+ * style skips `.axon-mention`, so it can't recolour it.
  */
 export const MENTION_CLASSES =
-  'axon-mention bg-blue-100 font-medium text-blue-700 hover:bg-blue-200 dark:bg-blue-500/20 dark:text-blue-300 dark:hover:bg-blue-500/30'
+  'axon-mention group/mention px-0.5 font-medium text-blue-700 dark:text-blue-400'
+
+/** The mention's label: the dotted underline (with room below it, since the label truncates). */
+export const MENTION_LABEL_CLASSES =
+  'leading-5 underline decoration-blue-400 decoration-dotted underline-offset-3 group-hover/mention:decoration-solid dark:decoration-blue-500'

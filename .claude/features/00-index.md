@@ -117,6 +117,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-26: Mention chips without a fill
+- Inline mentions drop the blue badge background: readable blue text (700; 400 in dark), medium weight, and a dotted underline that turns solid on hover (the user's request). New `MENTION_LABEL_CLASSES` in `lib/tint.js`; the label gets `leading-5` so the offset underline isn't clipped by its truncation.
+
 ### 2026-09-26: Mentions: @ as well as [[, blue chips, task-card hover
 - **Both `@` and `[[`** open the task search. `@` only triggers at the start of a word (after a space, `(` or `[`), and a space right after it closes the list, so emails and `@media` stay plain (tested).
 - **Discoverability:** the note placeholder reads "Type '/' for commands, or @ to link a task", the `/` menu has **Link task** (it leaves an `@`), and the shortcuts cheat sheet lists "Link a task: @ or [[".
