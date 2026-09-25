@@ -35,6 +35,7 @@ import { PriorityMenu, StatusMenu } from '@/features/tasks/components/TaskMenus'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP } from '@/features/tasks/constants'
 import { taskSchema } from '@/features/tasks/schemas'
 import { textToDoc } from '@/features/tasks/utils'
+import { useCreateChecklistItems } from '@/features/todos/api'
 import { ChecklistSection } from '@/features/todos/components/ChecklistSection'
 
 /**
@@ -70,12 +71,14 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
   const [createMore, setCreateMore] = useState(false)
   const [tagIds, setTagIds] = useState(task?.tag_ids ?? initialValues?.tag_ids ?? [])
   const [links, setLinks] = useState(task?.links ?? initialValues?.links ?? [])
+  const [checklist, setChecklist] = useState([])
+  const createChecklist = useCreateChecklistItems()
 
   const blank = {
     title: '',
     description_text: '',
     status: 'todo',
-    priority: 'none',
+    priority: 'high',
     start_date: null,
     due_date: null,
   }
@@ -106,6 +109,9 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
     const done = (row) => {
       setTaskTags.mutate({ taskId: row.id, tagIds })
       if (!isEdit && links.length) createLinks.mutate({ taskId: row.id, links })
+      if (!isEdit && checklist.length) {
+        createChecklist.mutate({ taskId: row.id, spaceId: row.space_id, titles: checklist })
+      }
       onSuccess?.(row)
       if (!isEdit && createMore) {
         toast.success('Task created', { description: row.title })
@@ -113,6 +119,7 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
         form.setFocus('title')
         setTagIds([])
         setLinks([])
+        setChecklist([])
         return
       }
       if (!isEdit) toast.success('Task created')
@@ -203,6 +210,7 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
           <PropertyChip
             icon={PriorityIcon}
             iconProps={{ color: TASK_PRIORITY_MAP[priority].color }}
+            iconClassName="size-2"
             empty={priority === 'none'}
           >
             {priority === 'none' ? 'Priority' : TASK_PRIORITY_MAP[priority].label}
@@ -230,7 +238,11 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
         </p>
       )}
 
-      {isEdit && <ChecklistSection taskId={task.id} spaceId={task.space_id} />}
+      {isEdit ? (
+        <ChecklistSection taskId={task.id} spaceId={task.space_id} />
+      ) : (
+        <ChecklistSection staged={{ items: checklist, onChange: setChecklist }} />
+      )}
 
       <div className="flex h-13 items-center gap-2.5 border-t px-4">
         {!isEdit && (

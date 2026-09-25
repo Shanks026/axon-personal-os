@@ -60,6 +60,13 @@ vi.mock('@/lib/supabase', () => {
     }
 
     function runTodos() {
+      if (state.op === 'insert' && Array.isArray(state.patch)) {
+        db.calls.push(['insert:bulk', state.patch])
+        state.patch.forEach((r, i) =>
+          db.todos.push({ id: `d${db.todos.length + i + 1}`, is_done: false, ...r }),
+        )
+        return result(null)
+      }
       if (state.op === 'insert') {
         const row = {
           id: `d${db.todos.length + 1}`,
@@ -89,6 +96,12 @@ vi.mock('@/lib/supabase', () => {
       if (table === 'profiles') return result({ id: 'u1', last_space_id: null, week_starts_on: 1 })
       if (table === 'tags') return result([])
       if (table === 'todos') return runTodos()
+      if (table === 'task_tags') return result(null)
+      if (table === 'tasks' && state.op === 'insert') {
+        const row = { id: `t${db.tasks.length + 1}`, tag_ids: [], links: [], ...state.patch }
+        db.tasks.push(row)
+        return result(row)
+      }
       // tasks: only used for the badge tests, which read via TasksPage's own tasks table.
       let live = db.tasks.filter((t) => !t.deleted_at).map((t) => ({ ...t, tag_ids: [] }))
       return result(state.single ? (live.at(-1) ?? null) : live)
@@ -184,6 +197,27 @@ describe('TodoChecklist (in TaskDialog)', () => {
     expect(await screen.findByText('· saves as you go')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Break this task into steps')).toBeInTheDocument()
     expect(screen.queryByText(/^\d+\/\d+$/)).not.toBeInTheDocument()
+  })
+
+  it('stages a checklist while creating a task and saves it after the task', async () => {
+    const user = userEvent.setup()
+    renderWithShell(<TaskDialog open onOpenChange={() => {}} />)
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByLabelText('Task title'), 'New admin menu')
+    const input = within(dialog).getByPlaceholderText('Break this task into steps')
+    await user.type(input, 'Wire the API{Enter}')
+    await user.type(within(dialog).getByPlaceholderText('Add item'), 'Add tests{Enter}')
+    expect(within(dialog).getByText('Wire the API')).toBeInTheDocument()
+    expect(db.calls.some((c) => c[0] === 'insert:bulk')).toBe(false) // nothing saved yet
+    await user.click(within(dialog).getByRole('button', { name: /create task/i }))
+
+    await waitFor(() => expect(db.calls.some((c) => c[0] === 'insert:bulk')).toBe(true))
+    const created = db.tasks.at(-1)
+    expect(created).toMatchObject({ title: 'New admin menu', priority: 'high' })
+    expect(db.calls.find((c) => c[0] === 'insert:bulk')[1]).toEqual([
+      { task_id: created.id, space_id: SPACE.id, title: 'Wire the API', position: 1000 },
+      { task_id: created.id, space_id: SPACE.id, title: 'Add tests', position: 2000 },
+    ])
   })
 
   it('adds an item on Enter and keeps focus', async () => {

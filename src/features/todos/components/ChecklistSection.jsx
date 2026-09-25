@@ -5,15 +5,18 @@ import { cn } from '@/lib/utils'
 import { springs } from '@/components/motion/presets'
 import { useTodos } from '@/features/todos/api'
 import { ChecklistProgress } from '@/features/todos/components/ChecklistProgress'
+import { StagedChecklist } from '@/features/todos/components/StagedChecklist'
 import { TodoChecklist } from '@/features/todos/components/TodoChecklist'
 
 /**
- * The collapsible "Checklist" section mounted in `TaskDialog` (edit mode). Wraps `TodoChecklist`
- * with a disclosure header and a hint that it saves independently of the dialog's own submit.
+ * The collapsible "Checklist" section of `TaskDialog`. Editing a task, it wraps the live
+ * `TodoChecklist` (saves as you go). Creating one, pass `staged` ({ items, onChange }) instead:
+ * the titles are held in the dialog and saved after the task is created.
  */
-export function ChecklistSection({ taskId, spaceId }) {
+export function ChecklistSection({ taskId, spaceId, staged }) {
   const [open, setOpen] = useState(true)
   // Same query (and cache entry) as the TodoChecklist below; read here for the header's progress.
+  // Disabled without a taskId (create mode).
   const { data: items = [] } = useTodos({ taskId })
   const done = items.filter((t) => t.is_done).length
   return (
@@ -29,7 +32,11 @@ export function ChecklistSection({ taskId, spaceId }) {
           aria-hidden
         />
         <span className="font-medium">Checklist</span>
-        {items.length > 0 ? (
+        {staged ? (
+          staged.items.length > 0 && (
+            <span className="text-muted-foreground">· {staged.items.length}</span>
+          )
+        ) : items.length > 0 ? (
           <ChecklistProgress done={done} total={items.length} />
         ) : (
           <span className="text-muted-foreground">· saves as you go</span>
@@ -44,7 +51,11 @@ export function ChecklistSection({ taskId, spaceId }) {
             transition={springs.gentle}
             className="overflow-hidden"
           >
-            <TodoChecklist taskId={taskId} spaceId={spaceId} showTitle={false} className="mt-2" />
+            {staged ? (
+              <StagedChecklist items={staged.items} onChange={staged.onChange} />
+            ) : (
+              <TodoChecklist taskId={taskId} spaceId={spaceId} showTitle={false} className="mt-2" />
+            )}
           </motion.div>
         )}
       </AnimatePresence>

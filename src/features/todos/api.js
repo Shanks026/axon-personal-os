@@ -118,6 +118,28 @@ export function useCreateTodo() {
   })
 }
 
+/** A just-created task's staged checklist (TaskDialog create mode), in order. */
+export async function createChecklistItems(taskId, spaceId, titles) {
+  const { error } = await supabase.from('todos').insert(
+    titles.map((title, i) => ({
+      task_id: taskId,
+      space_id: spaceId,
+      title,
+      position: (i + 1) * 1000,
+    })),
+  )
+  if (error) throw error
+}
+
+export function useCreateChecklistItems() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ taskId, spaceId, titles }) => createChecklistItems(taskId, spaceId, titles),
+    onSuccess: () => qc.invalidateQueries({ queryKey: todoKeys.all }),
+    onError: (err) => toast.error(err.message ?? 'Could not save the checklist'),
+  })
+}
+
 export function useUpdateTodo() {
   const qc = useQueryClient()
   return useMutation({

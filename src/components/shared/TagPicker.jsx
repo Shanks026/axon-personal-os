@@ -1,9 +1,9 @@
 import { forwardRef, useState } from 'react'
 import { Check, ChevronDown, Plus, Tag as TagIcon } from 'lucide-react'
-import { dotClasses } from '@/lib/tint'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { ManageTagsDialog } from '@/components/shared/ManageTagsDialog'
+import { TagPill } from '@/components/shared/TagPill'
 import { Button } from '@/components/ui/button'
 import {
   Command,
@@ -100,11 +100,9 @@ export function TagPicker({
                       )}
                       aria-hidden
                     />
-                    <span
-                      className={cn('size-2 shrink-0 rounded-full', dotClasses(tag.color))}
-                      aria-hidden
-                    />
-                    <span className="flex-1 truncate">{tag.name}</span>
+                    <span className="flex min-w-0 flex-1">
+                      <TagPill tag={tag} size="md" className="max-w-full truncate" />
+                    </span>
                     <span className="text-xs text-faint">
                       {tag.space_id ? spaceById.get(tag.space_id)?.name : 'All spaces'}
                     </span>

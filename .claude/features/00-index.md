@@ -113,6 +113,13 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Feature 04 follow-up 3: priority default, tag picker badges, checklist on create
+- **New tasks default to High priority** in the dialog. The DB default and board quick-add are unchanged (`none`).
+- **Priority chip dot** shrunk to 8px. It was inheriting the chip's 14px icon size.
+- **Tag picker options show the real tag badge** instead of a dot plus plain text.
+- **The checklist now appears when creating a task.** Items are staged in the dialog (new `StagedChecklist`) and saved in one insert after the task is created, via the new `createChecklistItems`/`useCreateChecklistItems` in `todos/api.js`. Before this it was edit-only, because checklist todos need a `task_id`.
+- **Tests:** 215.
+
 ### 2026-09-25: Feature 04 follow-up 2: task dialog layout and status tabs (browser feedback)
 - **Task dialog:**
   - The header uses shadcn's default `DialogHeader`/`DialogTitle`/`DialogDescription` with no extra classes. The description is a sentence, not the space name.
