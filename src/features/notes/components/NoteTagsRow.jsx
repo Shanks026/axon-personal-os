@@ -4,7 +4,6 @@ import { formatRelative } from '@/lib/dates'
 import { mergeVersions } from '@/lib/versions'
 import { TagPill } from '@/components/shared/TagPill'
 import { TagPicker } from '@/components/shared/TagPicker'
-import { VersionBadge } from '@/components/shared/VersionBadge'
 import { VersionPicker } from '@/components/shared/VersionPicker'
 import { useNoteVersions, useSetNoteVersions } from '@/features/notes/api'
 import { useSetNoteTags, useTags } from '@/features/tags/api'
@@ -24,8 +23,9 @@ function AddPill({ children, ...props }) {
 }
 
 /**
- * Under the title (design 07b): the note's tags and versions (both removable), dashed "+ Tag"
- * and "+ Version" pickers, and "Edited 2h ago". Tags can be created in the note's space;
+ * Under the title (design 07b): the note's tags (removable), dashed "+ Tag" and "+ Version"
+ * pickers, and "Edited 2h ago". The chosen versions sit at the end of the title row
+ * (`NoteVersionBadges`). Tags can be created in the note's space;
  * versions are free text, suggested from the tasks and notes in that space (like the task card).
  */
 export function NoteTagsRow({ note }) {
@@ -53,14 +53,6 @@ export function NoteTagsRow({ note }) {
           tag={tag}
           size="md"
           onRemove={() => saveTags(note.tag_ids.filter((id) => id !== tag.id))}
-        />
-      ))}
-      {versions.map((v) => (
-        <VersionBadge
-          key={v}
-          version={v}
-          className="h-6.5 max-w-60 px-2 text-sm"
-          onRemove={() => saveVersions(versions.filter((x) => x !== v))}
         />
       ))}
       <TagPicker

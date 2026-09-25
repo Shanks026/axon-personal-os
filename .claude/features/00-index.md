@@ -115,6 +115,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Note versions in the title row
+- In the note editor, version badges moved from the tags row to the **right end of the title row** (new `NoteVersionBadges`), matching the task card and dialog (the user's request). The "+ Version" pill stays in the tags row.
+
 ### 2026-09-25: Versions on notes
 - **Database:** `notes.versions` (text[], at most 10, GIN index), migration `notes_add_versions` (`20260925104452`), the same shape as `tasks.versions`. Advisors show no new warnings.
 - **Notes:**

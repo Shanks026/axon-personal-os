@@ -22,6 +22,7 @@ import { NoteActionsMenu } from '@/features/notes/components/NoteActionsMenu'
 import { NoteMetaRail } from '@/features/notes/components/NoteMetaRail'
 import { NoteTagsRow } from '@/features/notes/components/NoteTagsRow'
 import { NoteTitleInput } from '@/features/notes/components/NoteTitleInput'
+import { NoteVersionBadges } from '@/features/notes/components/NoteVersionBadges'
 import { NOTE_AUTOSAVE_DELAY } from '@/features/notes/constants'
 import { useNoteActions } from '@/features/notes/hooks/useNoteActions'
 import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
@@ -163,12 +164,17 @@ export function NoteEditor({ note }) {
     <div className="flex min-h-full flex-1">
       <div className="min-w-0 flex-1 px-4 pt-12 pb-24 md:px-16">
         <div className="mx-auto max-w-170">
-          <NoteTitleInput
-            value={title}
-            onChange={changeTitle}
-            onEnter={() => editorRef.current?.commands.focus('start')}
-            autoFocus={!note.title && !note.content_text}
-          />
+          <div className="flex items-start gap-3">
+            <div className="min-w-0 flex-1">
+              <NoteTitleInput
+                value={title}
+                onChange={changeTitle}
+                onEnter={() => editorRef.current?.commands.focus('start')}
+                autoFocus={!note.title && !note.content_text}
+              />
+            </div>
+            <NoteVersionBadges note={note} />
+          </div>
           <NoteTagsRow note={note} />
           <RichTextEditor
             value={note.content}
