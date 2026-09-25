@@ -145,7 +145,12 @@ export function TagPicker({
           </Command>
         </PopoverContent>
       </Popover>
-      <ManageTagsDialog open={manageOpen} onOpenChange={setManageOpen} spaceIds={spaceIds} />
+      <ManageTagsDialog
+        open={manageOpen}
+        onOpenChange={setManageOpen}
+        spaceIds={spaceIds}
+        createSpaceId={createSpaceId}
+      />
     </>
   )
 }

@@ -615,18 +615,18 @@ describe('ManageTagsDialog', () => {
     await waitFor(() => expect(db.calls).toContainEqual(['update:tags', 'tag1', { name: 'ui' }]))
   })
 
-  it('warns when narrowing a used tag to one space', async () => {
+  it('creates a tag in the current space, with no space picker', async () => {
     const user = userEvent.setup()
     const dialog = await openManage(user)
-    await user.click(within(dialog).getByLabelText('Scope of frontend'))
-    const listbox = within(await screen.findByRole('listbox'))
-    await user.click(await listbox.findByText('THMP'))
-    await waitFor(() =>
-      expect(db.calls).toContainEqual(['update:tags', 'tag1', { space_id: SPACE.id }]),
-    )
-    expect(
-      await within(dialog).findByText(/Items in other spaces keep this tag/),
-    ).toBeInTheDocument()
+    expect(within(dialog).queryByLabelText('Scope of frontend')).not.toBeInTheDocument()
+    await user.type(within(dialog).getByLabelText('New tag name'), 'backend{Enter}')
+    await waitFor(() => expect(db.calls.some((c) => c[0] === 'insert:tags')).toBe(true))
+    expect(db.calls.find((c) => c[0] === 'insert:tags')[1]).toMatchObject({
+      name: 'backend',
+      space_id: SPACE.id,
+    })
+    expect(within(dialog).getByLabelText('New tag name')).toHaveValue('')
+    expect(await within(dialog).findByLabelText('Rename backend')).toBeInTheDocument()
   })
 
   it('deletes a tag after confirming, with the usage count in the prompt', async () => {

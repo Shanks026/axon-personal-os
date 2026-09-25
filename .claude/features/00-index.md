@@ -117,6 +117,10 @@ Newest first. One entry per landed phase or planning change.
 - **Bug fix (user-reported):** the task dialog's hover-opened Status and Priority menus flickered non-stop. Radix DropdownMenu is modal by default, so it blocked pointer events on its own trigger, which fired mouseleave and closed it, then mouseenter reopened it. Hover-driven menus are now `modal={false}`, and this is recorded as a rule in `components.md`.
 - **New tasks default to Medium priority** (the user changed it from High).
 - **Tag picker:** the space/scope label is gone, and a selected tag shows a check icon on the right. The highlighted row no longer gets a background.
+- **Manage tags dialog:**
+  - The per-tag scope select (and its "narrowing" warning) is gone. A tag's space can no longer be changed after it's created.
+  - A **"New tag" row** at the top has a colour swatch (defaulting to the next free colour), a name field and Create, and Enter works too. The new tag goes to the space the picker was opened for (the task's space in the task dialog), otherwise the current space; in Global it becomes an all-spaces tag.
+  - `ManageTagsDialog` takes a new `createSpaceId` prop, which `TagPicker` passes through.
 
 ### 2026-09-25: Feature 04 follow-up 3: priority default, tag picker badges, checklist on create
 - **New tasks default to High priority** in the dialog. The DB default and board quick-add are unchanged (`none`).
