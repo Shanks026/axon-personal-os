@@ -275,13 +275,13 @@ Each of these maps to a shadcn primitive.
 - **Task dialog** (revised 2026-09-25 after the user reviewed it in the browser; they found the text "so small and heavy"):
   - **Height:** capped by `max-h-dialog` (a utility in `index.css`: `calc(100dvh - 4rem)`). The header and footer stay pinned, and only the middle (title → checklist) scrolls. The description textarea grows with its content and has no scroll of its own. Use the same pattern for any dialog whose content can grow.
   - The header is shadcn's default title and description (see `components.md`), with a ghost `icon-sm` close button beside it.
-  - The title input is `text-xl font-medium tracking-tight`, not semibold. The description is default `text-sm`.
+  - The task title input is `text-xl font-semibold tracking-tight` (the user asked for semibold, 2026-09-25, after trying medium). The description is default `text-sm`.
   - Under the description come the selected tags (`TagPill size="md"`: 26px tall, `text-sm`, removable), then the inline links field.
   - Property chips (`PropertyChip`) are **32px tall with `text-sm`**, never `text-xs`. The priority chip's dot is `size-2` (8px), smaller than the chip's 14px icons.
   - A new task's priority defaults to **Medium** in the dialog (the user changed it from High, 2026-09-25). The database default stays `none`, so board quick-add still creates tasks with no priority.
   - The checklist section appears in **both** modes. When creating a task, items are staged in the dialog (`StagedChecklist`) and bulk-inserted after the task is saved (`useCreateChecklistItems`).
   - The checklist has one disclosure header, "Checklist" in `font-medium`, followed by its progress, or "· saves as you go" while it's empty. There's no second title.
-  - **Weight rule for dialog and form text:** use `font-medium` for titles and headings. Keep `font-semibold` for page, section and card titles only.
+  - **Weight rule for dialog text:** the entity title being edited (the task title input) is `font-semibold`. Dialog headers, section headings and labels (the checklist header, for example) are `font-medium`.
 - **Empty state.** A dashed `border-strong` box with a 36px icon tile in the accent colour. Title (600), a one-line reason, and one primary action.
 - **Confirm dialog** (AlertDialog). Title, a one-line consequence, then Cancel plus a destructive button.
 - **Toast** (Sonner). `bg-card`, 12px radius, `shadow-md`. Icon, message, and an optional outlined action such as Undo.
@@ -293,6 +293,7 @@ Each of these maps to a shadcn primitive.
 - **Space-coloured UI** uses `--space-accent` or `--space-soft`. Per-item colours (tags, spaces in Global) go through the tint helper.
 - **Motion** values come only from `presets.js`, or the CSS variables that mirror it.
 - **Test both themes.** Every component must work in light and dark before it counts as done.
+- **Scrollbars** are styled once, app-wide, in `index.css` (the user's request, 2026-09-25: the default ones looked chunky). They're 10px wide with a 4px pill thumb inset by a transparent border, and no arrow buttons. The thumb is `--border-strong` at rest and `--faint` on hover, so dark mode follows automatically. Chromium and Safari use `::-webkit-scrollbar`, and Firefox gets `scrollbar-width: thin` inside `@supports not selector(::-webkit-scrollbar)`. Never set `scrollbar-width` or `scrollbar-color` on an element elsewhere, except `scrollbar-none` for hidden bars: Chrome ignores the pseudo-elements when either is present.
 - **Icon sizes:** 15px in rows, 13–14px in chips and buttons, 16px in empty-state tiles. Stroke width stays at the lucide default.
 - **Shortcut hints** always use `<Kbd shortcut="mod+k" />` from `components/shared`, never hardcoded glyphs. Modifiers render as **lucide icons** (Command, ArrowBigUp, Option, CornerDownLeft), matching the design's "⌘K". Screen readers get words.
 - **Space identity is an emoji, shown bare** (no tile or background). The space accent colour applies to UI chrome, not the emoji.

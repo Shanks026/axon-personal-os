@@ -178,7 +178,7 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
                   aria-invalid={!!errors.title}
                   autoFocus
                   autoComplete="off"
-                  className="w-full bg-transparent text-xl font-medium tracking-tight outline-none placeholder:text-faint"
+                  className="w-full bg-transparent text-xl font-semibold tracking-tight outline-none placeholder:text-faint"
                 />
               )}
             />

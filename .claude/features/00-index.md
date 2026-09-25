@@ -113,6 +113,10 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Thin themed scrollbars; semibold task title
+- **Scrollbars app-wide** (`index.css` base layer): thin (a 4px pill thumb), no arrow buttons, a transparent track. The thumb is `--border-strong` and turns `--faint` on hover, so dark mode follows automatically. Chromium and Safari use `::-webkit-scrollbar`; Firefox uses the standard properties behind `@supports`.
+- **Task dialog title** is back to `font-semibold` (the user's request). `design-system.md`'s weight rule now reads: the edited entity's title is semibold, and dialog headers and section headings are medium.
+
 ### 2026-09-25: Task dialog max height with a scrolling body
 - The task dialog is capped at the viewport minus 4rem, using a new `max-h-dialog` utility in `index.css`. Its header and footer (Create more, Save) stay pinned, and only the body scrolls, so a long checklist no longer pushes Save off-screen. The description textarea's own `max-h-60` scroll was removed to avoid a scroll inside a scroll.
 
