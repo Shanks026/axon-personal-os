@@ -273,6 +273,7 @@ Each of these maps to a shadcn primitive.
 - **Date picker** (Popover + Calendar), 260px wide. Quick chips first: Today, Tomorrow, Fri, Next week. The selected day is `bg-primary`; today uses red text with a muted background.
 - **Tag picker** (Popover + Command). Selected tags appear as chips inside the search input. Each option is the tag's **actual badge** (`TagPill size="md"`), not a colour dot plus plain text. It doesn't show the tag's space or scope, and selected tags get a **check icon on the right**. The highlighted row gets **no background** (all the user's requests, 2026-09-25). It ends with "Create "…"".
 - **Task dialog** (revised 2026-09-25 after the user reviewed it in the browser; they found the text "so small and heavy"):
+  - **Height:** capped by `max-h-dialog` (a utility in `index.css`: `calc(100dvh - 4rem)`). The header and footer stay pinned, and only the middle (title → checklist) scrolls. The description textarea grows with its content and has no scroll of its own. Use the same pattern for any dialog whose content can grow.
   - The header is shadcn's default title and description (see `components.md`), with a ghost `icon-sm` close button beside it.
   - The title input is `text-xl font-medium tracking-tight`, not semibold. The description is default `text-sm`.
   - Under the description come the selected tags (`TagPill size="md"`: 26px tall, `text-sm`, removable), then the inline links field.

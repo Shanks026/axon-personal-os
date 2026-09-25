@@ -113,6 +113,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Task dialog max height with a scrolling body
+- The task dialog is capped at the viewport minus 4rem, using a new `max-h-dialog` utility in `index.css`. Its header and footer (Create more, Save) stay pinned, and only the body scrolls, so a long checklist no longer pushes Save off-screen. The description textarea's own `max-h-60` scroll was removed to avoid a scroll inside a scroll.
+
 ### 2026-09-25: Feature 04 follow-up 4: menu flicker fix, Medium default, tag picker selection
 - **Bug fix (user-reported):** the task dialog's hover-opened Status and Priority menus flickered non-stop. Radix DropdownMenu is modal by default, so it blocked pointer events on its own trigger, which fired mouseleave and closed it, then mouseenter reopened it. Hover-driven menus are now `modal={false}`, and this is recorded as a rule in `components.md`.
 - **New tasks default to Medium priority** (the user changed it from High).

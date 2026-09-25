@@ -46,7 +46,10 @@ import { ChecklistSection } from '@/features/todos/components/ChecklistSection'
 export function TaskDialog({ open, onOpenChange, task, initialValues, onSuccess }) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent showCloseButton={false} className="gap-0 overflow-visible p-0 sm:max-w-160">
+      <DialogContent
+        showCloseButton={false}
+        className="flex max-h-dialog flex-col gap-0 overflow-hidden p-0 sm:max-w-160"
+      >
         <TaskForm
           task={task}
           initialValues={initialValues}
@@ -142,8 +145,9 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
         }
       }}
       noValidate
+      className="flex min-h-0 flex-1 flex-col"
     >
-      <div className="flex items-start gap-3 px-5 pt-5">
+      <div className="flex shrink-0 items-start gap-3 px-5 pt-5 pb-1">
         <div className="min-w-0 flex-1">
           <DialogHeader>
             <DialogTitle>{isEdit ? 'Edit task' : 'New task'}</DialogTitle>
@@ -159,92 +163,98 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
         </Button>
       </div>
 
-      <div className="flex flex-col gap-3 px-5 pt-5">
-        <div>
-          <Controller
-            name="title"
-            control={form.control}
-            render={({ field }) => (
-              <input
-                {...field}
-                placeholder="Task title"
-                aria-label="Task title"
-                aria-invalid={!!errors.title}
-                autoFocus
-                autoComplete="off"
-                className="w-full bg-transparent text-xl font-medium tracking-tight outline-none placeholder:text-faint"
-              />
+      {/* Only this middle part scrolls; the header and footer stay pinned. */}
+      <div className="min-h-0 flex-1 overflow-y-auto">
+        <div className="flex flex-col gap-3 px-5 pt-4">
+          <div>
+            <Controller
+              name="title"
+              control={form.control}
+              render={({ field }) => (
+                <input
+                  {...field}
+                  placeholder="Task title"
+                  aria-label="Task title"
+                  aria-invalid={!!errors.title}
+                  autoFocus
+                  autoComplete="off"
+                  className="w-full bg-transparent text-xl font-medium tracking-tight outline-none placeholder:text-faint"
+                />
+              )}
+            />
+            {errors.title && (
+              <p className="mt-1 text-xs text-destructive">{errors.title.message}</p>
             )}
+            <textarea
+              {...form.register('description_text')}
+              placeholder="Add description…"
+              aria-label="Description"
+              rows={2}
+              className="mt-1.5 field-sizing-content min-h-12 w-full resize-none bg-transparent leading-relaxed outline-none placeholder:text-faint"
+            />
+          </div>
+          <TagList
+            tags={selectedTags}
+            onRemove={(tag) => setTagIds(tagIds.filter((id) => id !== tag.id))}
           />
-          {errors.title && (
-            <p className="mt-1 text-xs text-destructive">{errors.title.message}</p>
-          )}
-          <textarea
-            {...form.register('description_text')}
-            placeholder="Add description…"
-            aria-label="Description"
-            rows={2}
-            className="mt-1.5 field-sizing-content max-h-60 min-h-12 w-full resize-none bg-transparent leading-relaxed outline-none placeholder:text-faint"
+          <LinksField
+            taskId={task?.id}
+            links={links}
+            onLinksChange={setLinks}
+            onCreate={(values, onDone) => createLink.mutate(values, { onSuccess: onDone })}
+            onDelete={(id) => deleteLink.mutate(id)}
           />
         </div>
-        <TagList
-          tags={selectedTags}
-          onRemove={(tag) => setTagIds(tagIds.filter((id) => id !== tag.id))}
-        />
-        <LinksField
-          taskId={task?.id}
-          links={links}
-          onLinksChange={setLinks}
-          onCreate={(values, onDone) => createLink.mutate(values, { onSuccess: onDone })}
-          onDelete={(id) => deleteLink.mutate(id)}
-        />
+
+        <div className="flex flex-wrap gap-1.5 px-5 pt-4 pb-5">
+          <StatusMenu value={status} onChange={(v) => form.setValue('status', v)} hoverOpen>
+            <PropertyChip
+              icon={StatusIcon}
+              iconClassName={textClasses(TASK_STATUS_MAP[status].color)}
+            >
+              {TASK_STATUS_MAP[status].label}
+            </PropertyChip>
+          </StatusMenu>
+          <PriorityMenu value={priority} onChange={(v) => form.setValue('priority', v)} hoverOpen>
+            <PropertyChip
+              icon={PriorityIcon}
+              iconProps={{ color: TASK_PRIORITY_MAP[priority].color }}
+              iconClassName="size-2"
+              empty={priority === 'none'}
+            >
+              {priority === 'none' ? 'Priority' : TASK_PRIORITY_MAP[priority].label}
+            </PropertyChip>
+          </PriorityMenu>
+          <DateChip
+            form={form}
+            name="start_date"
+            label="Start"
+            icon={CalendarArrowUp}
+            weekStartsOn={weekStartsOn}
+          />
+          <DateChip
+            form={form}
+            name="due_date"
+            label="Due"
+            icon={CalendarDays}
+            weekStartsOn={weekStartsOn}
+          />
+          <TagsChip spaceId={defaultSpace} value={tagIds} onChange={setTagIds} />
+        </div>
+        {(errors.due_date || errors.space_id) && (
+          <p className="-mt-2 px-5 pb-3 text-xs text-destructive">
+            {errors.due_date?.message ?? errors.space_id?.message}
+          </p>
+        )}
+
+        {isEdit ? (
+          <ChecklistSection taskId={task.id} spaceId={task.space_id} />
+        ) : (
+          <ChecklistSection staged={{ items: checklist, onChange: setChecklist }} />
+        )}
       </div>
 
-      <div className="flex flex-wrap gap-1.5 px-5 pt-4 pb-5">
-        <StatusMenu value={status} onChange={(v) => form.setValue('status', v)} hoverOpen>
-          <PropertyChip icon={StatusIcon} iconClassName={textClasses(TASK_STATUS_MAP[status].color)}>
-            {TASK_STATUS_MAP[status].label}
-          </PropertyChip>
-        </StatusMenu>
-        <PriorityMenu value={priority} onChange={(v) => form.setValue('priority', v)} hoverOpen>
-          <PropertyChip
-            icon={PriorityIcon}
-            iconProps={{ color: TASK_PRIORITY_MAP[priority].color }}
-            iconClassName="size-2"
-            empty={priority === 'none'}
-          >
-            {priority === 'none' ? 'Priority' : TASK_PRIORITY_MAP[priority].label}
-          </PropertyChip>
-        </PriorityMenu>
-        <DateChip
-          form={form}
-          name="start_date"
-          label="Start"
-          icon={CalendarArrowUp}
-          weekStartsOn={weekStartsOn}
-        />
-        <DateChip
-          form={form}
-          name="due_date"
-          label="Due"
-          icon={CalendarDays}
-          weekStartsOn={weekStartsOn}
-        />
-        <TagsChip spaceId={defaultSpace} value={tagIds} onChange={setTagIds} />
-      </div>
-      {(errors.due_date || errors.space_id) && (
-        <p className="-mt-2 px-5 pb-3 text-xs text-destructive">
-          {errors.due_date?.message ?? errors.space_id?.message}
-        </p>
-      )}
-
-      {isEdit ? (
-        <ChecklistSection taskId={task.id} spaceId={task.space_id} />
-      ) : (
-        <ChecklistSection staged={{ items: checklist, onChange: setChecklist }} />
-      )}
-
-      <div className="flex h-13 items-center gap-2.5 border-t px-4">
+      <div className="flex h-13 shrink-0 items-center gap-2.5 border-t px-4">
         {!isEdit && (
           <label className="flex items-center gap-2 text-muted-foreground">
             <Switch checked={createMore} onCheckedChange={setCreateMore} size="sm" />
