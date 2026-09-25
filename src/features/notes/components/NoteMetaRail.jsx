@@ -2,6 +2,7 @@ import { formatDate, formatRelative } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import { LinkedTasksSection } from '@/features/links/components/LinkedTasksSection'
+import { NoteTagsRow } from '@/features/notes/components/NoteTagsRow'
 import { NoteVersionBadges } from '@/features/notes/components/NoteVersionBadges'
 
 function Row({ label, children }) {
@@ -14,8 +15,8 @@ function Row({ label, children }) {
 }
 
 /**
- * The editor's side panel: the note's space, Created, Updated, Words and Versions, then its Linked tasks
- * (moved below the details at the user's request, 2026-09-26). Rendered in the 280px rail on large screens and in
+ * The editor's side panel: the note's space, Created, Updated, Words, Tags and Versions (all of a note's metadata), then its Linked tasks
+ * (moved below the details at the user's request, 2026-09-26). Rendered in the 352px rail on large screens and in
  * a Sheet below `lg`.
  */
 export function NoteMetaRail({ note, space, words, className }) {
@@ -31,6 +32,7 @@ export function NoteMetaRail({ note, space, words, className }) {
       <Row label="Created">{formatDate(note.created_at)}</Row>
       <Row label="Updated">{formatRelative(note.updated_at)}</Row>
       <Row label="Words">{words.toLocaleString()}</Row>
+      <NoteTagsRow note={note} />
       <NoteVersionBadges note={note} />
       <div className="my-2 border-t" />
       <LinkedTasksSection note={note} />

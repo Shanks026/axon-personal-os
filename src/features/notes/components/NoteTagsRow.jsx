@@ -1,27 +1,13 @@
 import { useMemo } from 'react'
 import { Plus } from 'lucide-react'
-import { formatRelative } from '@/lib/dates'
 import { TagPill } from '@/components/shared/TagPill'
 import { TagPicker } from '@/components/shared/TagPicker'
 import { useSetNoteTags, useTags } from '@/features/tags/api'
 
-function AddPill({ children, ...props }) {
-  return (
-    <button
-      type="button"
-      className="flex h-6.5 items-center gap-1 rounded-full border border-dashed border-border-strong px-2.5 text-faint outline-none hover:border-faint hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
-      {...props}
-    >
-      <Plus className="size-3.25" aria-hidden />
-      {children}
-    </button>
-  )
-}
-
 /**
- * Under the title (design 07b): the note's tags (removable), a dashed "+ Tag" picker (tags can be
- * created in the note's space), and "Edited 2h ago" on its own line below. Versions live in the
- * Details rail (`NoteVersionBadges`).
+ * The "Tags" row in the note's Details rail (moved from under the title at the user's request,
+ * 2026-09-26, so a note's metadata sits in one place, as on the task page): removable pills and a
+ * dashed "+ Tag" picker that can also create tags in the note's space.
  */
 export function NoteTagsRow({ note }) {
   const spaceIds = useMemo(() => [note.space_id], [note.space_id])
@@ -29,29 +15,36 @@ export function NoteTagsRow({ note }) {
   const setTags = useSetNoteTags()
   const byId = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags])
   const selected = note.tag_ids.map((id) => byId.get(id)).filter(Boolean)
-  const saveTags = (tagIds) => setTags.mutate({ noteId: note.id, tagIds })
+  const save = (tagIds) => setTags.mutate({ noteId: note.id, tagIds })
 
   return (
-    <div className="mt-3.5">
-      <div className="flex flex-wrap items-center gap-1.5">
+    <div className="flex items-start gap-2">
+      <span className="flex-1 pt-0.5 text-muted-foreground">Tags</span>
+      <div className="flex max-w-3/5 flex-wrap items-center justify-end gap-1">
         {selected.map((tag) => (
           <TagPill
             key={tag.id}
             tag={tag}
-            size="md"
-            onRemove={() => saveTags(note.tag_ids.filter((id) => id !== tag.id))}
+            onRemove={() => save(note.tag_ids.filter((id) => id !== tag.id))}
           />
         ))}
         <TagPicker
           value={note.tag_ids}
-          onChange={saveTags}
+          onChange={save}
           spaceIds={spaceIds}
           createSpaceId={note.space_id}
-          trigger={<AddPill>Tag</AddPill>}
+          align="end"
+          trigger={
+            <button
+              type="button"
+              className="flex h-6 items-center gap-1 rounded-full border border-dashed border-border-strong px-2 text-xs text-faint outline-none hover:border-faint hover:text-muted-foreground focus-visible:ring-2 focus-visible:ring-ring"
+            >
+              <Plus className="size-3" aria-hidden />
+              Tag
+            </button>
+          }
         />
       </div>
-      {/* Its own line, so it never wraps in tight against the pills. */}
-      <p className="mt-3 font-mono text-xs text-faint">Edited {formatRelative(note.updated_at)}</p>
     </div>
   )
 }

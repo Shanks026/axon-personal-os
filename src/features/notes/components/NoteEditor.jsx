@@ -29,7 +29,6 @@ import { collectTaskMentionIds, sameIds } from '@/features/links/utils'
 import { useDiscardNote, useUpdateNote } from '@/features/notes/api'
 import { NoteActionsMenu } from '@/features/notes/components/NoteActionsMenu'
 import { NoteMetaRail } from '@/features/notes/components/NoteMetaRail'
-import { NoteTagsRow } from '@/features/notes/components/NoteTagsRow'
 import { NOTE_AUTOSAVE_DELAY } from '@/features/notes/constants'
 import { useNoteActions } from '@/features/notes/hooks/useNoteActions'
 import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
@@ -234,7 +233,6 @@ export function NoteEditor({ note }) {
               />
             </div>
           </div>
-          <NoteTagsRow note={note} />
           <RichTextEditor
             value={note.content}
             onChange={changeContent}
@@ -248,13 +246,13 @@ export function NoteEditor({ note }) {
       </div>
 
       {railOpen && (
-        <aside className="hidden w-70 shrink-0 border-l p-5 lg:block">
+        <aside className="hidden w-88 shrink-0 border-l p-5 lg:block">
           <NoteMetaRail note={note} space={space} words={words} className="sticky top-5" />
         </aside>
       )}
       <EditorShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="right" className="data-[side=right]:w-70">
+        <SheetContent side="right" className="overflow-y-auto data-[side=right]:w-88">
           <SheetHeader>
             <SheetTitle>Details</SheetTitle>
             <SheetDescription>About this note.</SheetDescription>
