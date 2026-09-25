@@ -9,6 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
 import { TaskPriorityPill } from '@/features/tasks/components/TaskPills'
 import { isClosed, linkHost } from '@/features/tasks/utils'
+import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
 
 // Controls inside a draggable card: keep their pointer and key presses from starting a drag.
 const stopDrag = {
@@ -21,7 +22,16 @@ const stopDrag = {
  * footer with the space (Global only), the due label and a hover menu. `overlay` is the lifted
  * copy.
  */
-export function BoardCard({ task, space, showSpace, tags, onEdit, onDelete, overlay = false }) {
+export function BoardCard({
+  task,
+  space,
+  showSpace,
+  tags,
+  progress,
+  onEdit,
+  onDelete,
+  overlay = false,
+}) {
   const closed = isClosed(task)
   const hasTop = task.priority !== 'none' || task.external_url
   return (
@@ -73,6 +83,7 @@ export function BoardCard({ task, space, showSpace, tags, onEdit, onDelete, over
             <span className="truncate text-xs font-medium">{space?.name}</span>
           </>
         )}
+        <ChecklistProgressBadge progress={progress} />
         <div className="flex-1" />
         <DueLabel date={task.due_date} completedAt={task.completed_at} closed={closed} />
         {!overlay && (

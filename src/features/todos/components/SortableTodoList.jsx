@@ -18,9 +18,8 @@ import { AnimatePresence, motion } from 'motion/react'
 import { listItem } from '@/components/motion/presets'
 import { positionBetween } from '@/lib/position'
 import { useReorderTodo } from '@/features/todos/api'
-import { TodoItem } from '@/features/todos/components/TodoItem'
 
-function SortableRow({ todo, flash, ...itemProps }) {
+function SortableRow({ todo, renderItem }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: todo.id,
   })
@@ -33,22 +32,19 @@ function SortableRow({ todo, flash, ...itemProps }) {
         opacity: isDragging ? 0.5 : 1,
       }}
     >
-      <TodoItem
-        todo={todo}
-        flash={flash}
-        dragHandleProps={{ ...attributes, ...listeners }}
-        {...itemProps}
-      />
+      {renderItem(todo, { ...attributes, ...listeners })}
     </div>
   )
 }
 
 /**
- * Drag reorder within one open group (design: cross-group drops aren't allowed — change the due
- * date to move a todo between groups instead). Enter/exit uses `AnimatePresence`; the live reorder
- * itself is dnd-kit's own transform, so it never fights `motion`'s `layout` animation.
+ * Drag reorder within one flat list — a Todos-page group, or a task's checklist (design: cross-
+ * group drops aren't allowed on the Todos page; change the due date to move a todo between
+ * groups instead). `renderItem(todo, dragHandleProps)` renders the row (`TodoItem` or
+ * `ChecklistItem`). Enter/exit uses `AnimatePresence`; the live reorder itself is dnd-kit's own
+ * transform, so it never fights `motion`'s `layout` animation.
  */
-export function SortableTodoList({ todos, flashId, ...itemProps }) {
+export function SortableTodoList({ todos, renderItem }) {
   const reorder = useReorderTodo()
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
@@ -87,7 +83,7 @@ export function SortableTodoList({ todos, flashId, ...itemProps }) {
               animate="animate"
               exit="exit"
             >
-              <SortableRow todo={todo} flash={flashId === todo.id} {...itemProps} />
+              <SortableRow todo={todo} renderItem={renderItem} />
             </motion.div>
           ))}
         </AnimatePresence>

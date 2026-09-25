@@ -9,9 +9,10 @@ import { PriorityMenu, StatusMenu, TaskActionsMenu } from '@/features/tasks/comp
 import { TaskPriorityIcon, TaskStatusIcon } from '@/features/tasks/components/TaskPills'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP } from '@/features/tasks/constants'
 import { isClosed, linkHost } from '@/features/tasks/utils'
+import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
 
 /** Dense list row (design Foundations → task row): priority, status, title, tags, meta, due. */
-export function TaskRow({ task, space, showSpace, tags, onEdit, onSetField, onDelete }) {
+export function TaskRow({ task, space, showSpace, tags, progress, onEdit, onSetField, onDelete }) {
   const closed = isClosed(task)
   return (
     <div className="group flex h-11 items-center gap-2.5 border-b px-3 transition-colors hover:bg-muted">
@@ -44,6 +45,7 @@ export function TaskRow({ task, space, showSpace, tags, onEdit, onSetField, onDe
         {task.title}
       </button>
       <TagPillGroup tags={tags} max={2} />
+      <ChecklistProgressBadge progress={progress} />
       {showSpace && <SpaceBadge space={space} />}
       {task.external_url && (
         <Tooltip>

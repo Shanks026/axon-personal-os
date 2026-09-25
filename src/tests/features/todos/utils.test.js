@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { groupTodos } from '@/features/todos/utils'
+import { groupTodos, toProgressMap } from '@/features/todos/utils'
 
 const todo = (id, extra = {}) => ({ id, position: 1000, is_done: false, due_date: null, ...extra })
 
@@ -40,5 +40,23 @@ describe('groupTodos', () => {
     const groups = groupTodos(todos, today)
     expect(groups.someday.map((t) => t.id)).toEqual(['b', 'a'])
     expect(groups.done.map((t) => t.id)).toEqual(['newer', 'older'])
+  })
+})
+
+describe('toProgressMap', () => {
+  it('counts done and total per task', () => {
+    const rows = [
+      { id: 'd1', task_id: 't1', is_done: true },
+      { id: 'd2', task_id: 't1', is_done: false },
+      { id: 'd3', task_id: 't2', is_done: false },
+    ]
+    const map = toProgressMap(rows)
+    expect(map.get('t1')).toEqual({ done: 1, total: 2 })
+    expect(map.get('t2')).toEqual({ done: 0, total: 1 })
+    expect(map.has('t3')).toBe(false)
+  })
+
+  it('returns an empty map for no rows', () => {
+    expect(toProgressMap([]).size).toBe(0)
   })
 })

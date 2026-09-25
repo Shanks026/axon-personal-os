@@ -54,6 +54,7 @@ export function TaskBoard({
   statuses,
   actions,
   tagsById,
+  progressByTask,
   onEdit,
   onCreate,
   windowed,
@@ -180,6 +181,7 @@ export function TaskBoard({
     space: spaceById.get(task.space_id),
     showSpace: isGlobal,
     tags: task.tag_ids?.map((id) => tagsById.get(id)).filter(Boolean),
+    progress: progressByTask?.get(task.id),
     onEdit,
     onDelete: actions.remove,
   })
@@ -242,6 +244,7 @@ export function TaskBoard({
               space={spaceById.get(active.space_id)}
               showSpace={isGlobal}
               tags={active.tag_ids?.map((id) => tagsById.get(id)).filter(Boolean)}
+              progress={progressByTask?.get(active.id)}
               overlay
             />
           </motion.div>

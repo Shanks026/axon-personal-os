@@ -18,6 +18,7 @@ import { PriorityMenu, StatusMenu } from '@/features/tasks/components/TaskMenus'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP } from '@/features/tasks/constants'
 import { taskSchema } from '@/features/tasks/schemas'
 import { textToDoc } from '@/features/tasks/utils'
+import { ChecklistSection } from '@/features/todos/components/ChecklistSection'
 
 /**
  * Create (no `task`) or edit a task (design 04f, Linear-style). Mountable standalone:
@@ -207,6 +208,8 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
           {errors.due_date?.message ?? errors.external_url?.message ?? errors.space_id?.message}
         </p>
       )}
+
+      {isEdit && <ChecklistSection taskId={task.id} spaceId={task.space_id} />}
 
       <div className="flex h-13 items-center gap-2.5 border-t px-4">
         {!isEdit && (

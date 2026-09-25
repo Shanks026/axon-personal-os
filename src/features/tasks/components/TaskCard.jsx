@@ -7,13 +7,14 @@ import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip
 import { PriorityMenu, StatusMenu, TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
 import { TaskPriorityPill, TaskStatusPill } from '@/features/tasks/components/TaskPills'
 import { isClosed, linkHost } from '@/features/tasks/utils'
+import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
 
 /**
  * Grid card (design 04a/G2): status + priority pills, MR chip and menu on top; title; a 2-line
- * description; tags; a dashed footer with the space and the due label. The card body opens
- * `onEdit`.
+ * description; tags; a dashed footer with the space, checklist progress and the due label. The
+ * card body opens `onEdit`.
  */
-export function TaskCard({ task, space, tags, onEdit, onSetField, onDelete }) {
+export function TaskCard({ task, space, tags, progress, onEdit, onSetField, onDelete }) {
   const closed = isClosed(task)
   return (
     <article
@@ -95,6 +96,7 @@ export function TaskCard({ task, space, tags, onEdit, onSetField, onDelete }) {
       <footer className="pointer-events-none relative mt-4 flex items-center gap-2 border-t border-dashed border-border-strong pt-3.5">
         <SpaceIcon icon={space?.icon} size="sm" />
         <span className="truncate font-medium">{space?.name}</span>
+        <ChecklistProgressBadge progress={progress} />
         <div className="flex-1" />
         <DueLabel date={task.due_date} completedAt={task.completed_at} closed={closed} />
       </footer>

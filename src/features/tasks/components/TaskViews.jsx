@@ -11,7 +11,7 @@ import { TASK_STATUS_MAP } from '@/features/tasks/constants'
 import { groupTasksByStatus } from '@/features/tasks/utils'
 
 /** 3-column card grid (design 04a/04b). Cards animate in/out and reflow with `layout`. */
-export function TaskGrid({ tasks, actions, tagsById, onEdit }) {
+export function TaskGrid({ tasks, actions, tagsById, progressByTask, onEdit }) {
   const { spaceById } = useSpace()
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -30,6 +30,7 @@ export function TaskGrid({ tasks, actions, tagsById, onEdit }) {
               task={task}
               space={spaceById.get(task.space_id)}
               tags={task.tag_ids?.map((id) => tagsById.get(id)).filter(Boolean)}
+              progress={progressByTask?.get(task.id)}
               onEdit={onEdit}
               onSetField={actions.setField}
               onDelete={actions.remove}
@@ -42,7 +43,15 @@ export function TaskGrid({ tasks, actions, tagsById, onEdit }) {
 }
 
 /** Status-grouped list (the dense view). Group collapse persists per device. */
-export function TaskList({ tasks, actions, tagsById, onEdit, windowed, onShowAllCompleted }) {
+export function TaskList({
+  tasks,
+  actions,
+  tagsById,
+  progressByTask,
+  onEdit,
+  windowed,
+  onShowAllCompleted,
+}) {
   const { isGlobal, spaceById } = useSpace()
   const [collapsed, setCollapsed] = useLocalStorage('axon:tasks:collapsed', ['cancelled'])
   const groups = groupTasksByStatus(tasks).filter((g) => g.tasks.length > 0)
@@ -94,6 +103,7 @@ export function TaskList({ tasks, actions, tagsById, onEdit, windowed, onShowAll
                           space={spaceById.get(task.space_id)}
                           showSpace={isGlobal}
                           tags={task.tag_ids?.map((id) => tagsById.get(id)).filter(Boolean)}
+                          progress={progressByTask?.get(task.id)}
                           onEdit={onEdit}
                           onSetField={actions.setField}
                           onDelete={actions.remove}

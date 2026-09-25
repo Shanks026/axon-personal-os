@@ -20,7 +20,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 03 | Spaces, Global view and App Shell | [03-spaces-and-shell.md](03-spaces-and-shell.md) | 02 | ✅ Complete |
 | **Wave 2: Capture** | | | | |
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | ✅ Complete |
-| 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | 🟡 Phase 1 ✅ · Phase 2 next |
+| 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | ✅ Complete |
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | 🔵 Planned |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🔵 Planned |
 | **Wave 3: Time** | | | | |
@@ -111,6 +111,16 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-25: Feature 05 Phase 2: Task checklists — Feature 05 complete
+- **`TodoChecklist`** (add, toggle, reorder, inline edit, delete + Undo, live "2/4" progress), mounted in `TaskDialog`'s edit mode as a collapsible "Checklist" section that saves independently of the dialog's own submit.
+- **`ChecklistProgressBadge`** ("2/4" with a `list-checks` icon, ok-toned when complete) on task rows, grid cards and board cards, backed by a new `useChecklistProgress` query that patches optimistically on toggle.
+- **New components:** `TodoChecklist`, `ChecklistSection`, `ChecklistItem`, `ChecklistProgress`, `ChecklistProgressBadge`. `SortableTodoList` was generalised (a `renderItem` prop) so the checklist reuses Phase 1's drag-reorder wiring instead of duplicating it.
+- **Two real bugs fixed, surfaced while testing:**
+  - `AnimatedCheckbox`'s check-off animation used a 3-keyframe spring, which Motion doesn't support (throws at runtime) — **present since Phase 1**; checking a todo may have been broken in the browser the whole time. Fixed with a tween transition for that one animation.
+  - Sonner toasts (including the Undo button) were unclickable while a modal Radix Dialog was open, because Radix locks `body` pointer events and Sonner's portal isn't part of its layer tree. Fixed with an inline `pointerEvents: 'auto'` override in `components/ui/sonner.jsx` — this fixes Undo everywhere a toast appears over an open dialog, not just the checklist.
+- **Tests:** 212.
+- **Manual check for you:** please re-verify checking a todo on the Todos page in the browser, now that the animation bug is fixed.
 
 ### 2026-09-24: Feature 05 Phase 1: Todos page
 - **Migration `20260924113120_create_todos`:** the `todos` table (standalone or a task's checklist item via `task_id`), with two triggers: `todos_before_write` (maintains `done_at`; a checklist item's `space_id` always follows its task) and `tasks_cascade_to_todos` (a task's space move or soft delete/restore cascades to its open checklist items). Owner RLS. Verified in a rolled-back transaction; advisors clean.

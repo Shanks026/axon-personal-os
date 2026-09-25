@@ -21,3 +21,15 @@ export function groupTodos(todos, today) {
   groups.done.sort((a, b) => new Date(b.done_at) - new Date(a.done_at))
   return groups
 }
+
+/** `{ task_id, is_done }[]` → `Map<taskId, { done, total }>`, for checklist progress badges. */
+export function toProgressMap(rows) {
+  const map = new Map()
+  for (const { task_id, is_done } of rows) {
+    const entry = map.get(task_id) ?? { done: 0, total: 0 }
+    entry.total += 1
+    if (is_done) entry.done += 1
+    map.set(task_id, entry)
+  }
+  return map
+}

@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/05-todos.md`
-**Status**: 🟡 Phase 1 ✅ · Phase 2 next
+**Status**: ✅ Complete
 **Depends on**: 04
 **Last Updated**: September 2026
 
@@ -245,7 +245,7 @@ src/features/todos/
 
 ---
 
-## Phase 2: Task Checklists
+## Phase 2: Task Checklists ✅ Complete
 
 ### Goal
 A task can carry a checklist of todos with add, toggle, reorder, delete and a live "3/5" progress count. The reusable `TodoChecklist` is mounted in `TaskDialog` (edit mode) now and on the task detail page in Feature 07. Task rows and board cards show a small progress badge when a task has checklist items.
@@ -306,16 +306,28 @@ None.
 - Checklist templates: backlog
 
 ### 2.7 Checklist: Before Marking Complete
-- [ ] `TodoChecklist` adds, toggles, edits, reorders and deletes items; progress updates live
-- [ ] Checklist items also appear on the Todos page with the "↳ task" chip (unless hidden)
-- [ ] Task rows and board cards show "done/total" only for tasks with items, and update instantly on toggle
-- [ ] Deleting a checklist task and pressing Undo restores its items and the badge
-- [ ] `toProgressMap` has unit tests
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` status and changelog are updated
+- [x] `TodoChecklist` adds, toggles, edits, reorders and deletes items; progress updates live (tests). Reorder's position maths and its optimistic mutation are tested; a real drag can't run in jsdom.
+- [x] Checklist items also appear on the Todos page with the "↳ task" chip (unless hidden) — unchanged from Phase 1, which already built this
+- [x] Task rows, grid cards and board cards show "done/total" only for tasks with items, and update instantly on toggle (tests). The grid card also got the badge, matching G2's card spec, which the Phase 1 doc's component list didn't call out explicitly
+- [x] Deleting a checklist item and pressing Undo restores it (test). A checklist *task's* delete/restore/space-move was already covered by Phase 1's `todoKeys` invalidation in `useDeleteTask`/`useRestoreTask`/`useUpdateTask`
+- [x] `toProgressMap` has unit tests
+- [x] `npm run lint`, `npm test` (212 tests) and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` status and changelog are updated — **Feature 05 is now complete**
 
-**Stop here. Show the result and wait for approval.**
+### Implementation Notes (Phase 2)
+
+**Two real bugs surfaced while writing tests, both fixed — one is a retroactive fix to Phase 1:**
+- **Critical, affects Phase 1 too:** `AnimatedCheckbox`'s "pop" animation (`scale: [1, 1.08, 1]`) was paired with `springs.snappy`, a spring transition. Motion's spring/inertia transitions only support two keyframes, not three, and throw at runtime the moment you check a box — in the real browser, not just in tests. This has been true since Phase 1 built the component; nothing in Phase 1's own tests happened to surface it (see below). Fixed by giving the 3-keyframe pop its own tween transition (duration-based, not spring) while leaving everything else spring-driven. **Please re-verify checking a todo on the Todos page**, not just the new checklist, now that this is fixed.
+- **Sonner toasts were unclickable while a modal Radix Dialog was open.** Radix's `DismissableLayer` sets `document.body.style.pointerEvents = 'none'` while a modal layer (like `TaskDialog`) is open, and only restores it for nodes it recognises as part of that same layer tree. Sonner's toaster is a separate, sibling portal, so it inherited `none` and its buttons (including Undo) stopped responding — only surfaced now because deleting a checklist item is the first Undo-toast action that happens *while a dialog stays open*. Fixed with the standard workaround: an inline `pointerEvents: 'auto'` on the Toaster's root in `src/components/ui/sonner.jsx` (it always wins over an inherited value). This fixes Undo everywhere a toast can appear over an open dialog, not just here.
+- **Why Phase 1 didn't catch the checkbox bug:** its own tests only ever *unchecked* an item or checked one without a following assertion that waited past the animation's microtask queue before the test ended; the throw became an unhandled rejection that vitest didn't attach to a specific assertion. Building Phase 2's tests, which check an item and then immediately assert on the live progress count, forced the animation to run to completion inside the test's own `waitFor`, which is what surfaced it.
+- **`SortableTodoList` was generalised** to take `renderItem(todo, dragHandleProps)` instead of being hardcoded to `TodoItem`, so `TodoChecklist` could reuse the exact same dnd-kit wiring (sensors, modifiers, drag-end position math) for `ChecklistItem` rows instead of duplicating it.
+- **`AnimatedCheckbox` gained a `size` prop** (`default` 17px/rounded-md for the Todos page, `sm` 15px/rounded-sm for the compact checklist row), matching the two sizes the design actually uses (`Todos.dc.html` vs `Task Detail.dc.html`).
+- **The checklist's progress cache stores raw `{ id, task_id, is_done }` rows, not the reduced map,** so `useToggleTodo` can patch one row and let `toProgressMap` (applied via React Query's `select`) recompute the counts on read, instead of hand-rolling map arithmetic in the optimistic update.
+- **`ChecklistProgressBadge` uses `list-checks`** (the icon the source design actually shows in the card footer), not `CheckSquare` as this doc's plan said before the design was checked.
+- **The "Checklist" section in `TaskDialog`** is a small collapsible (`ChecklistSection`, in `features/todos/components/` since it's todos-owned chrome around `TodoChecklist`), open by default, with a hint that it saves immediately and doesn't depend on the dialog's own submit.
+
+**Feature 05 (Todos) is now complete.**
 
 ---
 

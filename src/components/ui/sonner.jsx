@@ -33,7 +33,10 @@ const Toaster = ({
           "--normal-bg": "var(--popover)",
           "--normal-text": "var(--popover-foreground)",
           "--normal-border": "var(--border)",
-          "--border-radius": "var(--radius)"
+          "--border-radius": "var(--radius)",
+          // A modal Radix Dialog sets `body { pointer-events: none }` while open (e.g. deleting
+          // a checklist item from inside TaskDialog); an inline override keeps toasts clickable.
+          pointerEvents: "auto"
         }
       }
       toastOptions={{

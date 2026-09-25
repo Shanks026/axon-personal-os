@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase'
 import { daysAgoISO, toISODate } from '@/lib/dates'
 import { positionAfterLast } from '@/lib/position'
 import { DONE_WINDOW_DAYS } from '@/features/todos/constants'
+import { toProgressMap } from '@/features/todos/utils'
 
 export const todoKeys = {
   all: ['todos'],
@@ -45,6 +46,31 @@ export function useTodos({ spaceIds, taskId, includeDone = true, checklist } = {
     queryKey: todoKeys.list(params),
     queryFn: () => fetchTodos(params),
     enabled: !!taskId || spaceIds?.length > 0,
+  })
+}
+
+/**
+ * Every checklist todo's done state, scoped to `spaceIds`. Reduced to `Map<taskId, { done, total }>`
+ * on read (`select`); the cache itself keeps the raw rows, so `useToggleTodo` can patch a single
+ * row optimistically without recomputing the whole map by hand.
+ */
+export async function fetchChecklistProgress({ spaceIds }) {
+  const { data, error } = await supabase
+    .from('todos')
+    .select('id, task_id, is_done')
+    .in('space_id', spaceIds)
+    .not('task_id', 'is', null)
+    .is('deleted_at', null)
+  if (error) throw error
+  return data
+}
+
+export function useChecklistProgress({ spaceIds } = {}) {
+  return useQuery({
+    queryKey: todoKeys.progress({ spaceIds }),
+    queryFn: () => fetchChecklistProgress({ spaceIds }),
+    select: toProgressMap,
+    enabled: spaceIds?.length > 0,
   })
 }
 
@@ -122,13 +148,36 @@ function useOptimisticPatch(patchLocal, mutationFn, errorMessage) {
   })
 }
 
-/** Check / uncheck, optimistic: `done_at` moves locally so the group re-sorts instantly. */
+const isProgressQuery = (query) => query.queryKey[1] === 'progress'
+
+/**
+ * Check / uncheck, optimistic: `done_at` moves locally so the group re-sorts instantly, and a
+ * checklist item's row in every cached `todoKeys.progress` query updates too, so its task's
+ * badge changes without waiting for a refetch. Both cache families roll back together on error.
+ */
 export function useToggleTodo() {
-  return useOptimisticPatch(
-    (t, { is_done }) => ({ ...t, is_done, done_at: is_done ? new Date().toISOString() : null }),
-    ({ id, is_done }) => updateTodo(id, { is_done }),
-    'Could not update todo',
-  )
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, is_done }) => updateTodo(id, { is_done }),
+    onMutate: async ({ id, is_done }) => {
+      await qc.cancelQueries({ queryKey: todoKeys.all })
+      const snapshots = qc.getQueriesData({ queryKey: todoKeys.all })
+      qc.setQueriesData({ queryKey: todoKeys.lists() }, (old) =>
+        old?.map((t) =>
+          t.id === id ? { ...t, is_done, done_at: is_done ? new Date().toISOString() : null } : t,
+        ),
+      )
+      qc.setQueriesData({ queryKey: todoKeys.all, predicate: isProgressQuery }, (old) =>
+        old?.map((r) => (r.id === id ? { ...r, is_done } : r)),
+      )
+      return { snapshots }
+    },
+    onError: (err, _vars, ctx) => {
+      ctx?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data))
+      toast.error(err.message ?? 'Could not update todo')
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: todoKeys.all }),
+  })
 }
 
 /** Drag reorder within a group, optimistic. */

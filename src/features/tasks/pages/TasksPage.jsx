@@ -10,6 +10,7 @@ import { Button } from '@/components/ui/button'
 import { usePreferences } from '@/features/settings/api'
 import { useTags } from '@/features/tags/api'
 import { useTasks } from '@/features/tasks/api'
+import { useChecklistProgress } from '@/features/todos/api'
 import { TaskBoard } from '@/features/tasks/components/TaskBoard'
 import { TaskDialog } from '@/features/tasks/components/TaskDialog'
 import { TasksSkeleton } from '@/features/tasks/components/TasksSkeleton'
@@ -44,6 +45,7 @@ export default function TasksPage() {
   })
   const { data: tags = [] } = useTags({ spaceIds: scopeSpaceIds })
   const tagsById = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags])
+  const { data: progressByTask } = useChecklistProgress({ spaceIds: scopeSpaceIds })
 
   const tasks = useMemo(() => data ?? [], [data])
   const visible = useMemo(
@@ -118,6 +120,7 @@ export default function TasksPage() {
             statuses={columns}
             actions={actions}
             tagsById={tagsById}
+            progressByTask={progressByTask}
             onEdit={openEdit}
             onCreate={(status) => openCreate({ status })}
             windowed={!allClosed}
@@ -155,12 +158,19 @@ export default function TasksPage() {
             tasks={visible}
             actions={actions}
             tagsById={tagsById}
+            progressByTask={progressByTask}
             onEdit={openEdit}
             windowed={!allClosed}
             onShowAllCompleted={() => setFilter('tab', 'completed')}
           />
         ) : (
-          <TaskGrid tasks={visible} actions={actions} tagsById={tagsById} onEdit={openEdit} />
+          <TaskGrid
+            tasks={visible}
+            actions={actions}
+            tagsById={tagsById}
+            progressByTask={progressByTask}
+            onEdit={openEdit}
+          />
         )}
       </div>
 

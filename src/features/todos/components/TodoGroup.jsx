@@ -72,9 +72,15 @@ export function TodoGroup({
             ) : (
               <SortableTodoList
                 todos={todos}
-                showSpace={showSpace}
-                onEdit={onEdit}
-                flashId={flashId}
+                renderItem={(t, dragHandleProps) => (
+                  <TodoItem
+                    todo={t}
+                    showSpace={showSpace}
+                    onEdit={onEdit}
+                    flash={flashId === t.id}
+                    dragHandleProps={dragHandleProps}
+                  />
+                )}
               />
             )}
           </motion.div>
