@@ -23,10 +23,11 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
 | 05 Todos | ✅ Complete (page, groups, reorder, task checklists) |
 | 06 Notes | ✅ Complete (editor, list, autosave, pinning, versions, tag chips, code highlight, tables, Markdown, shortcuts, rich task descriptions) |
 | 07–14 | Planned (docs in `.claude/features/`) |
+| 15 Attachments and Media | 🟡 Phase 1 ✅ (images in notes and task descriptions, private bucket, signed URLs); Phases 2–3 later |
 
 ### Resume here (session handoff)
 
-1. **Next step: after approval of 06 Phase 3, either an images slice (pulled forward from Feature 15, pending the user's decision) or Feature 07 Phase 1 (task detail page).**
+1. **Next step: Feature 07 Phase 1 (task detail page), after the user approves Feature 15 Phase 1 (images).** Feature 15 Phases 2–3 (task file attachments, space images) wait until later.
    - Run the `axon-feature` skill, Step 4, on `.claude/features/06-notes.md`. Phase 1's Implementation Notes (§1.8) cover the Tiptap 3.31 specifics.
    - Phase 2 covers the tag filter, table controls, lowlight code blocks, Copy as Markdown, Ctrl+S and the shortcuts cheat sheet. Phase 3 turns the task dialog's description into a compact `RichTextEditor`; pass the suggestion `container` option inside the Dialog.
    - **Still to confirm in the browser:**

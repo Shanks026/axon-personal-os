@@ -4,6 +4,8 @@ import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table
 import { Placeholder } from '@tiptap/extensions'
 import StarterKit from '@tiptap/starter-kit'
 import { CodeBlockHighlighted } from '@/components/editor/extensions/CodeBlockHighlighted'
+import { ImageBlock } from '@/components/editor/extensions/ImageBlock'
+import { ImageUpload } from '@/components/editor/extensions/ImageUpload'
 import { KeyboardShortcuts } from '@/components/editor/extensions/KeyboardShortcuts'
 import { SlashCommand } from '@/components/editor/extensions/SlashCommand'
 
@@ -15,6 +17,8 @@ import { SlashCommand } from '@/components/editor/extensions/SlashCommand'
  * - `codeHighlight` (default on): lowlight code blocks with a language picker.
  * - `compact`: the task dialog's description (H2–H3 only, no H1 or Table in the `/` menu,
  *   Mod-Enter left to the dialog's submit).
+ * - `images` (Feature 15): upload and URL handlers. Image nodes always render (existing images
+ *   show anywhere); paste, drop and "/ Image" need the handlers (set via `setImageHandlers`).
  * Feature 07 adds `taskMentions`.
  */
 export function buildExtensions({ placeholder, features = {} }) {
@@ -23,6 +27,7 @@ export function buildExtensions({ placeholder, features = {} }) {
     StarterKit.configure({
       heading: { levels: features.compact ? [2, 3] : [1, 2, 3] },
       link: { openOnClick: false, autolink: true, defaultProtocol: 'https' },
+      dropcursor: { color: 'var(--ring)', width: 2 },
       ...(highlight && { codeBlock: false }),
     }),
     Placeholder.configure({ placeholder }),
@@ -33,13 +38,20 @@ export function buildExtensions({ placeholder, features = {} }) {
     TableRow,
     TableHeader,
     TableCell,
+    ImageBlock,
+    ImageUpload.configure({ handlers: features.images ?? null }),
     // Mod-s save (via editor storage), Mod-k link, and Mod-Enter for dialogs.
     KeyboardShortcuts.configure({ swallowModEnter: !!features.compact }),
   ]
   if (highlight) extensions.push(CodeBlockHighlighted)
   if (features.slash) {
     extensions.push(
-      SlashCommand.configure({ exclude: features.compact ? ['heading-1', 'table'] : [] }),
+      SlashCommand.configure({
+        exclude: [
+          ...(features.compact ? ['heading-1', 'table'] : []),
+          ...(features.images ? [] : ['image']),
+        ],
+      }),
     )
   }
   return extensions

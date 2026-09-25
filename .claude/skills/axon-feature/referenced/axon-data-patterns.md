@@ -208,6 +208,7 @@ export function useTaskFilters() {
 | `VersionBadge`/`VersionBadgeGroup`, `VersionPicker`, `EmptyCell`; `lib/versions.js` (`versionSchema`, `mergeVersions`) | `components/shared/`, `lib/` | 04, shared in 06 |
 | `TableBubbleMenu`, `CodeBlockView` + `codeLanguages.js` (one lowlight), `EditorShortcutsDialog` + `editorShortcuts.js`, `markdown.js` (`docToMarkdown`, `noteToMarkdown`), `KeyboardShortcuts` (Mod-s via `setSaveHandler`, Mod-k link) | `components/editor/` | 06 Phase 2 |
 | `RichTextEditor variant="compact"` (dialogs: no H1/Table, Mod-Enter left to the form, popups inside the dialog); `lib/richText.js` `isDocEmpty` | `components/editor/`, `lib/` | 06 Phase 3 |
+| Editor images: `ImageBlock` + `ImageBlockView` + `ImageUpload` (`insertImageFiles`, `stripPendingImages`, `setImageHandlers`); pass `features.images` from `useImageHandlers({ spaceId })` (`features/attachments/api.js`) | `components/editor/`, `features/attachments/` | 15 Phase 1 |
 | `useAutosave({ save, delay })` → `{ schedule, flush, status }` | `hooks/` | 06 Phase 1 |
 | `usePageHeader({ parent })` middle crumb; `SaveIndicator onRetry` | `components/layout/`, `components/shared/` | 06 Phase 1 |
 | `EntityLink` (task/note chip with hover preview) | `components/shared/` | 07 |

@@ -4,6 +4,7 @@ import { cn } from '@/lib/utils'
 import { EditorBubbleMenu } from '@/components/editor/EditorBubbleMenu'
 import { TableBubbleMenu } from '@/components/editor/TableBubbleMenu'
 import { buildExtensions } from '@/components/editor/extensions/buildExtensions'
+import { setImageHandlers, stripPendingImages } from '@/components/editor/extensions/ImageUpload'
 import { setSaveHandler } from '@/components/editor/extensions/KeyboardShortcuts'
 import '@/components/editor/editor.css'
 
@@ -18,7 +19,8 @@ const MAX_TEXT = 100_000
  * `onEditorReady(editor)` hands the instance to the page (focus, Ctrl+S, Copy as Markdown).
  * `label` is the editable area's accessible name. `features` (read once, merged over the
  * defaults `{ slash: true, codeHighlight: true }`) may add `onSave`, called on Ctrl/Cmd+S;
- * the latest `onSave` is always used.
+ * the latest `onSave` is always used. `features.images` (`{ validate, upload, resolveUrl }`)
+ * turns on image paste, drop and "/ Image"; images still uploading are left out of `onChange`.
  *
  * `variant="compact"` is the task dialog's description: `text-sm`, no minimum height, the
  * placeholder "Add description…", H2–H3 only, no H1 or Table in the `/` menu, and Mod-Enter left
@@ -63,7 +65,10 @@ export function RichTextEditor({
       },
     },
     onUpdate: ({ editor: e }) =>
-      onChangeRef.current?.(e.getJSON(), e.getText({ blockSeparator: '\n' }).slice(0, MAX_TEXT)),
+      onChangeRef.current?.(
+        stripPendingImages(e.getJSON()),
+        e.getText({ blockSeparator: '\n' }).slice(0, MAX_TEXT),
+      ),
   })
 
   useEffect(() => {
@@ -72,6 +77,10 @@ export function RichTextEditor({
 
   // Ctrl/Cmd+S inside the editor calls the latest onSave (KeyboardShortcuts reads it from storage).
   const onSave = features?.onSave
+  const images = features?.images
+  useEffect(() => {
+    if (editor) setImageHandlers(editor, images)
+  }, [editor, images])
   useEffect(() => {
     if (editor) setSaveHandler(editor, onSave)
   }, [editor, onSave])

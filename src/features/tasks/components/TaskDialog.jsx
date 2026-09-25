@@ -20,6 +20,7 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { textClasses } from '@/lib/tint'
+import { useImageHandlers } from '@/features/attachments/api'
 import { usePreferences } from '@/features/settings/api'
 import { useSetTaskTags, useTags } from '@/features/tags/api'
 import {
@@ -92,6 +93,8 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
     ? (detail.data?.description ?? textToDoc(task.description_text))
     : (initialValues?.description ?? null)
   const createChecklist = useCreateChecklistItems()
+  // Images in the description upload to the task's (fixed) space, so they work before it exists.
+  const images = useImageHandlers({ spaceId: defaultSpace })
 
   const blank = {
     title: '',
@@ -227,6 +230,7 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
               <RichTextEditor
                 key={`${task?.id ?? 'new'}-${editorKey}`}
                 variant="compact"
+                features={{ images }}
                 value={initialDescription}
                 label="Description"
                 onChange={(json, text) => {

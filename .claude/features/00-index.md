@@ -34,7 +34,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 13 | Inbox and Quick Capture | [13-inbox-quick-capture.md](13-inbox-quick-capture.md) | 12 | 🔵 Planned |
 | 14 | Pins and Trash | [14-pins-and-trash.md](14-pins-and-trash.md) | 13 | 🔵 Planned |
 | **Wave 6: Later** (backlog; each gets a full doc through the skill when started) | | | | |
-| 15 | Attachments and Media | [15-attachments-and-media.md](15-attachments-and-media.md) | 06 | 🔵 Planned (Phase 1, images in the editor, pulled forward; next) |
+| 15 | Attachments and Media | [15-attachments-and-media.md](15-attachments-and-media.md) | 06 | 🟡 In progress (Phase 1 ✅ images in the editor; Phases 2–3 later) |
 | 16 | Recurring Tasks and Reminders | none | 14 | ⚪ Backlog |
 | 17 | AI Assistant | none | 11, 12 | ⚪ Backlog |
 | 18 | Automation and Email Triggers | none | 13, 16 | ⚪ Backlog |
@@ -87,7 +87,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `todos` (+ cascade triggers) | 05 | ✅ | `task_id` set means a checklist item |
 | `notes`, `note_tags` | 06 | ✅ | Tiptap JSON plus `content_text`; generated `excerpt` (280 characters) for list cards. Migration `20260925100223` |
 | `notes.versions` (text[] + GIN index) | 06 | ✅ | Free-text versions like `tasks.versions`. Migration `20260925104452` |
-| Storage bucket `attachments` + owner-only `storage.objects` policies | 15 | ⬜ | Private; `{user_id}/{space_id}/{uuid}.{ext}`; images only (10 MB) in Phase 1 |
+| Storage bucket `attachments` + owner-only `storage.objects` policies | 15 | ✅ | Private; `{user_id}/{space_id}/{uuid}.{ext}`; images only (10 MB) in Phase 1. Migration `20260925123002` |
 | `task_activity` (+ log trigger) | 07 | ⬜ | Auto history plus manual work-log comments |
 | `note_task_links` + `sync_note_mentions()` | 07 | ⬜ | Sources: manual or mention |
 | `events` | 08 | ⬜ | Optional `task_id` / `note_id` |
@@ -115,6 +115,18 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-25: Feature 15 Phase 1: Images in the editor
+- **Storage:** a private bucket `attachments` (10 MB; png, jpeg, webp and gif) with owner-only policies on the first path segment, migration `create_attachments_bucket` (`20260925123002`). Cross-user access was verified to be denied, and advisors are clean.
+- **Editor:** images in notes and task descriptions:
+  - Paste a screenshot, drop a file, or "/ Image" (a file picker).
+  - While uploading, a faded preview with a spinner shows. Stored images load through signed URLs cached for about an hour.
+  - Images keep their aspect ratio, never overflow the column, show an accent ring when selected, and take alt text. Delete removes them.
+  - Bad files and failed uploads show a toast and leave nothing.
+- **New:** `features/attachments/` (`api.js`: `uploadImage`, `fetchImageUrl`, `useImageUrl`, `useImageHandlers`; `utils.js`: `validateImageFile`, `imageExtension`, `imagePath`, `readImageSize`). `components/editor/` gains `ImageBlockView`, `extensions/ImageBlock.js` and `extensions/ImageUpload.js`. `RichTextEditor` takes `features.images`.
+- **Saved shape:** only `path`/`alt`/`width`/`height`. Images still uploading are stripped before saves. Copy as Markdown writes `![alt](axon-image:path)`.
+- **New dependency:** `@tiptap/extension-image`.
+- **Manual steps for you:** none. Please check in the browser: paste, drop and "/ Image" in a note and in the task dialog, then a reload.
 
 ### 2026-09-25: Feature 15 plan (Attachments and Media), Phase 1 pulled forward
 - **`15-attachments-and-media.md` written** at the user's request to add images now that task descriptions are rich text.

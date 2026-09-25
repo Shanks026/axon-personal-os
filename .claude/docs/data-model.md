@@ -534,3 +534,17 @@ create index inbox_processed_idx on public.inbox_items (user_id, processed_at de
 | `search_all(p_query, p_space_ids, p_limit, p_include_global)` | 12 | Unified search across tasks, notes, todos, events and reports (`p_include_global` adds Global reports) |
 | `trash_items(p_space_ids, p_include_global)` / `purge_trash(p_older_than, p_space_ids)` | 14 | Trash listing and caller purge (`p_space_ids` null = all the caller's rows) |
 | `private.purge_all_trash()` | 14 | Security definer, not exposed via PostgREST; daily `pg_cron` job `axon-purge-trash` at 03:00 UTC purges rows deleted over 30 days ago |
+
+## Storage (Feature 15)
+
+```sql
+-- Private bucket for editor images (Phase 1); file attachments and space images join it later.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values ('attachments', 'attachments', false, 10485760,
+        array['image/png', 'image/jpeg', 'image/webp', 'image/gif']);
+-- Owner-only select / insert / update / delete on storage.objects:
+--   bucket_id = 'attachments' and (storage.foldername(name))[1] = (select auth.uid())::text
+```
+
+- **Paths:** `{user_id}/{space_id}/{uuid}.{ext}`. Files are only ever read through signed URLs (1 hour).
+- **Docs reference images by path:** the Tiptap `image` node stores `{ path, alt, width, height }` in `notes.content` / `tasks.description`. There's no table in Phase 1; Phase 2 adds `attachments` for task files.

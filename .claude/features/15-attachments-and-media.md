@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/15-attachments-and-media.md`
-**Status**: 🔵 Planned (Phase 1 pulled forward on 2026-09-25 at the user's request)
+**Status**: 🟡 In progress (Phase 1 ✅ 2026-09-25, pulled forward at the user's request; Phases 2–3 later)
 **Depends on**: 06 (the shared editor, including compact task descriptions)
 **Last Updated**: September 2026
 
@@ -31,7 +31,7 @@ Phase 3: Space images
 
 ---
 
-## Phase 1: Images in the Editor
+## Phase 1: Images in the Editor ✅ Complete (2026-09-25)
 
 ### Goal
 In a note or a task description, the user can paste a screenshot (Ctrl/Cmd+V), drop an image file, or pick one from the `/` menu ("Image"). The image appears at once as a faded local preview with a spinner while it uploads, then as the stored image. Images fill the reading column (never wider), keep their aspect ratio with no layout jump on reload, can be selected (accent ring) and deleted like any block, and have alt text for screen readers. Only PNG, JPEG, WebP and GIF files up to 10 MB are accepted; anything else shows a clear toast. Images are private: nobody without the signed-in account can load them, even with a copied link after it expires.
@@ -152,16 +152,41 @@ src/features/attachments/
 - Non-image files (Phase 2), space images (Phase 3), images in the journal (09) and reports (11); those inherit it by passing `features.images`.
 
 ### 1.7 Checklist: Before Marking Complete
-- [ ] `create_attachments_bucket` is applied and mirrored. Cross-user reads are denied, the bucket enforces type and size, and advisors are clean
-- [ ] Pasting a screenshot, dropping a file and "/ Image" each insert an image in a note **and** in the task dialog (create and edit), with a preview while uploading
-- [ ] Wrong types and files over 10 MB show a toast and insert nothing. A failed upload removes the placeholder
-- [ ] Images survive reload (the signed URL resolves from `path`), keep their aspect ratio (no jump), and never overflow the column
-- [ ] Selecting shows the ring. Delete removes it. Alt text can be set and is saved
-- [ ] Only `path`/`alt`/`width`/`height` are saved (no `src`, no blob URL, no `uploadId`). Copy as Markdown writes `![alt](axon-image:…)`
-- [ ] Tests: `validateImageFile`, `imageExtension`, `imagePath`, Markdown for image nodes, and an editor test inserting an image through a mocked `features.images`
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` status, DB registry and changelog, `data-model.md` (Storage) and `axon-data-patterns.md` §10 are updated
+- [x] `create_attachments_bucket` is applied and mirrored. Cross-user reads are denied, the bucket enforces type and size, and advisors are clean
+- [x] Pasting a screenshot, dropping a file and "/ Image" each insert an image in a note **and** in the task dialog (create and edit), with a preview while uploading *(built and covered by editor tests; confirm the real upload in the browser)*
+- [x] Wrong types and files over 10 MB show a toast and insert nothing. A failed upload removes the placeholder
+- [x] Images survive reload (the signed URL resolves from `path`), keep their aspect ratio (no jump), and never overflow the column
+- [x] Selecting shows the ring. Delete removes it. Alt text can be set and is saved
+- [x] Only `path`/`alt`/`width`/`height` are saved (no `src`, no blob URL, no `uploadId`). Copy as Markdown writes `![alt](axon-image:…)`
+- [x] Tests: `validateImageFile`, `imageExtension`, `imagePath`, Markdown for image nodes, and an editor test inserting an image through a mocked `features.images`
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` status, DB registry and changelog, `data-model.md` (Storage) and `axon-data-patterns.md` §10 are updated
+
+### 1.8 Implementation Notes
+- **Bucket verified** in rolled-back transactions against `storage.objects`:
+  - The owner can insert into and see their own folder.
+  - A second user id sees nothing of theirs.
+  - Writing into someone else's folder fails the RLS check.
+  - Size and type limits are enforced by the Storage API from the bucket settings (`file_size_limit`, `allowed_mime_types`), and mirrored client-side by `validateImageFile`.
+  - Advisors show no new warnings. Migration `20260925123002`.
+- **`ImageBlock`** extends `@tiptap/extension-image` 3.31. `addAttributes` is replaced with `path`, `alt`, `width`, `height` and `uploadId` (`rendered: false`); `src` and `title` are dropped.
+  - `parseHTML` takes only `img[data-path]`. Copying images between notes works, while pasted web images are ignored (their text still pastes).
+  - Markdown round-trips `axon-image:{path}`.
+- **Handlers reach the editor two ways:**
+  - At creation, `ImageUpload.configure({ handlers })` seeds editor storage, so image views have them on the first render. Storage isn't reactive, so an effect alone would leave "Image unavailable" stuck.
+  - Afterwards, `setImageHandlers` (from a `RichTextEditor` effect) keeps them current.
+  - The "/ Image" slash item is excluded when `features.images` is missing.
+- **Upload flow** (`insertImageFiles`): validate (a toast on error), then insert a node with `uploadId` whose blob preview is kept in storage, then `upload`.
+  - On success, `setNodeMarkup` sets `path`/`width`/`height` (found by `uploadId`, so it's safe if the node moved). The preview stays mapped to the new `path`, so there's no flash or signed-URL round trip right after uploading.
+  - On failure, it shows a toast and deletes the node. Blob URLs are revoked on failure and when the editor is destroyed.
+- **Saving:** `RichTextEditor` passes `stripPendingImages(json)` to `onChange`, so an image still uploading is never saved. Leaving mid-upload just drops it; the finished upload's transaction saves it.
+- **Paste rule:** image files are uploaded only when the clipboard has **no plain text**. A screenshot or "Copy image" has none; copied web content with text pastes normally.
+- **Signed URLs:** `resolveUrl` = `qc.fetchQuery` with a 1-hour URL, `staleTime` 50 minutes and `gcTime` 55 minutes, so each image is signed at most about once an hour. `useImageUrl(path)` is exported for Phase 3.
+- **The upload path's user id** comes from `supabase.auth.getSession()` (local, no network round trip).
+- **Drop cursor:** StarterKit's `dropcursor` is `var(--ring)`, 2px.
+- **Bundle:** the `editor` chunk is about 594 kB raw and 185 kB gzip.
+- **Deferred:** a real upload against Supabase can't be exercised in jsdom; the user should confirm paste, drop and "/ Image" in the browser. Orphaned files remain when images are removed from docs (as planned).
 
 **Stop here. Show the result and wait for approval.**
 

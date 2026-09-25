@@ -21,6 +21,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { useImageHandlers } from '@/features/attachments/api'
 import { useDiscardNote, useUpdateNote } from '@/features/notes/api'
 import { NoteActionsMenu } from '@/features/notes/components/NoteActionsMenu'
 import { NoteMetaRail } from '@/features/notes/components/NoteMetaRail'
@@ -65,6 +66,8 @@ export function NoteEditor({ note }) {
   const update = useUpdateNote()
   const { mutate: discard } = useDiscardNote()
   const actions = useNoteActions()
+  // Paste, drop or "/ Image" upload into the note's space (Feature 15).
+  const images = useImageHandlers({ spaceId: note.space_id })
   const [title, setTitle] = useState(note.title)
   const [text, setText] = useState(note.content_text)
   const [railOpen, setRailOpen] = useLocalStorage('axon:notes:rail', true)
@@ -209,7 +212,7 @@ export function NoteEditor({ note }) {
             value={note.content}
             onChange={changeContent}
             onEditorReady={handleReady}
-            features={{ slash: true, onSave: flush }}
+            features={{ slash: true, onSave: flush, images }}
             label="Note body"
             className="mt-7 text-base leading-7"
           />

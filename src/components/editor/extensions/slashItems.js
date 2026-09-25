@@ -1,8 +1,10 @@
+import { pickImageFiles } from '@/components/editor/extensions/ImageUpload'
 import {
   Code,
   Heading1,
   Heading2,
   Heading3,
+  ImageIcon,
   List,
   ListChecks,
   ListOrdered,
@@ -94,6 +96,17 @@ export const SLASH_ITEMS = [
     icon: Minus,
     command: ({ editor, range }) =>
       editor.chain().focus().deleteRange(range).setHorizontalRule().run(),
+  },
+  {
+    id: 'image',
+    title: 'Image',
+    hint: '',
+    keywords: ['picture', 'screenshot', 'photo', 'upload'],
+    icon: ImageIcon,
+    command: ({ editor, range }) => {
+      editor.chain().focus().deleteRange(range).run()
+      pickImageFiles(editor)
+    },
   },
   {
     id: 'text',
