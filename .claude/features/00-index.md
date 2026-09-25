@@ -112,6 +112,10 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Fix: the todo/checklist checkbox was invisible
+- **User-reported.** `AnimatedCheckbox` used a `border-1.5` class, which Tailwind never generates (no fractional border-widths), so an unchecked box had no border and no fill — invisible against the page. Present since Feature 05 Phase 1. Fixed by switching to the plain `border` utility (the project's 1px hairline convention).
+- No test caught it, since none of the suite asserts on computed styles. Noted in `05-todos.md`'s Phase 2 implementation notes as a reminder: a mistyped or invalid Tailwind class fails silently, with no error anywhere.
+
 ### 2026-09-25: Feature 05 Phase 2: Task checklists — Feature 05 complete
 - **`TodoChecklist`** (add, toggle, reorder, inline edit, delete + Undo, live "2/4" progress), mounted in `TaskDialog`'s edit mode as a collapsible "Checklist" section that saves independently of the dialog's own submit.
 - **`ChecklistProgressBadge`** ("2/4" with a `list-checks` icon, ok-toned when complete) on task rows, grid cards and board cards, backed by a new `useChecklistProgress` query that patches optimistically on toggle.

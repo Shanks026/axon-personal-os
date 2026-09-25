@@ -29,7 +29,7 @@ export function AnimatedCheckbox({ checked, onCheckedChange, label, size = 'defa
       animate={checked ? { scale: [1, 1.08, 1] } : { scale: 1 }}
       transition={checked ? popTransition : springs.snappy}
       className={cn(
-        'border-1.5 flex shrink-0 items-center justify-center text-primary-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring',
+        'flex shrink-0 items-center justify-center border text-primary-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring',
         s.box,
         checked
           ? 'border-ok bg-ok'

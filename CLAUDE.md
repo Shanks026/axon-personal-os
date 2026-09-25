@@ -25,11 +25,10 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
 
 ### Resume here (session handoff)
 
-1. **Next step: Feature 06 (Notes)**, once the user approves Feature 05 Phase 2.
+1. **Next step: Feature 06 (Notes)**, once the user approves Feature 05.
    - Run the `axon-feature` skill; Feature 06 doesn't have a doc yet, so Step 2 (clarify and analyse) runs before Step 3 writes `.claude/features/06-notes.md`.
-   - **Please confirm in the browser first, in this order:**
-     1. Checking a todo (on the Todos page, and in a task's checklist) — a real bug just fixed (see the 2026-09-25 changelog entry) may have been silently broken since Phase 1.
-     2. Todo drag reorder (by pointer and by keyboard), on the Todos page and in a task's checklist — the test environment can't simulate a real drag.
+   - The checkbox-invisible bug (user-reported 2026-09-25) and the checkbox spring-animation crash are both fixed; please re-check.
+   - **Please confirm in the browser:** todo drag reorder (by pointer and by keyboard), on the Todos page and in a task's checklist — the test environment can't simulate a real drag.
 2. **Workflow the user expects:**
    - Build one phase, verify it (lint, tests, build, the `axon-rules` audit), and update the feature doc, `00-index.md` and the patterns catalogue.
    - **Then commit and push to `main`** (github.com/Shanks026/axon-personal-os), and stop for approval.
