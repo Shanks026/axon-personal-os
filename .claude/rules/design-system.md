@@ -268,6 +268,16 @@ Each of these maps to a shadcn primitive.
   - Hover: `bg-muted`.
   - Keyboard-focused (J/K): `bg-accent` plus an inset 2px accent bar on the left.
 - **Entity chip** (HoverCard). An inline pill 24px high with a 6px radius. Task chips use `space-soft` with an accent border and a status icon; note chips use `bg-muted` with a `file-text` icon. The hover card is 300px wide and shows status · priority · due, then the title.
+- **Grid task card** (revised 2026-09-25, the user's layout), from top to bottom:
+  1. Status and priority pills, then the links button and ⋮.
+  2. The title.
+  3. The description, clamped to 2 lines.
+  4. A **meta row**: checklist progress now, and the linked-notes count from Feature 07. It's rendered only when there's something to show.
+  5. A flexible spacer.
+  6. **Tags pinned just above the footer.** At most 3, then "+n". Each pill truncates a long name, and hovering shows the full name.
+  7. A dashed footer: **"Created 12 Sep"** (mono `text-xs`) on the left and the due label on the right.
+  - The footer has **no space name**. In Global, the space's emoji alone (with its name for screen readers and on hover) sits before the created date.
+  - Tag pills cap their width (`max-w-40`, or `max-w-60` for `md`) and truncate inside, everywhere they're used.
 - **Kanban card / task card.** `bg-card`, a border, 9–10px radius and 12px padding. Status icon and title on the first line; priority, tag pills and a mono due date on the second. The columns are `bg-muted` wells.
 - **Note card.** `bg-card`, 12px radius, padding 14×16. Title (600), then a 2-line muted preview, then tags on the left and a mono relative time on the right.
 - **Date picker** (Popover + Calendar), 260px wide. Quick chips first: Today, Tomorrow, Fri, Next week. The selected day is `bg-primary`; today uses red text with a muted background.

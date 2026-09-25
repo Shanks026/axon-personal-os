@@ -532,6 +532,23 @@ describe('Tags (Phase 3)', () => {
     expect(within(row).getByText('frontend')).toBeInTheDocument()
   })
 
+  it('shows the created date (not the space) and at most 3 tags on a card', async () => {
+    db.tags.push(
+      { id: 'tag2', space_id: null, name: 'backend', color: 'green' },
+      { id: 'tag3', space_id: null, name: 'infra', color: 'amber' },
+      { id: 'tag4', space_id: null, name: 'design', color: 'pink' },
+    )
+    db.taskTags.push(
+      ...['tag2', 'tag3', 'tag4'].map((tag_id) => ({ task_id: 't1', tag_id, user_id: 'u1' })),
+    )
+    renderPage()
+    const card = (await screen.findByText('Buyer portal: fix RFQ pagination')).closest('article')
+    expect(within(card).getByText(/^Created /)).toBeInTheDocument()
+    expect(within(card).queryByText('THMP')).not.toBeInTheDocument()
+    expect(await within(card).findByText('+1')).toBeInTheDocument()
+    expect(within(card).queryByText('design')).not.toBeInTheDocument()
+  })
+
   it('filters by tag through the URL', async () => {
     const user = userEvent.setup()
     const router = renderPage()

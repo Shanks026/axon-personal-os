@@ -113,6 +113,14 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Grid task card layout
+- **Footer:** "Created <date>" replaces the space name. Global keeps only the space emoji, since the view mixes spaces.
+- **Checklist progress** moved from the footer to a new meta row under the description, which is where the Feature 07 notes count will go.
+- **Tags:** pinned just above the footer, so cards with a short or empty description line up. At most 3 are shown, then "+n".
+- **`TagPill`:** long names truncate inside the pill (capped width, full name on hover). This applies wherever pills are used.
+- `TaskCard` takes a new `showSpace` prop, passed by `TaskGrid`.
+- **Tests:** 216.
+
 ### 2026-09-25: Thin themed scrollbars; semibold task title
 - **Scrollbars app-wide** (`index.css` base layer): thin (a 4px pill thumb), no arrow buttons, a transparent track. The thumb is `--border-strong` and turns `--faint` on hover, so dark mode follows automatically. Chromium and Safari use `::-webkit-scrollbar`; Firefox uses the standard properties behind `@supports`.
 - **Task dialog title** is back to `font-semibold` (the user's request). `design-system.md`'s weight rule now reads: the edited entity's title is semibold, and dialog headers and section headings are medium.

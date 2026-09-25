@@ -1,3 +1,4 @@
+import { formatDateShort } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { DueLabel } from '@/components/shared/DueLabel'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
@@ -10,10 +11,11 @@ import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistPro
 
 /**
  * Grid card (design 04a/G2): status + priority pills, MR chip and menu on top; title; a 2-line
- * description; tags; a dashed footer with the space, checklist progress and the due label. The
- * card body opens `onEdit`.
+ * description; a meta row (checklist progress); then, pinned to the bottom, up to 3 tags (+n) and
+ * a dashed footer with the created date and the due label. `showSpace` (Global) adds the space's
+ * emoji. The card body opens `onEdit`.
  */
-export function TaskCard({ task, space, tags, progress, onEdit, onSetField, onDelete }) {
+export function TaskCard({ task, space, showSpace, tags, progress, onEdit, onSetField, onDelete }) {
   const closed = isClosed(task)
   return (
     <article
@@ -74,15 +76,28 @@ export function TaskCard({ task, space, tags, progress, onEdit, onSetField, onDe
           {task.description_text}
         </p>
       )}
-      {tags?.length > 0 && (
-        <TagPillGroup tags={tags} className="pointer-events-none relative mt-2.5 flex-wrap" />
+      {/* Meta row: checklist progress now; linked-notes count joins it in Feature 07. */}
+      {progress?.total > 0 && (
+        <div className="pointer-events-none relative mt-2.5 flex items-center gap-3">
+          <ChecklistProgressBadge progress={progress} />
+        </div>
       )}
       <div className="flex-1" />
+      {/* Tags sit on the footer, so a short or missing description just leaves space above. */}
+      {tags?.length > 0 && (
+        <TagPillGroup tags={tags} max={3} className="pointer-events-none relative mt-3" />
+      )}
 
-      <footer className="pointer-events-none relative mt-4 flex items-center gap-2 border-t border-dashed border-border-strong pt-3.5">
-        <SpaceIcon icon={space?.icon} size="sm" />
-        <span className="truncate font-medium">{space?.name}</span>
-        <ChecklistProgressBadge progress={progress} />
+      <footer className="pointer-events-none relative mt-3 flex items-center gap-2 border-t border-dashed border-border-strong pt-3.5">
+        {showSpace && (
+          <span className="flex" title={space?.name}>
+            <SpaceIcon icon={space?.icon} size="sm" />
+            <span className="sr-only">{space?.name}</span>
+          </span>
+        )}
+        <span className="font-mono text-xs whitespace-nowrap text-muted-foreground">
+          Created {formatDateShort(task.created_at)}
+        </span>
         <div className="flex-1" />
         <DueLabel date={task.due_date} completedAt={task.completed_at} closed={closed} />
       </footer>

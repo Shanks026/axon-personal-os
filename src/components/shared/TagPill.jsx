@@ -6,19 +6,21 @@ import { cn } from '@/lib/utils'
  * Tag pill (design: tag rows and cards, board card tags). `--radius-sm`, the same square-ish
  * shape as `SpaceBadge`, so both read as "labels" distinct from the fully round status pills.
  * A plain Tailwind colour-scale badge (the user's request, 2026-09-25), not the CSS-variable tint
- * recipe. `onRemove` adds a labelled ✕; otherwise it's a plain read-only chip.
+ * recipe. `onRemove` adds a labelled ✕; otherwise it's a plain read-only chip. A long name
+ * truncates inside the pill (capped at 10rem, or 15rem for `md`); hover shows the full name.
  */
 export function TagPill({ tag, size = 'sm', onRemove, className }) {
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center gap-1 rounded-sm px-1.75 font-medium whitespace-nowrap',
+        'inline-flex min-w-0 items-center gap-1 rounded-sm px-1.75 font-medium whitespace-nowrap',
         badgeClasses(tag.color),
-        size === 'sm' ? 'h-5 text-xs' : 'h-6.5 px-2 text-sm',
+        size === 'sm' ? 'h-5 max-w-40 text-xs' : 'h-6.5 max-w-60 px-2 text-sm',
         className,
       )}
+      title={tag.name}
     >
-      {tag.name}
+      <span className="truncate">{tag.name}</span>
       {onRemove && (
         <button
           type="button"
@@ -27,7 +29,7 @@ export function TagPill({ tag, size = 'sm', onRemove, className }) {
             onRemove(tag)
           }}
           aria-label={`Remove tag ${tag.name}`}
-          className="-mr-0.5 rounded-full outline-none hover:opacity-70 focus-visible:ring-2 focus-visible:ring-ring"
+          className="-mr-0.5 shrink-0 rounded-full outline-none hover:opacity-70 focus-visible:ring-2 focus-visible:ring-ring"
         >
           <X className={size === 'sm' ? 'size-2.75' : 'size-3.25'} />
         </button>
