@@ -7,7 +7,7 @@ import { sanitizeSearch } from '@/features/notes/utils'
 export const noteKeys = {
   all: ['notes'],
   lists: () => [...noteKeys.all, 'list'],
-  list: (params) => [...noteKeys.lists(), params], // { spaceIds, q }
+  list: (params) => [...noteKeys.lists(), params], // { spaceIds, q, tag }
   details: () => [...noteKeys.all, 'detail'],
   detail: (id) => [...noteKeys.details(), id],
   versions: (spaceIds) => [...noteKeys.all, 'versions', spaceIds], // version suggestions
@@ -24,22 +24,26 @@ function mapRow(row) {
 
 /**
  * Scoped note list, always newest edit first (design 07a has no sort control). `q` matches the
- * title (substring) or the full text (websearch syntax over title + body).
+ * title (substring) or the full text (websearch syntax over title + body). `tag` (any-of) joins
+ * `note_tags` a second time under its own alias, so the filter doesn't trim the `tag_ids` a
+ * note actually has (the same trick as `fetchTasks`).
  */
-export async function fetchNotes({ spaceIds, q }) {
+export async function fetchNotes({ spaceIds, q, tag = [] }) {
   let query = supabase
     .from('notes')
-    .select(LIST_COLUMNS)
+    .select(tag.length ? `${LIST_COLUMNS}, tag_match:note_tags!inner(tag_id)` : LIST_COLUMNS)
     .in('space_id', spaceIds)
     .is('deleted_at', null)
     .order('updated_at', { ascending: false })
+
+  if (tag.length) query = query.in('tag_match.tag_id', tag)
 
   const term = sanitizeSearch(q)
   if (term) query = query.or(`title.ilike."*${term}*",search.wfts(english)."${term}"`)
 
   const { data, error } = await query
   if (error) throw error
-  return data.map(mapRow)
+  return data.map(({ tag_match: _match, ...row }) => mapRow(row))
 }
 
 /** One note with its full content. Not scope-filtered: entity routes work in any scope. */

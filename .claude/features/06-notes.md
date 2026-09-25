@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/06-notes.md`
-**Status**: 🟡 In progress (Phase 1 ✅ 2026-09-25; design deltas ✅ folded; Phase 3 added)
+**Status**: 🟡 In progress (Phases 1–2 ✅ 2026-09-25; Phase 3 next)
 **Depends on**: 04 (tags)
 **Last Updated**: September 2026
 
@@ -287,7 +287,7 @@ src/features/notes/
 
 ---
 
-## Phase 2: Organise and Editor Extras
+## Phase 2: Organise and Editor Extras ✅ Complete (2026-09-25)
 
 ### Goal
 The user filters notes by tag, edits tables with proper controls (rows, columns, header), writes code blocks with syntax highlighting and a language picker, copies a note as Markdown, forces a save with Ctrl+S, and can look up the editor's shortcuts from a cheat sheet.
@@ -343,15 +343,37 @@ src/features/notes/components/
 - Note version history, collaborative editing: never or backlog
 
 ### 2.7 Checklist: Before Marking Complete
-- [ ] The tag filter works, lives in the URL and combines with search and sort
-- [ ] The table menu performs every listed action; Tab moves between cells
-- [ ] Code blocks highlight, the language persists across reload, and old code blocks still render
-- [ ] Copy as Markdown produces headings, lists, checklists, tables, code fences and links correctly (unit test on a fixture document)
-- [ ] Ctrl/Cmd+S saves immediately from the editor and the title, and never opens the browser dialog
-- [ ] The cheat sheet opens by keyboard and lists the shortcuts from `editorShortcuts.js`
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` status and changelog are updated
+- [x] The tag filter works, lives in the URL and combines with search (inline chips per design 07a; there's no sort)
+- [x] The table menu performs every listed action; Tab moves between cells
+- [x] Code blocks highlight, the language persists across reload, and old code blocks still render
+- [x] Copy as Markdown produces headings, lists, checklists, tables, code fences and links correctly (unit test on a fixture document)
+- [x] Ctrl/Cmd+S saves immediately from the editor and the title, and never opens the browser dialog
+- [x] The cheat sheet opens by keyboard and lists the shortcuts from `editorShortcuts.js`
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` status and changelog are updated
+
+### 2.8 Implementation Notes
+- **Tag filter = inline chips** (design 07a, per the delta-06 note "tag chips go in Phase 2"), not the plan's toolbar `TagPicker`.
+  - The row is "All" plus the 6 tags notes use most (`note_count`), plus any selected tag outside those. "More" (a filter-mode `TagPicker`) appears when more tags are in use.
+  - Chips are any-of, in `?tag=`. "Clear filters" on the empty state keeps the view and also empties the search field.
+- **`fetchNotes` tag filter:** `tag_match:note_tags!inner(tag_id)` + `.in('tag_match.tag_id', tag)`. Verified against the live PostgREST API, as was Phase 1's quoted `or()` search. The alias is dropped from each row.
+- **Markdown:** the official **`@tiptap/markdown` 3.31**. `MarkdownManager.serialize(json)` runs over the editor's own `buildExtensions()` list, so no live editor or `turndown` is needed.
+  - It lives in `components/editor/markdown.js` (`docToMarkdown`, `noteToMarkdown`); the plan's `src/lib/markdown.js` isn't needed.
+  - The fixture test covers headings, marks, links, bullets, `- [x]` checklists, pipe tables and fenced code.
+- **Code blocks:** `@tiptap/extension-code-block-lowlight` with `lowlight` 3 `createLowlight(common)` (37 languages, one instance in `codeLanguages.js`), and StarterKit's `codeBlock: false` (same node name).
+  - `CodeBlockView` puts a shadcn Select in the corner, shown on hover or focus. "Plain text" clears `language`.
+  - Colours are `.hljs-*` rules in `editor.css`, using the tint-text recipe (hue 72% + foreground) so they read in both themes.
+  - The editor chunk grows to about 584 kB raw and 183 kB gzip.
+- **Table menu:** a second `BubbleMenu` (`pluginKey: 'tableMenu'`) anchored **under the table** (`getReferencedVirtualElement`, `bottom-start`, no flip), so it never collides with the text bubble above a selection.
+  - Its callbacks and options are stable, because `BubbleMenu` re-sends its options whenever they change identity. The text bubble's `options` are memoised for the same reason.
+- **Shortcuts extension (`KeyboardShortcuts`):**
+  - **Mod-s** calls `editor.storage.axonShortcuts.onSave`, which `RichTextEditor` keeps current via `setSaveHandler` in an effect. That avoids reading refs during render and mutating a hook value, both of which the React compiler lint rules flag. It always returns true, so the browser dialog never opens.
+  - **Mod-k** with text selected emits `axon:edit-link`, which opens the bubble's link field. Without a selection it passes, leaving Mod-k for the Feature 12 palette.
+  - Outside the body (the title, the page), `useHotkeys('mod+s', flush, { enableOnFormTags: true, preventDefault: true })` in `NoteEditor` does the same.
+- **Cheat sheet:** `EditorShortcutsDialog` (a shadcn Dialog, default header) opens from a Keyboard icon button in the note header and renders `EDITOR_SHORTCUTS` with `Kbd`. Every key was checked against the installed extensions' keymaps.
+- **Copy as Markdown** is in the editor's ⋮ menu only (it needs the full content); cards have just the excerpt.
+- **Tests:** the Markdown fixture, plus page and editor tests for the tag chips, Ctrl+S inside the debounce, code highlighting and the language label, Copy as Markdown (clipboard), and the cheat sheet. The test shell now renders the header actions.
 
 **Stop here. Show the result and wait for approval.**
 

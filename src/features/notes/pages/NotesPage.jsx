@@ -4,6 +4,7 @@ import { useSpace } from '@/context/SpaceContext'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ErrorState } from '@/components/shared/ErrorState'
+import { Button } from '@/components/ui/button'
 import { useNotes } from '@/features/notes/api'
 import { NewNoteButton } from '@/features/notes/components/NewNoteButton'
 import { NotesGrid } from '@/features/notes/components/NotesGrid'
@@ -31,9 +32,13 @@ function Section({ title, icon: Icon, children }) {
 /** Notes (design 07a): newest edit first, a Pinned section when anything is pinned. */
 export default function NotesPage() {
   const { space, isGlobal, activeSpaces, scopeSpaceIds } = useSpace()
-  const { filters, setFilter } = useNoteFilters()
+  const { filters, setFilter, clear } = useNoteFilters()
   const actions = useNoteActions()
-  const { data, isLoading, error, refetch } = useNotes({ spaceIds: scopeSpaceIds, q: filters.q })
+  const { data, isLoading, error, refetch } = useNotes({
+    spaceIds: scopeSpaceIds,
+    q: filters.q,
+    tag: filters.tag,
+  })
   const { data: tags = [] } = useTags({ spaceIds: scopeSpaceIds })
   const tagsById = useMemo(() => new Map(tags.map((t) => [t.id, t])), [tags])
 
@@ -62,7 +67,7 @@ export default function NotesPage() {
       </div>
 
       <div className="mt-6">
-        <NotesToolbar filters={filters} setFilter={setFilter} />
+        <NotesToolbar filters={filters} setFilter={setFilter} tags={tags} />
       </div>
 
       <div className="mt-6">
@@ -71,11 +76,16 @@ export default function NotesPage() {
         ) : error ? (
           <ErrorState error={error} onRetry={refetch} title="Couldn’t load notes" />
         ) : notes.length === 0 ? (
-          filters.q ? (
+          filters.q || filters.tag.length ? (
             <EmptyState
               icon={SearchX}
-              title={`No notes match “${filters.q}”`}
-              description="Try a different word, or clear the search."
+              title={filters.q ? `No notes match “${filters.q}”` : 'No notes with these tags'}
+              description="Try a different word or tag, or clear the filters."
+              action={
+                <Button variant="outline" onClick={clear}>
+                  Clear filters
+                </Button>
+              }
             />
           ) : (
             <EmptyState

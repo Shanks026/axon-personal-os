@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useEditorState } from '@tiptap/react'
 import { BubbleMenu } from '@tiptap/react/menus'
 import { NodeSelection } from '@tiptap/pm/state'
@@ -21,6 +21,7 @@ import {
   TextQuote,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { EDIT_LINK_EVENT } from '@/components/editor/extensions/KeyboardShortcuts'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -139,7 +140,7 @@ function LinkField({ editor, onDone }) {
 
 /**
  * Selection toolbar (design 07b): bold, italic, strike, code, link, H2 and highlight, then a
- * "Turn into" menu. Underline stays on Mod+U. Buttons keep the editor's focus (mousedown is
+ * "Turn into" menu. Underline stays on Mod+U; Mod+K opens the link field. Buttons keep the editor's focus (mousedown is
  * prevented), and the menu re-reads the active marks through `useEditorState`, since the editor
  * doesn't re-render on every transaction.
  */
@@ -158,6 +159,21 @@ export function EditorBubbleMenu({ editor }) {
       block: currentBlock(e),
     }),
   })
+  // Stable: the BubbleMenu re-sends its options whenever they change identity.
+  const options = useMemo(
+    () => ({ placement: 'top', offset: 8, onHide: () => setEditingLink(false) }),
+    [],
+  )
+
+  // Mod-k with text selected (KeyboardShortcuts) opens the link field.
+  useEffect(() => {
+    const open = () => setEditingLink(true)
+    editor.on(EDIT_LINK_EVENT, open)
+    return () => {
+      editor.off(EDIT_LINK_EVENT, open)
+    }
+  }, [editor])
+
   const run = (fn) => fn(editor.chain().focus()).run()
   const block = TURN_INTO.find((b) => b.id === active.block) ?? TURN_INTO[0]
 
@@ -165,7 +181,7 @@ export function EditorBubbleMenu({ editor }) {
     <BubbleMenu
       editor={editor}
       shouldShow={shouldShow}
-      options={{ placement: 'top', offset: 8, onHide: () => setEditingLink(false) }}
+      options={options}
       className="z-40 flex h-9 items-center gap-0.5 rounded-lg border bg-popover p-1 text-popover-foreground shadow-md"
     >
       {editingLink ? (

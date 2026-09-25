@@ -201,3 +201,73 @@
 .axon-prose .suggestion {
   color: var(--muted-foreground);
 }
+
+/* Code blocks: the node view wraps <pre> (language picker in the corner, CodeBlockView). */
+.axon-prose [data-node-view-wrapper] + *,
+.axon-prose * + [data-node-view-wrapper] {
+  margin-top: 0.75em;
+}
+
+/*
+ * Syntax highlighting (lowlight → highlight.js classes). Colours follow the tint-text recipe
+ * (a hue mixed 72% with the foreground), so they read on the muted code background in both themes.
+ */
+.axon-prose pre {
+  --code-hue: 72%;
+}
+.axon-prose .hljs-comment,
+.axon-prose .hljs-quote {
+  color: var(--faint);
+  font-style: italic;
+}
+.axon-prose .hljs-keyword,
+.axon-prose .hljs-selector-tag,
+.axon-prose .hljs-doctag {
+  color: color-mix(in oklab, var(--hue-violet) var(--code-hue), var(--foreground));
+}
+.axon-prose .hljs-string,
+.axon-prose .hljs-regexp,
+.axon-prose .hljs-addition {
+  color: color-mix(in oklab, var(--hue-green) var(--code-hue), var(--foreground));
+}
+.axon-prose .hljs-number,
+.axon-prose .hljs-literal,
+.axon-prose .hljs-symbol,
+.axon-prose .hljs-bullet {
+  color: color-mix(in oklab, var(--hue-orange) var(--code-hue), var(--foreground));
+}
+.axon-prose .hljs-title,
+.axon-prose .hljs-section,
+.axon-prose .hljs-selector-id {
+  color: color-mix(in oklab, var(--hue-blue) var(--code-hue), var(--foreground));
+}
+.axon-prose .hljs-type,
+.axon-prose .hljs-built_in,
+.axon-prose .hljs-class {
+  color: color-mix(in oklab, var(--hue-teal) var(--code-hue), var(--foreground));
+}
+.axon-prose .hljs-attr,
+.axon-prose .hljs-attribute,
+.axon-prose .hljs-property,
+.axon-prose .hljs-selector-class,
+.axon-prose .hljs-name,
+.axon-prose .hljs-tag {
+  color: color-mix(in oklab, var(--hue-indigo) var(--code-hue), var(--foreground));
+}
+.axon-prose .hljs-variable,
+.axon-prose .hljs-template-variable,
+.axon-prose .hljs-params {
+  color: color-mix(in oklab, var(--hue-pink) var(--code-hue), var(--foreground));
+}
+.axon-prose .hljs-deletion {
+  color: color-mix(in oklab, var(--hue-red) var(--code-hue), var(--foreground));
+}
+.axon-prose .hljs-meta {
+  color: var(--muted-foreground);
+}
+.axon-prose .hljs-emphasis {
+  font-style: italic;
+}
+.axon-prose .hljs-strong {
+  font-weight: 600;
+}

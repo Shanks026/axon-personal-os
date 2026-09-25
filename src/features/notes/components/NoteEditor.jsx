@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { PanelRight, Pin, PinOff } from 'lucide-react'
+import { Keyboard, PanelRight, Pin, PinOff } from 'lucide-react'
+import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router'
+import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { useAutosave } from '@/hooks/useAutosave'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { EditorShortcutsDialog } from '@/components/editor/EditorShortcutsDialog'
+import { noteToMarkdown } from '@/components/editor/markdown'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
 import { SaveIndicator } from '@/components/shared/SaveIndicator'
@@ -65,6 +69,7 @@ export function NoteEditor({ note }) {
   const [text, setText] = useState(note.content_text)
   const [railOpen, setRailOpen] = useLocalStorage('axon:notes:rail', true)
   const [sheetOpen, setSheetOpen] = useState(false)
+  const [shortcutsOpen, setShortcutsOpen] = useState(false)
   const editorRef = useRef(null)
   const latest = useRef({
     title: note.title,
@@ -101,6 +106,21 @@ export function NoteEditor({ note }) {
       }, 0)
     }
   }, [note.id, discard])
+
+  // Ctrl/Cmd+S saves now: inside the body through the editor's keymap (features.onSave), and
+  // anywhere else on the page (the title included) through this hotkey. Never the browser dialog.
+  useHotkeys('mod+s', () => flush(), { enableOnFormTags: true, preventDefault: true }, [flush])
+
+  const copyMarkdown = useCallback(() => {
+    const markdown = noteToMarkdown({
+      title: latest.current.title,
+      content: editorRef.current?.getJSON() ?? latest.current.content,
+    })
+    navigator.clipboard.writeText(markdown).then(
+      () => toast.success('Copied as Markdown'),
+      () => toast.error('Couldn’t copy to the clipboard'),
+    )
+  }, [])
 
   const changeTitle = (value) => {
     setTitle(value)
@@ -143,13 +163,22 @@ export function NoteEditor({ note }) {
         >
           {pinned ? <PinOff /> : <Pin />}
         </HeaderIconButton>
+        <HeaderIconButton label="Keyboard shortcuts" onClick={() => setShortcutsOpen(true)}>
+          <Keyboard />
+        </HeaderIconButton>
         <HeaderIconButton label="Details" pressed={railOpen} onClick={toggleRail}>
           <PanelRight />
         </HeaderIconButton>
-        <NoteActionsMenu note={note} showPin={false} vertical={false} onDelete={remove} />
+        <NoteActionsMenu
+          note={note}
+          showPin={false}
+          vertical={false}
+          onCopyMarkdown={copyMarkdown}
+          onDelete={remove}
+        />
       </>
     ),
-    [status, flush, pinned, actions, note, railOpen, toggleRail, remove],
+    [status, flush, pinned, actions, note, railOpen, toggleRail, remove, copyMarkdown],
   )
   usePageHeader({
     title: title.trim() || 'Untitled',
@@ -180,6 +209,7 @@ export function NoteEditor({ note }) {
             value={note.content}
             onChange={changeContent}
             onEditorReady={handleReady}
+            features={{ slash: true, onSave: flush }}
             label="Note body"
             className="mt-7 text-base leading-7"
           />
@@ -191,6 +221,7 @@ export function NoteEditor({ note }) {
           <NoteMetaRail note={note} space={space} words={words} className="sticky top-5" />
         </aside>
       )}
+      <EditorShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="right" className="data-[side=right]:w-70">
           <SheetHeader>

@@ -1,18 +1,18 @@
 import { StrictMode } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
 import { SpaceProvider } from '@/context/SpaceContext'
-import { PageHeaderProvider } from '@/components/layout/PageHeaderContext'
+import { PageHeaderProvider, usePageHeaderState } from '@/components/layout/PageHeaderContext'
 import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import NoteEditorPage from '@/features/notes/pages/NoteEditorPage'
 import NotesPage from '@/features/notes/pages/NotesPage'
 
-const db = vi.hoisted(() => ({ notes: [], calls: [] }))
+const db = vi.hoisted(() => ({ notes: [], calls: [], tags: [] }))
 
 vi.mock('@/context/AuthContext', () => ({
   AuthProvider: ({ children }) => children,
@@ -46,6 +46,7 @@ vi.mock('@/lib/supabase', () => {
     }
     function run() {
       if (table === 'profiles') return result({ id: 'u1', last_space_id: null })
+      if (table === 'tags') return result(db.tags)
       if (table !== 'notes') return result(state.single ? null : [])
       if (state.op === 'insert') {
         const row = {
@@ -110,11 +111,17 @@ const note = (id, title, extra = {}) => ({
   ...extra,
 })
 
+// The shell's header, reduced to the page's actions (pin, shortcuts, ⋮ live there).
+function HeaderActions() {
+  return <header>{usePageHeaderState().actions}</header>
+}
+
 function renderApp(path = '/s/thmp/notes') {
   const qc = new QueryClient({ defaultOptions: { queries: { retry: false } } })
   const Shell = () => (
     <SpaceProvider spaceSlug="thmp" spaces={[SPACE]}>
       <PageHeaderProvider>
+        <HeaderActions />
         <Outlet />
       </PageHeaderProvider>
     </SpaceProvider>
@@ -150,6 +157,32 @@ function renderApp(path = '/s/thmp/notes') {
 beforeEach(() => {
   localStorage.clear()
   db.calls = []
+  db.tags = [
+    {
+      id: 't1',
+      space_id: null,
+      name: 'sprint',
+      color: 'blue',
+      task_tags: [],
+      note_tags: [{ count: 2 }],
+    },
+    {
+      id: 't2',
+      space_id: null,
+      name: 'rca',
+      color: 'pink',
+      task_tags: [],
+      note_tags: [{ count: 1 }],
+    },
+    {
+      id: 't3',
+      space_id: null,
+      name: 'unused',
+      color: 'teal',
+      task_tags: [],
+      note_tags: [{ count: 0 }],
+    },
+  ]
   db.notes = [
     note('n1', 'Sprint 42 planning', { pinned_at: '2026-09-24T11:00:00Z', excerpt: 'Committed…' }),
     note('n2', 'Pagination bug RCA', {
@@ -227,5 +260,90 @@ describe('NotesPage', () => {
   it('shows a missing note as not found', async () => {
     renderApp('/s/thmp/notes/nope')
     expect(await screen.findByText('This note doesn’t exist or is in Trash')).toBeInTheDocument()
+  })
+
+  it('filters by tag chips through ?tag=, with All to clear', async () => {
+    const user = userEvent.setup()
+    const router = renderApp()
+    await screen.findByText('Sprint 42 planning')
+    const group = screen.getByRole('group', { name: 'Filter by tag' })
+    // Only tags that notes use get a chip, most used first.
+    expect(
+      within(group)
+        .getAllByRole('button')
+        .map((b) => b.textContent),
+    ).toEqual(['All', 'sprint', 'rca'])
+    await user.click(within(group).getByRole('button', { name: 'rca' }))
+    expect(router.state.location.search).toBe('?tag=t2')
+    expect(within(group).getByRole('button', { name: 'rca' })).toHaveAttribute(
+      'aria-pressed',
+      'true',
+    )
+    await user.click(within(group).getByRole('button', { name: 'All' }))
+    expect(router.state.location.search).toBe('')
+  })
+})
+
+describe('NoteEditor (Phase 2)', () => {
+  const codeDoc = {
+    type: 'doc',
+    content: [
+      { type: 'paragraph', content: [{ type: 'text', text: 'Snippet:' }] },
+      {
+        type: 'codeBlock',
+        attrs: { language: 'javascript' },
+        content: [{ type: 'text', text: 'const answer = 42' }],
+      },
+    ],
+  }
+
+  beforeEach(() => {
+    db.notes = [
+      note('n1', 'Snippets', { content: codeDoc, content_text: 'Snippet:\nconst answer = 42' }),
+    ]
+  })
+
+  it('saves at once on Ctrl+S from the title', async () => {
+    const user = userEvent.setup()
+    renderApp('/s/thmp/notes/n1')
+    const title = await screen.findByLabelText('Note title')
+    await user.type(title, '!')
+    await user.keyboard('{Control>}s{/Control}')
+    // Well inside the 800ms debounce: only the shortcut could have saved it.
+    await waitFor(() => expect(db.calls).toContainEqual(['update', 'n1', { title: 'Snippets!' }]), {
+      timeout: 400,
+    })
+  })
+
+  it('highlights code blocks and shows their language', async () => {
+    renderApp('/s/thmp/notes/n1')
+    await screen.findByLabelText('Note title')
+    await waitFor(() =>
+      expect(document.querySelector('pre .hljs-keyword')).toHaveTextContent('const'),
+    )
+    expect(screen.getByRole('combobox', { name: 'Code language' })).toHaveTextContent('JavaScript')
+  })
+
+  it('copies the note as Markdown', async () => {
+    const user = userEvent.setup()
+    renderApp('/s/thmp/notes/n1')
+    await screen.findByLabelText('Note title')
+    await user.click(screen.getByRole('button', { name: 'Snippets options' }))
+    await user.click(await screen.findByRole('menuitem', { name: 'Copy as Markdown' }))
+    await waitFor(async () =>
+      expect(await navigator.clipboard.readText()).toBe(
+        '# Snippets\n\nSnippet:\n\n```javascript\nconst answer = 42\n```',
+      ),
+    )
+  })
+
+  it('lists the editor shortcuts in the cheat sheet', async () => {
+    const user = userEvent.setup()
+    renderApp('/s/thmp/notes/n1')
+    await screen.findByLabelText('Note title')
+    await user.click(screen.getByRole('button', { name: 'Keyboard shortcuts' }))
+    const dialog = await screen.findByRole('dialog', { name: 'Keyboard shortcuts' })
+    expect(within(dialog).getByText('Save now')).toBeInTheDocument()
+    expect(within(dialog).getByText('Link (with text selected)')).toBeInTheDocument()
   })
 })

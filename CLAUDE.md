@@ -21,12 +21,12 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
 | 03 Spaces gallery, app shell, Global | ✅ Complete |
 | 04 Tasks | ✅ Complete, plus many browser-feedback follow-ups on 2026-09-25 (see the changelog) |
 | 05 Todos | ✅ Complete (page, groups, reorder, task checklists) |
-| 06 Notes | 🟡 Phase 1 ✅ (editor, notes list, autosave, pinning); **Phase 2 is next** after approval |
+| 06 Notes | 🟡 Phases 1–2 ✅ (editor, list, autosave, pinning, versions, tag chips, code highlight, tables, Markdown, shortcuts); **Phase 3 is next** after approval |
 | 07–14 | Planned (docs in `.claude/features/`) |
 
 ### Resume here (session handoff)
 
-1. **Next step: Feature 06 Phase 2 (Organise and editor extras), once Phase 1 is approved.**
+1. **Next step: Feature 06 Phase 3 (rich task descriptions), once Phase 2 is approved.**
    - Run the `axon-feature` skill, Step 4, on `.claude/features/06-notes.md`. Phase 1's Implementation Notes (§1.8) cover the Tiptap 3.31 specifics.
    - Phase 2 covers the tag filter, table controls, lowlight code blocks, Copy as Markdown, Ctrl+S and the shortcuts cheat sheet. Phase 3 turns the task dialog's description into a compact `RichTextEditor`; pass the suggestion `container` option inside the Dialog.
    - **Still to confirm in the browser:**

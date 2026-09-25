@@ -4,8 +4,8 @@ import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { NOTE_VIEWS } from '@/features/notes/constants'
 
 /**
- * Notes page state in the URL: view (grid | table), q, and tag[] (read now, filtered on in
- * Phase 2). The last view is also remembered per device. There's no sort: notes are always
+ * Notes page state in the URL: view (grid | table), q and tag[] (any-of). The last view is
+ * also remembered per device; clearing filters keeps the view. There's no sort: notes are always
  * newest edit first.
  */
 export function useNoteFilters() {
@@ -38,5 +38,18 @@ export function useNoteFilters() {
     [setParams, setLastView],
   )
 
-  return { filters, setFilter }
+  const clear = useCallback(
+    () =>
+      setParams(
+        (prev) => {
+          const next = new URLSearchParams()
+          if (prev.get('view')) next.set('view', prev.get('view'))
+          return next
+        },
+        { replace: true },
+      ),
+    [setParams],
+  )
+
+  return { filters, setFilter, clear }
 }

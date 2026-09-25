@@ -1,4 +1,4 @@
-import { Ellipsis, Pin, PinOff, Trash2 } from 'lucide-react'
+import { Copy, Ellipsis, Pin, PinOff, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   DropdownMenu,
@@ -10,9 +10,17 @@ import {
 
 /**
  * Card, row and editor "⋮" menu: Pin/Unpin (unless `showPin` is off, as in the editor header,
- * which has its own pin button) and Move to Trash. Phase 2 adds Copy as Markdown and Shortcuts.
+ * which has its own pin button), Copy as Markdown (when `onCopyMarkdown` is given: the editor,
+ * which has the full content) and Move to Trash.
  */
-export function NoteActionsMenu({ note, onTogglePin, onDelete, showPin = true, vertical = true }) {
+export function NoteActionsMenu({
+  note,
+  onTogglePin,
+  onDelete,
+  onCopyMarkdown,
+  showPin = true,
+  vertical = true,
+}) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
@@ -31,6 +39,15 @@ export function NoteActionsMenu({ note, onTogglePin, onDelete, showPin = true, v
             <DropdownMenuItem onSelect={onTogglePin}>
               {note.pinned_at ? <PinOff /> : <Pin />}
               {note.pinned_at ? 'Unpin' : 'Pin'}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+          </>
+        )}
+        {onCopyMarkdown && (
+          <>
+            <DropdownMenuItem onSelect={onCopyMarkdown}>
+              <Copy />
+              Copy as Markdown
             </DropdownMenuItem>
             <DropdownMenuSeparator />
           </>

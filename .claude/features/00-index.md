@@ -21,7 +21,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | **Wave 2: Capture** | | | | |
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | ✅ Complete |
 | 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | ✅ Complete |
-| 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | 🟡 In progress (Phase 1 ✅) |
+| 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | 🟡 In progress (Phases 1–2 ✅; Phase 3 next) |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🔵 Planned |
 | **Wave 3: Time** | | | | |
 | 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | 🔵 Planned |
@@ -114,6 +114,16 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-25: Feature 06 Phase 2: Organise and editor extras
+- **Tag filter:** inline chips in the notes toolbar (design 07a): All, the 6 most-used note tags, and "More". Any-of, in `?tag=`. `fetchNotes` filters through a second `note_tags!inner` alias. The empty state gains "Clear filters".
+- **Code blocks:** lowlight syntax highlighting (`@tiptap/extension-code-block-lowlight`, `lowlight`, `highlight.js`) with a language picker in the block's corner. Colours are on tokens in `editor.css`.
+- **Tables:** `TableBubbleMenu` under the table: add rows and columns before or after, delete a row, column or the table, toggle the header row. Tab and Shift+Tab move between cells.
+- **Copy as Markdown** (the editor's ⋮) uses the official `@tiptap/markdown` serializer (`components/editor/markdown.js`, tested on a fixture).
+- **Shortcuts:** Ctrl/Cmd+S saves now (in the body, the title and the page); Ctrl/Cmd+K opens the link field when text is selected. A Keyboard button opens `EditorShortcutsDialog` (data in `editorShortcuts.js`).
+- **New shared editor pieces:** `TableBubbleMenu`, `CodeBlockView`, `EditorShortcutsDialog`, `codeLanguages.js`, `editorShortcuts.js`, `markdown.js`, and the `extensions/CodeBlockHighlighted.js` and `extensions/KeyboardShortcuts.js` extensions. `RichTextEditor` merges `features` over `{ slash, codeHighlight }` and accepts `features.onSave`.
+- **New dependencies:** `@tiptap/extension-code-block-lowlight`, `@tiptap/markdown`, `lowlight`, `highlight.js`. The editor chunk is now about 584 kB raw and 183 kB gzip.
+- **Manual steps for you:** none. Please check in the browser: the table menu position, the code-block language picker, and Ctrl+S.
 
 ### 2026-09-25: Note versions in the title row
 - "Edited 2h ago" now sits on its own line 12px below the tag pills instead of wrapping in tight against them (the user's request).
