@@ -10,6 +10,7 @@ import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { EditorShortcutsDialog } from '@/components/editor/EditorShortcutsDialog'
 import { noteToMarkdown } from '@/components/editor/markdown'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
+import { DetailRail } from '@/components/layout/DetailRail'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
 import { SaveIndicator } from '@/components/shared/SaveIndicator'
 import { TitleTextarea } from '@/components/shared/TitleTextarea'
@@ -245,11 +246,9 @@ export function NoteEditor({ note }) {
         </div>
       </div>
 
-      {railOpen && (
-        <aside className="hidden w-76 shrink-0 border-l p-5 lg:block">
-          <NoteMetaRail note={note} space={space} words={words} className="sticky top-5" />
-        </aside>
-      )}
+      <DetailRail open={railOpen}>
+        <NoteMetaRail note={note} space={space} words={words} />
+      </DetailRail>
       <EditorShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="right" className="overflow-y-auto data-[side=right]:w-80">

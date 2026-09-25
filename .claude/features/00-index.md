@@ -117,6 +117,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-26: Detail rail animates like the sidebar
+- The task and note detail rails no longer mount and unmount. A new shared `components/layout/DetailRail` animates its width (200ms `ease-linear`, the sidebar's timing) with the contents at a fixed width and fading, and is `inert` when closed. It uses `overflow-x-clip`, so the sticky contents keep working. Reduced motion skips the animation.
+
 ### 2026-09-26: Rail Tags and Versions rows stacked; square add buttons
 - In the task and note rails, Tags and Versions put the label on its own line with the badges below (the user's request: side by side looked cramped). The "+ Tag" / "+ Version" buttons are `h-5 rounded-sm`, like the badges. The user also set both detail rails to `w-76` (304px) by hand; the Sheets stay `w-80`. (Uncommitted: the user now approves commits.)
 

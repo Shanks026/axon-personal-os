@@ -251,7 +251,7 @@ Variants to export: `fadeIn`, `slideUp` (y 6), `listItem` (y 4 with height exit)
 | Grid | 12 columns, 20px gutters. Dashboard widgets split 7/5 and 6/6. |
 | Data max-width | Dashboard capped at 1080px. Tasks, board and calendar are fluid. |
 | Reading max-width | 680px for the note editor and journal; 760px for reports (two charts side by side). |
-| Right rail | **304px (`w-76`)** for task meta and the note side panel (set by the user, 2026-09-26). It becomes a Sheet (`w-80`) below 1024px. |
+| Right rail | Opens and closes **like the sidebar** (`DetailRail`: the width animates 200ms `ease-linear` with the contents held at full width and fading; `motion-reduce` skips it; the user's request, 2026-09-26). **304px (`w-76`)** for task meta and the note side panel (set by the user, 2026-09-26). It becomes a Sheet (`w-80`) below 1024px. |
 | Row heights | task row 44 · todo row 40 · nav item 32 (shadcn sidebar default) · group header 36 |
 | Breakpoints | Below 1024px the right rail becomes a Sheet. Below 768px the sidebar becomes a drawer and rows go two-line. |
 | Print (reports) | No chrome, white paper, always light theme |

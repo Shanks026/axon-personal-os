@@ -22,19 +22,23 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
 | 04 Tasks | ✅ Complete, plus many browser-feedback follow-ups on 2026-09-25 (see the changelog) |
 | 05 Todos | ✅ Complete (page, groups, reorder, task checklists) |
 | 06 Notes | ✅ Complete (editor, list, autosave, pinning, versions, tag chips, code highlight, tables, Markdown, shortcuts, rich task descriptions) |
-| 07 Task detail and linking | ✅ Complete (task detail page, activity and work log, note ↔ task links, `[[` mentions, Make task); **UI refinements from the user are next** |
+| 07 Task detail and linking | ✅ Complete (task detail page, activity and work log, note ↔ task links, `@` / `[[` mentions, Make task, and the user's UI refinements) |
 | 08–14 | Planned (docs in `.claude/features/`) |
 | 15 Attachments and Media | 🟡 Phase 1 ✅ (images in notes and task descriptions, private bucket, signed URLs); Phases 2–3 later |
 
 ### Resume here (session handoff)
 
-1. **Next step: the user's UI refinements for Feature 07 (linking and mentions), which they asked to do after Phase 3; then Feature 08 (Calendar).** Tests run with `maxWorkers: 2` (the suite takes about 4 minutes). Feature 15 Phases 2–3 (task file attachments, space images) wait until later.
-   - Run the `axon-feature` skill, Step 4, on `.claude/features/06-notes.md`. Phase 1's Implementation Notes (§1.8) cover the Tiptap 3.31 specifics.
-   - Phase 2 covers the tag filter, table controls, lowlight code blocks, Copy as Markdown, Ctrl+S and the shortcuts cheat sheet. Phase 3 turns the task dialog's description into a compact `RichTextEditor`; pass the suggestion `container` option inside the Dialog.
-   - **Still to confirm in the browser:**
-     - The note editor: the bubble menu, "Turn into", the slash menu, and discard-on-leave of an empty note.
-     - Todo drag reorder (pointer and keyboard).
-   - Supabase MCP tools didn't load in the 2026-09-25 session; the Management API fallback worked (see item 3).
+1. **Next step: Feature 08 (Calendar) Phase 1: Month, Agenda and events CRUD.** Features 06 and 07 are complete, including the user's UI refinements (2026-09-26).
+   - Run the `axon-feature` skill, Step 4, on `.claude/features/08-calendar.md`. First fold the Calendar items from `.claude/design/design-deltas.md` and the Calendar screen (`Calendar.dc.html`) into the doc.
+   - **Check the plan against later decisions** and put anything unclear to the user:
+     - Spaces are fixed at creation, with no space pickers in dialogs (use `useDefaultSpaceId`, as `TaskDialog` does).
+     - Chips and pills use literal Tailwind colours from `lib/tint.js`, never the space accent. `EntityLink` has `tone` (plain / blue).
+     - Detail rails use `components/layout/DetailRail` (304px `w-76`, animated like the sidebar).
+     - Dialog headers are shadcn defaults; tall dialogs use `max-h-dialog` with a scrolling body.
+   - The shared editor (`RichTextEditor`) takes `features`: `slash`, `images` (`useImageHandlers`), `taskMentions` (`useTaskMentionsConfig`), `onSave`, and `variant="compact"` for dialogs. Meeting notes (08 Phase 3) reuse the notes API.
+   - Tests run with `maxWorkers: 2` (the suite takes about 4 minutes). Feature 15 Phases 2–3 (task file attachments, space images) wait until later.
+   - **Still to confirm in the browser:** todo drag reorder (pointer and keyboard).
+   - The Supabase MCP tools didn't load in the 2026-09-25/26 sessions; the Management API fallback (item 3) worked. Scratchpad helpers `sb.js` and `q.js` must be re-created in a new session.
 2. **Workflow the user expects:**
    - Build one phase, verify it (lint, tests, build, the `axon-rules` audit), and update the feature doc, `00-index.md` and the patterns catalogue.
    - **Then ask before committing and pushing to `main`** (github.com/Shanks026/axon-personal-os), and stop for approval. **Never commit each small change**: leave UI tweaks uncommitted and batch them when the user says so (their request, 2026-09-26).

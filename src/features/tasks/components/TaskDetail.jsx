@@ -4,6 +4,7 @@ import { useHotkeys } from 'react-hotkeys-hook'
 import { useLocation, useNavigate } from 'react-router'
 import { cn } from '@/lib/utils'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { DetailRail } from '@/components/layout/DetailRail'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
 import { SaveIndicator } from '@/components/shared/SaveIndicator'
 import { Button } from '@/components/ui/button'
@@ -166,13 +167,9 @@ export function TaskDetail({ task }) {
         </div>
       </div>
 
-      {railOpen && (
-        <aside className="hidden w-76 shrink-0 border-l p-5 lg:block">
-          <div className="sticky top-5">
-            <TaskMetaRail task={task} onDelete={remove} />
-          </div>
-        </aside>
-      )}
+      <DetailRail open={railOpen}>
+        <TaskMetaRail task={task} onDelete={remove} />
+      </DetailRail>
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
         <SheetContent side="right" className="overflow-y-auto data-[side=right]:w-80">
           <SheetHeader>
