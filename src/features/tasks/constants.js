@@ -56,10 +56,15 @@ export const TASK_TABS = [
 export const TASK_VIEWS = ['grid', 'board', 'table']
 
 /**
- * Sort fields for the grid and table (`?sort=due`, `?sort=-due` for descending); no sort means
- * the manual position order. `descFirst` fields start descending (newest, most urgent). The
+ * Sort fields for the grid and table (`?sort=due`, `?sort=-due` for descending; `manual` is the
+ * position order). `descFirst` fields start descending (newest, most urgent). The
  * board always keeps its manual drag order. `space` exists only as a Global table column.
  */
+/** Newest created first, until the user picks something else (remembered per device). */
+export const DEFAULT_TASK_SORT = '-created'
+/** The explicit "Manual order" choice: the position (drag) order. */
+export const MANUAL_TASK_SORT = 'manual'
+
 export const TASK_SORTS = [
   { value: 'created', label: 'Created', descFirst: true },
   { value: 'updated', label: 'Updated', descFirst: true },

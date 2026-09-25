@@ -1,18 +1,20 @@
 import { useCallback, useMemo } from 'react'
 import { useSearchParams } from 'react-router'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
-import { TASK_TABS, TASK_VIEWS } from '@/features/tasks/constants'
+import { DEFAULT_TASK_SORT, TASK_TABS, TASK_VIEWS } from '@/features/tasks/constants'
 
 const TABS = TASK_TABS.map((t) => t.value)
 
 /**
  * Tasks page state in the URL (shareable, survives reloads): tab, view, status[], priority[],
- * tag[], version[], due, q, and the table view's sort. The last view is also remembered per device and used
- * when the URL has none. Clearing filters keeps tab, view and sort.
+ * tag[], version[], due, q and sort. The last view and the last sort are also remembered per device
+ * (localStorage) and used when the URL has none; the default sort is newest created first.
+ * Clearing filters keeps tab, view and sort.
  */
 export function useTaskFilters() {
   const [params, setParams] = useSearchParams()
   const [lastView, setLastView] = useLocalStorage('axon:tasks:view', 'grid')
+  const [lastSort, setLastSort] = useLocalStorage('axon:tasks:sort', DEFAULT_TASK_SORT)
 
   const filters = useMemo(() => {
     const tab = params.get('tab')
@@ -26,13 +28,20 @@ export function useTaskFilters() {
       version: params.getAll('version'),
       due: params.get('due') ?? '',
       q: params.get('q') ?? '',
-      sort: params.get('sort') ?? '', // table view: 'due' or '-due' (descending)
+      // 'due' or '-due' (descending); 'manual' is the drag order. URL first, then this device's last choice.
+      sort: params.get('sort') || lastSort || DEFAULT_TASK_SORT,
     }
-  }, [params, lastView])
+  }, [params, lastView, lastSort])
 
   const setFilter = useCallback(
     (key, value) => {
       if (key === 'view') setLastView(value)
+      // Clearing the sort (a table header's third click) means the default, which stays out of the URL.
+      if (key === 'sort') {
+        value = value || DEFAULT_TASK_SORT
+        setLastSort(value)
+        if (value === DEFAULT_TASK_SORT) value = ''
+      }
       setParams(
         (prev) => {
           const next = new URLSearchParams(prev)
@@ -46,7 +55,7 @@ export function useTaskFilters() {
         { replace: true },
       )
     },
-    [setParams, setLastView],
+    [setParams, setLastView, setLastSort],
   )
 
   const clear = useCallback(

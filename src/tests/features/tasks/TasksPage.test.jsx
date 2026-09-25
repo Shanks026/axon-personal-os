@@ -564,6 +564,30 @@ describe('TasksPage', () => {
     ).not.toBeInTheDocument()
   })
 
+  it('defaults to newest created (a plain "Sort" button) and remembers the last sort', async () => {
+    db.tasks[3].created_at = '2026-09-10T10:00:00Z' // KYC upload: newest
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Storefront: lazy-load images')
+    const headings = () =>
+      screen.getAllByRole('article').map((a) => within(a).getByRole('heading').textContent)
+    expect(headings()[0]).toBe('Onboarding: KYC upload UI')
+    await user.click(screen.getByRole('button', { name: 'Sort' }))
+    await user.click(await screen.findByRole('menuitemradio', { name: 'Title' }))
+    await waitFor(() => expect(localStorage.getItem('axon:tasks:sort')).toBe('"title"'))
+  })
+
+  it('applies the remembered sort when the URL has none', async () => {
+    localStorage.setItem('axon:tasks:sort', '"title"')
+    renderPage()
+    await screen.findByText('Storefront: lazy-load images')
+    expect(screen.getByRole('button', { name: /^Title/ })).toBeInTheDocument()
+    const headings = screen
+      .getAllByRole('article')
+      .map((a) => within(a).getByRole('heading').textContent)
+    expect(headings[0]).toBe('Buyer portal: fix RFQ pagination') // alphabetical
+  })
+
   it('opens a task from its title and changes status in place in the table', async () => {
     const user = userEvent.setup()
     renderPage('/s/thmp/tasks?view=table')
