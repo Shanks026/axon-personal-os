@@ -6,7 +6,8 @@ const MARKDOWN_PREFIX = 'axon-image:'
 
 /**
  * Block images stored in the private `attachments` bucket. The doc saves only `path`, `alt`,
- * `width` and `height` (no `src`: signed URLs expire); `ImageBlockView` resolves `path` to a URL.
+ * `width`/`height` (the natural size, for the aspect ratio) and `displayWidth` (set by resizing;
+ * null = natural size) — no `src`: signed URLs expire. `ImageBlockView` resolves `path` to a URL.
  * `uploadId` exists only while an upload runs and is stripped before saving.
  * HTML keeps `data-path` (copy-paste between notes works); pasted web images without one are
  * ignored. Markdown writes a stable `![alt](axon-image:{path})` reference.
@@ -27,6 +28,12 @@ export const ImageBlock = Image.extend({
       height: {
         default: null,
         parseHTML: (el) => Number(el.getAttribute('height')) || null,
+      },
+      displayWidth: {
+        default: null,
+        parseHTML: (el) => Number(el.getAttribute('data-display-width')) || null,
+        renderHTML: (attrs) =>
+          attrs.displayWidth ? { 'data-display-width': attrs.displayWidth } : {},
       },
       uploadId: { default: null, rendered: false },
     }

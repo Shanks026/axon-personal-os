@@ -146,7 +146,7 @@ src/features/attachments/
 | 14 trash purge, space delete | Orphaned files | Out of scope here. 14 deletes the `{user_id}/{space_id}/` prefix when a space is deleted; per-entity cleanup comes with Phase 2's table |
 
 ### 1.6 Not in This Phase
-- Image resizing and alignment, captions, galleries, and a lightbox/zoom (backlog).
+- ~~Image resizing~~ (added as a follow-up on 2026-09-25, the user's request; see §1.8). Alignment, captions, galleries and a lightbox/zoom remain in the backlog.
 - Client-side downscaling or compression. The 10 MB cap stands in; revisit if screenshots are heavy.
 - Removing a Storage object when its image is deleted from a doc (orphans are left; cleanup needs the Phase 2 table or a sweep).
 - Non-image files (Phase 2), space images (Phase 3), images in the journal (09) and reports (11); those inherit it by passing `features.images`.
@@ -186,6 +186,11 @@ src/features/attachments/
 - **The upload path's user id** comes from `supabase.auth.getSession()` (local, no network round trip).
 - **Drop cursor:** StarterKit's `dropcursor` is `var(--ring)`, 2px.
 - **Bundle:** the `editor` chunk is about 594 kB raw and 185 kB gzip.
+- **Follow-up (2026-09-25, the user's request): resizing.**
+  - A selected image shows a handle on each side (`ImageResizeHandle`). Dragging sets the width live and saves it on release as a new `displayWidth` attribute (null = natural size; `data-display-width` in HTML). The height follows the aspect ratio.
+  - The width is clamped to 80px minimum and the column width maximum (`imageSize.js` `clampImageWidth`, tested).
+  - Arrow keys on a focused handle resize by 20px (Shift: 80px). A double-click resets to the natural size.
+  - Handles prevent the pointer default and use pointer capture, so ProseMirror never starts a node drag.
 - **Deferred:** a real upload against Supabase can't be exercised in jsdom; the user should confirm paste, drop and "/ Image" in the browser. Orphaned files remain when images are removed from docs (as planned).
 
 **Stop here. Show the result and wait for approval.**

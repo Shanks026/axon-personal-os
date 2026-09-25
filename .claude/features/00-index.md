@@ -116,6 +116,10 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Resizable editor images
+- A selected image has drag handles on both sides (the user's request). The width saves as `displayWidth` on the image node, is clamped to 80px up to the column, and keeps the aspect ratio. Arrow keys work on a focused handle, and a double-click resets.
+- New: `ImageResizeHandle.jsx` and `imageSize.js` (tested) in `components/editor/`.
+
 ### 2026-09-25: Feature 15 Phase 1: Images in the editor
 - **Storage:** a private bucket `attachments` (10 MB; png, jpeg, webp and gif) with owner-only policies on the first path segment, migration `create_attachments_bucket` (`20260925123002`). Cross-user access was verified to be denied, and advisors are clean.
 - **Editor:** images in notes and task descriptions:

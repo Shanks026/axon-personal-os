@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NodeViewWrapper } from '@tiptap/react'
 import { ImageOff, Loader2, RotateCw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { ImageResizeHandle } from '@/components/editor/ImageResizeHandle'
+import { displayWidth } from '@/components/editor/imageSize'
 
 /** Resolves a stored image's `path` to a URL through the editor's handlers (cached upstream). */
 function useResolvedUrl(editor, path, preview) {
@@ -78,24 +80,30 @@ function AltTextField({ value, onSave }) {
 /**
  * Node view for `ImageBlock`: the uploading preview (faded, with a spinner), the stored image
  * via a signed URL, or "Image unavailable" with a retry. Its natural size reserves the space
- * (aspect ratio), and it never grows past the column. Selected: an accent ring, plus alt text.
+ * (aspect ratio), and it never grows past the column. Selected: an accent ring, alt text, and
+ * resize handles on both sides (saved as `displayWidth`; double-click a handle to reset).
  */
 export function ImageBlockView({ node, editor, selected, updateAttributes }) {
   const { path, alt, width, height, uploadId } = node.attrs
+  const boxRef = useRef(null)
+  // The width while a handle is being dragged; saved to the node on release.
+  const [liveWidth, setLiveWidth] = useState(null)
   const previews = editor.storage.imageUpload?.previews
   const preview = previews?.get(uploadId) ?? previews?.get(path) ?? null
   const { url, failed, retry } = useResolvedUrl(editor, path, preview)
   const uploading = !!uploadId
   // A node with neither a stored path nor an upload in flight has nothing to show.
   const unavailable = failed || (!path && !uploading)
+  const shown = liveWidth ?? displayWidth(node.attrs)
   const box = {
-    width: width ? `${width}px` : undefined,
+    width: shown ? `${shown}px` : undefined,
     aspectRatio: width && height ? `${width} / ${height}` : undefined,
   }
 
   return (
     <NodeViewWrapper className="axon-image" data-drag-handle>
       <div
+        ref={boxRef}
         className={cn(
           'relative max-w-full rounded-lg',
           selected && 'ring-2 ring-ring ring-offset-2 ring-offset-background',
@@ -141,6 +149,29 @@ export function ImageBlockView({ node, editor, selected, updateAttributes }) {
           >
             <Loader2 className="size-5 animate-spin text-foreground" aria-hidden />
           </span>
+        )}
+
+        {selected && editor.isEditable && !uploading && !unavailable && (
+          <>
+            {['left', 'right'].map((side) => (
+              <ImageResizeHandle
+                key={side}
+                side={side}
+                boxRef={boxRef}
+                // The column: the node view wrapper spans the editor's full width.
+                maxWidth={() => boxRef.current?.parentElement?.getBoundingClientRect().width}
+                onResize={setLiveWidth}
+                onCommit={(w) => {
+                  setLiveWidth(null)
+                  updateAttributes({ displayWidth: w })
+                }}
+                onReset={() => {
+                  setLiveWidth(null)
+                  updateAttributes({ displayWidth: null })
+                }}
+              />
+            ))}
+          </>
         )}
 
         {selected && editor.isEditable && !uploading && path && (

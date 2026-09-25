@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { act, fireEvent, render, screen, waitFor } from '@testing-library/react'
 import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { docToMarkdown } from '@/components/editor/markdown'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
@@ -65,7 +65,13 @@ describe('RichTextEditor images', () => {
     await act(async () => finish({ path: 'u/s/new.png', width: 800, height: 400 }))
     await waitFor(() =>
       expect(onChange.mock.lastCall[0].content).toContainEqual(
-        image({ path: 'u/s/new.png', width: 800, height: 400, uploadId: null }),
+        image({
+          path: 'u/s/new.png',
+          width: 800,
+          height: 400,
+          displayWidth: null,
+          uploadId: null,
+        }),
       ),
     )
     expect(screen.queryByRole('status', { name: 'Uploading image' })).not.toBeInTheDocument()
@@ -135,5 +141,31 @@ describe('RichTextEditor images', () => {
       </TooltipProvider>,
     )
     expect(screen.getByText('Image unavailable')).toBeInTheDocument()
+  })
+
+  it('resizes a selected image from its handles (keys) and resets on double-click', async () => {
+    const images = {
+      validate: () => null,
+      upload: vi.fn(),
+      resolveUrl: vi.fn(async () => 'https://signed.example/stored.png'),
+    }
+    const doc = { type: 'doc', content: [image({ path: 'u/s/r.png', width: 1200, height: 600 })] }
+    const { editor, onChange } = renderEditor(images, doc)
+    act(() => {
+      editor.commands.setNodeSelection(0)
+    })
+    const right = await screen.findByRole('button', { name: 'Resize image (right edge)' })
+    expect(screen.getByRole('button', { name: 'Resize image (left edge)' })).toBeInTheDocument()
+
+    // jsdom measures 0px, so one step right lands on the minimum width.
+    fireEvent.keyDown(right, { key: 'ArrowRight' })
+    await waitFor(() =>
+      expect(onChange.mock.lastCall[0].content[0].attrs).toMatchObject({ displayWidth: 80 }),
+    )
+
+    fireEvent.doubleClick(await screen.findByRole('button', { name: 'Resize image (right edge)' }))
+    await waitFor(() =>
+      expect(onChange.mock.lastCall[0].content[0].attrs).toMatchObject({ displayWidth: null }),
+    )
   })
 })
