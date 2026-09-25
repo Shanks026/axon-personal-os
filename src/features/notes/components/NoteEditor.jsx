@@ -246,13 +246,13 @@ export function NoteEditor({ note }) {
       </div>
 
       {railOpen && (
-        <aside className="hidden w-64 shrink-0 border-l p-5 lg:block">
+        <aside className="hidden w-88 shrink-0 border-l p-5 lg:block">
           <NoteMetaRail note={note} space={space} words={words} className="sticky top-5" />
         </aside>
       )}
       <EditorShortcutsDialog open={shortcutsOpen} onOpenChange={setShortcutsOpen} />
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="right" className="overflow-y-auto data-[side=right]:w-64">
+        <SheetContent side="right" className="overflow-y-auto data-[side=right]:w-88">
           <SheetHeader>
             <SheetTitle>Details</SheetTitle>
             <SheetDescription>About this note.</SheetDescription>

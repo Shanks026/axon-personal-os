@@ -56,7 +56,7 @@ function HeaderIconButton({ label, shortcut, pressed, disabled, onClick, childre
 
 /**
  * The task detail page's body (design Task Detail, delta 07), mounted with `key={task.id}`.
- * A 720px main column (title, description, checklist, activity) and a 256px rail (the sidebar's width) (a Sheet below
+ * A 720px main column (title, description, checklist, activity) and a 352px rail (a Sheet below
  * `lg`). It owns the header: the description's save state, previous/next (J/K, following the
  * list order the task was opened from), the Details toggle and a ⋯ menu.
  */
@@ -167,14 +167,14 @@ export function TaskDetail({ task }) {
       </div>
 
       {railOpen && (
-        <aside className="hidden w-64 shrink-0 border-l p-5 lg:block">
+        <aside className="hidden w-88 shrink-0 border-l p-5 lg:block">
           <div className="sticky top-5">
             <TaskMetaRail task={task} onDelete={remove} />
           </div>
         </aside>
       )}
       <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-        <SheetContent side="right" className="overflow-y-auto data-[side=right]:w-64">
+        <SheetContent side="right" className="overflow-y-auto data-[side=right]:w-88">
           <SheetHeader>
             <SheetTitle>Details</SheetTitle>
             <SheetDescription>Status, dates, tags, versions and links.</SheetDescription>
