@@ -3,6 +3,8 @@ import { ChevronRight } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { springs } from '@/components/motion/presets'
+import { useTodos } from '@/features/todos/api'
+import { ChecklistProgress } from '@/features/todos/components/ChecklistProgress'
 import { TodoChecklist } from '@/features/todos/components/TodoChecklist'
 
 /**
@@ -11,19 +13,27 @@ import { TodoChecklist } from '@/features/todos/components/TodoChecklist'
  */
 export function ChecklistSection({ taskId, spaceId }) {
   const [open, setOpen] = useState(true)
+  // Same query (and cache entry) as the TodoChecklist below; read here for the header's progress.
+  const { data: items = [] } = useTodos({ taskId })
+  const done = items.filter((t) => t.is_done).length
   return (
-    <div className="border-t px-5 py-3.5">
+    <div className="border-t px-5 py-4">
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        className="flex h-6 items-center gap-1.5 text-xs text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        className="flex h-6 items-center gap-1.5 rounded-sm outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
         <ChevronRight
-          className={cn('size-3.5 text-faint transition-transform', open && 'rotate-90')}
+          className={cn('size-4 text-muted-foreground transition-transform', open && 'rotate-90')}
           aria-hidden
         />
-        Checklist saves as you go
+        <span className="font-medium">Checklist</span>
+        {items.length > 0 ? (
+          <ChecklistProgress done={done} total={items.length} />
+        ) : (
+          <span className="text-muted-foreground">· saves as you go</span>
+        )}
       </button>
       <AnimatePresence initial={false}>
         {open && (
@@ -34,7 +44,7 @@ export function ChecklistSection({ taskId, spaceId }) {
             transition={springs.gentle}
             className="overflow-hidden"
           >
-            <TodoChecklist taskId={taskId} spaceId={spaceId} className="mt-2" />
+            <TodoChecklist taskId={taskId} spaceId={spaceId} showTitle={false} className="mt-2" />
           </motion.div>
         )}
       </AnimatePresence>

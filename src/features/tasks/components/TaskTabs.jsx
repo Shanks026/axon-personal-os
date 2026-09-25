@@ -6,7 +6,11 @@ import { TASK_TABS } from '@/features/tasks/constants'
 /** Underlined tab bar with counts (design 04a). The underline slides between tabs. */
 export function TaskTabs({ value, counts, onChange }) {
   return (
-    <div role="tablist" aria-label="Task views" className="flex gap-7 border-b">
+    <div
+      role="tablist"
+      aria-label="Task views"
+      className="flex gap-6 overflow-x-auto border-b scrollbar-none"
+    >
       {TASK_TABS.map((tab) => {
         const selected = tab.value === value
         return (
@@ -17,7 +21,7 @@ export function TaskTabs({ value, counts, onChange }) {
             aria-selected={selected}
             onClick={() => onChange(tab.value)}
             className={cn(
-              'relative flex h-10 items-center gap-1.75 text-sm transition-colors outline-none focus-visible:text-foreground',
+              'relative flex h-10 shrink-0 items-center gap-1.75 text-sm whitespace-nowrap transition-colors outline-none focus-visible:text-foreground',
               selected
                 ? 'font-medium text-foreground'
                 : 'text-muted-foreground hover:text-foreground',

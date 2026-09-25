@@ -19,7 +19,7 @@ import { TaskToolbar } from '@/features/tasks/components/TaskToolbar'
 import { TaskGrid, TaskList } from '@/features/tasks/components/TaskViews'
 import { useTaskActions } from '@/features/tasks/hooks/useTaskActions'
 import { useTaskFilters } from '@/features/tasks/hooks/useTaskFilters'
-import { BOARD_STATUSES } from '@/features/tasks/constants'
+import { BOARD_STATUSES, CLOSED_STATUSES } from '@/features/tasks/constants'
 import { boardStatuses, filterTasks, isClosed, tabCounts, weekEndISO } from '@/features/tasks/utils'
 
 /** Tasks (design 04a–04e). Todos have their own page (Feature 05). */
@@ -32,7 +32,7 @@ export default function TasksPage() {
 
   const today = toISODate(new Date())
   const allClosed =
-    filters.tab === 'completed' || filters.status.some((s) => s === 'done' || s === 'cancelled')
+    CLOSED_STATUSES.includes(filters.tab) || filters.status.some((s) => s === 'done' || s === 'cancelled')
   const { data, isLoading, error, refetch } = useTasks({
     spaceIds: scopeSpaceIds,
     priority: filters.priority,
@@ -124,7 +124,7 @@ export default function TasksPage() {
             onEdit={openEdit}
             onCreate={(status) => openCreate({ status })}
             windowed={!allClosed}
-            onShowAll={() => setFilter('tab', 'completed')}
+            onShowAll={() => setFilter('tab', 'done')}
           />
         ) : visible.length === 0 ? (
           tasks.length > 0 || hasFilters ? (
@@ -161,7 +161,7 @@ export default function TasksPage() {
             progressByTask={progressByTask}
             onEdit={openEdit}
             windowed={!allClosed}
-            onShowAllCompleted={() => setFilter('tab', 'completed')}
+            onShowAllCompleted={() => setFilter('tab', 'done')}
           />
         ) : (
           <TaskGrid

@@ -272,6 +272,13 @@ Each of these maps to a shadcn primitive.
 - **Note card.** `bg-card`, 12px radius, padding 14×16. Title (600), then a 2-line muted preview, then tags on the left and a mono relative time on the right.
 - **Date picker** (Popover + Calendar), 260px wide. Quick chips first: Today, Tomorrow, Fri, Next week. The selected day is `bg-primary`; today uses red text with a muted background.
 - **Tag picker** (Popover + Command). Selected tags appear as chips inside the search input. Each option has a checkbox, a colour dot and the name. It ends with "Create "…"".
+- **Task dialog** (revised 2026-09-25 after the user reviewed it in the browser; they found the text "so small and heavy"):
+  - The header is shadcn's default title and description (see `components.md`), with a ghost `icon-sm` close button beside it.
+  - The title input is `text-xl font-medium tracking-tight`, not semibold. The description is default `text-sm`.
+  - Under the description come the selected tags (`TagPill size="md"`: 26px tall, `text-sm`, removable), then the inline links field.
+  - Property chips (`PropertyChip`) are **32px tall with `text-sm`**, never `text-xs`.
+  - The checklist has one disclosure header, "Checklist" in `font-medium`, followed by its progress, or "· saves as you go" while it's empty. There's no second title.
+  - **Weight rule for dialog and form text:** use `font-medium` for titles and headings. Keep `font-semibold` for page, section and card titles only.
 - **Empty state.** A dashed `border-strong` box with a 36px icon tile in the accent colour. Title (600), a one-line reason, and one primary action.
 - **Confirm dialog** (AlertDialog). Title, a one-line consequence, then Cancel plus a destructive button.
 - **Toast** (Sonner). `bg-card`, 12px radius, `shadow-md`. Icon, message, and an optional outlined action such as Undo.

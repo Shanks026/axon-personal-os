@@ -52,14 +52,23 @@ describe('tabs', () => {
     t('5', 'blocked'),
   ]
 
-  it('filters by tab and status', () => {
-    expect(filterTasks(tasks, { tab: 'in_progress' }).map((x) => x.id)).toEqual(['2', '3'])
-    expect(filterTasks(tasks, { tab: 'completed' }).map((x) => x.id)).toEqual(['4'])
+  it('filters by a status tab and the status filter', () => {
+    expect(filterTasks(tasks, { tab: 'in_progress' }).map((x) => x.id)).toEqual(['2'])
+    expect(filterTasks(tasks, { tab: 'done' }).map((x) => x.id)).toEqual(['4'])
     expect(filterTasks(tasks, { tab: 'all', status: ['blocked'] }).map((x) => x.id)).toEqual(['5'])
   })
 
-  it('counts every tab', () => {
-    expect(tabCounts(tasks)).toEqual({ all: 5, in_progress: 2, completed: 1 })
+  it('counts All and every status', () => {
+    expect(tabCounts(tasks)).toEqual({
+      all: 5,
+      todo: 1,
+      in_progress: 1,
+      in_review: 1,
+      blocked: 1,
+      on_hold: 0,
+      done: 1,
+      cancelled: 0,
+    })
   })
 })
 
@@ -131,8 +140,9 @@ describe('boardStatuses', () => {
   })
 
   it('narrows columns by tab and status filter', () => {
-    expect(boardStatuses({ tab: 'in_progress' })).toEqual(['in_progress', 'in_review'])
-    expect(boardStatuses({ tab: 'completed' })).toEqual(['done'])
+    expect(boardStatuses({ tab: 'in_review' })).toEqual(['in_review'])
+    expect(boardStatuses({ tab: 'done' })).toEqual(['done'])
+    expect(boardStatuses({ tab: 'cancelled' })).toEqual([])
     expect(boardStatuses({ status: ['blocked', 'todo'] })).toEqual(['todo', 'blocked'])
     expect(boardStatuses({ tab: 'in_progress', status: ['todo'] })).toEqual([])
   })

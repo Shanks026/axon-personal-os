@@ -311,7 +311,10 @@ describe('TasksPage', () => {
       'aria-selected',
       'true',
     )
-    expect(within(tabs).getByRole('tab', { name: /In progress\s*2/ })).toBeInTheDocument()
+    expect(within(tabs).getAllByRole('tab')).toHaveLength(8)
+    expect(within(tabs).getByRole('tab', { name: /In progress\s*1/ })).toBeInTheDocument()
+    expect(within(tabs).getByRole('tab', { name: /In review\s*1/ })).toBeInTheDocument()
+    expect(within(tabs).getByRole('tab', { name: /On hold\s*0/ })).toBeInTheDocument()
     expect(within(tabs).getByRole('tab', { name: /Completed\s*1/ })).toBeInTheDocument()
   })
 
@@ -361,6 +364,33 @@ describe('TasksPage', () => {
     // Create more: still open, title cleared for the next one
     expect(screen.getByRole('dialog')).toBeInTheDocument()
     expect(within(screen.getByRole('dialog')).getByLabelText('Task title')).toHaveValue('')
+  })
+
+  it('stages two links inline and saves them with the new task', async () => {
+    const user = userEvent.setup()
+    renderPage()
+    await screen.findByText('Storefront: lazy-load images')
+    await user.click(screen.getByRole('button', { name: 'New task' }))
+    const dialog = await screen.findByRole('dialog')
+    await user.type(within(dialog).getByLabelText('Task title'), 'Admin: role-based menu')
+    const linkInput = within(dialog).getByLabelText('Add a link')
+    await user.type(linkInput, 'not a link{Enter}')
+    expect(await within(dialog).findByText(/Enter a full link/)).toBeInTheDocument()
+    await user.clear(linkInput)
+    await user.type(linkInput, 'https://gitlab.com/mr/1{Enter}')
+    await user.type(linkInput, 'https://jira.example.com/T-2')
+    await user.click(within(dialog).getByRole('button', { name: 'Add link' }))
+    expect(within(dialog).getByText('https://gitlab.com/mr/1')).toBeInTheDocument()
+    await user.click(within(dialog).getByRole('button', { name: /create task/i }))
+
+    await waitFor(() =>
+      expect(db.calls.filter((c) => c[0] === 'insert:task_links')).toHaveLength(2),
+    )
+    const created = db.calls.find((c) => c[0] === 'insert')[1]
+    expect(db.calls.filter((c) => c[0] === 'insert:task_links').map((c) => c[1])).toEqual([
+      expect.objectContaining({ task_id: created.id, url: 'https://gitlab.com/mr/1' }),
+      expect.objectContaining({ task_id: created.id, url: 'https://jira.example.com/T-2' }),
+    ])
   })
 
   it('validates the title and dates before saving', async () => {
@@ -441,9 +471,9 @@ describe('TasksPage', () => {
   })
 
   it('narrows board columns by tab', async () => {
-    renderPage('/s/thmp/tasks?view=board&tab=in_progress')
+    renderPage('/s/thmp/tasks?view=board&tab=in_review')
     const columns = await screen.findAllByRole('region', { name: / column$/ })
-    expect(columns).toHaveLength(2)
+    expect(columns.map((c) => c.getAttribute('aria-label'))).toEqual(['In review column'])
   })
 
   it('quick-adds a task at the bottom of a column', async () => {

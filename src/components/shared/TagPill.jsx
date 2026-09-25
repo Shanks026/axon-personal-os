@@ -14,7 +14,7 @@ export function TagPill({ tag, size = 'sm', onRemove, className }) {
       className={cn(
         'inline-flex shrink-0 items-center gap-1 rounded-sm px-1.75 font-medium whitespace-nowrap',
         badgeClasses(tag.color),
-        size === 'sm' ? 'h-5 text-xs' : 'h-6 text-xs',
+        size === 'sm' ? 'h-5 text-xs' : 'h-6.5 px-2 text-sm',
         className,
       )}
     >
@@ -29,7 +29,7 @@ export function TagPill({ tag, size = 'sm', onRemove, className }) {
           aria-label={`Remove tag ${tag.name}`}
           className="-mr-0.5 rounded-full outline-none hover:opacity-70 focus-visible:ring-2 focus-visible:ring-ring"
         >
-          <X className="size-2.75" />
+          <X className={size === 'sm' ? 'size-2.75' : 'size-3.25'} />
         </button>
       )}
     </span>

@@ -43,15 +43,14 @@ export const DUE_FILTERS = [
   { value: 'none', label: 'No due date' },
 ]
 
-/** Tabs of the Tasks page. Todos have their own page (Feature 05). */
+/** Tabs of the Tasks page: All, then one per status (the user's request, 2026-09-25). */
 export const TASK_TABS = [
   { value: 'all', label: 'All', match: () => true },
-  {
-    value: 'in_progress',
-    label: 'In progress',
-    match: (t) => t.status === 'in_progress' || t.status === 'in_review',
-  },
-  { value: 'completed', label: 'Completed', match: (t) => t.status === 'done' },
+  ...TASK_STATUSES.map((s) => ({
+    value: s.value,
+    label: s.label,
+    match: (t) => t.status === s.value,
+  })),
 ]
 
 export const TASK_VIEWS = ['grid', 'board', 'list']

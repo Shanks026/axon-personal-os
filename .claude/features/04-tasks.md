@@ -518,7 +518,14 @@ Browser feedback after Feature 04/05 shipped, not a new phase. Full detail in `0
 - `tasks.external_url` replaced by a new `task_links` table (a task can have any number of links), with a shared `TaskLinksButton` (hover popover) on the row, card and board card, and a rewritten `LinksChip` in the dialog.
 - Priority is a plain coloured dot (the shared `Dot` component), not signal-bar icons.
 - Status, priority and tag colours moved from the CSS-variable tint recipe to literal Tailwind colour-scale classes (`lib/tint.js`); see `design-system.md`.
-- The dialog's property chips (status, priority, dates, tags, links) open on hover as well as on click (`useHoverOpen`), row/card/board menus unchanged (click-only).
+- The dialog's property chips (status, priority, dates, tags) open on hover as well as on click (`useHoverOpen`). Row, card and board menus are unchanged (click-only).
+- **Second pass on the same day, after the user reviewed the dialog in the browser:**
+  - The dialog uses shadcn's default title and description, with a text description instead of the space name.
+  - Chips are `text-sm` and 32px tall, and the type is lighter (the title is `font-medium`).
+  - Selected tags are listed under the description, not inside the Tags chip.
+  - Links became an inline "Add a link" field with a + button (`LinksField`), replacing the `LinksChip` popover.
+  - The checklist has a single header.
+- **Tabs are now All plus one per status** (8 tabs, each with a count; the tab values are the status values, e.g. `?tab=on_hold`). They replace All · In progress · Completed. A status tab narrows the board to that one column; Cancelled shows no board columns. The Done tab (formerly `?tab=completed`) or the Cancelled tab lifts the 30-day closed-task window.
 
 ---
 

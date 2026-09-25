@@ -279,3 +279,8 @@
 @utility scrollbar-stable {
   scrollbar-gutter: stable;
 }
+
+/* Horizontal strips (the task tabs) that scroll on narrow screens without a visible bar. */
+@utility scrollbar-none {
+  scrollbar-width: none;
+}

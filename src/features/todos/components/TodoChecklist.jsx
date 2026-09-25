@@ -13,7 +13,7 @@ import { SortableTodoList } from '@/features/todos/components/SortableTodoList'
  * Feature 07, the task detail page. Changes save immediately; they don't depend on the task
  * form's own submit.
  */
-export function TodoChecklist({ taskId, spaceId, className }) {
+export function TodoChecklist({ taskId, spaceId, showTitle = true, className }) {
   const { data, isLoading, error, refetch } = useTodos({ taskId })
   const create = useCreateTodo()
   const inputRef = useRef(null)
@@ -31,10 +31,12 @@ export function TodoChecklist({ taskId, spaceId, className }) {
 
   return (
     <div className={cn('flex flex-col gap-2', className)}>
-      <div className="flex h-5 items-center gap-2">
-        <span className="text-sm font-semibold">Checklist</span>
-        {items.length > 0 && <ChecklistProgress done={done} total={items.length} />}
-      </div>
+      {showTitle && (
+        <div className="flex h-5 items-center gap-2">
+          <span className="text-sm font-medium">Checklist</span>
+          {items.length > 0 && <ChecklistProgress done={done} total={items.length} />}
+        </div>
+      )}
 
       {isLoading ? (
         <div className="flex flex-col gap-1.5" aria-hidden>

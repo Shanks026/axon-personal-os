@@ -181,7 +181,7 @@ describe('TodoChecklist (in TaskDialog)', () => {
 
   it('shows the hint and no progress when empty', async () => {
     renderDialog()
-    expect(await screen.findByText('Checklist saves as you go')).toBeInTheDocument()
+    expect(await screen.findByText('· saves as you go')).toBeInTheDocument()
     expect(screen.getByPlaceholderText('Break this task into steps')).toBeInTheDocument()
     expect(screen.queryByText(/^\d+\/\d+$/)).not.toBeInTheDocument()
   })

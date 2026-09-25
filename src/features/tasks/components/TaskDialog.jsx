@@ -4,12 +4,16 @@ import { CalendarArrowUp, CalendarDays, X } from 'lucide-react'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { useDefaultSpaceId } from '@/hooks/useDefaultSpaceId'
-import { useSpace } from '@/context/SpaceContext'
 import { Kbd } from '@/components/shared/Kbd'
 import { PropertyChip } from '@/components/shared/PropertyChip'
-import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from '@/components/ui/dialog'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import { Switch } from '@/components/ui/switch'
 import { textClasses } from '@/lib/tint'
 import { usePreferences } from '@/features/settings/api'
@@ -21,7 +25,12 @@ import {
   useDeleteTaskLink,
   useUpdateTask,
 } from '@/features/tasks/api'
-import { DateChip, LinksChip, TagsChip } from '@/features/tasks/components/TaskDialogChips'
+import {
+  DateChip,
+  LinksField,
+  TagList,
+  TagsChip,
+} from '@/features/tasks/components/TaskDialogChips'
 import { PriorityMenu, StatusMenu } from '@/features/tasks/components/TaskMenus'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP } from '@/features/tasks/constants'
 import { taskSchema } from '@/features/tasks/schemas'
@@ -50,7 +59,6 @@ export function TaskDialog({ open, onOpenChange, task, initialValues, onSuccess 
 
 function TaskForm({ task, initialValues, onClose, onSuccess }) {
   const isEdit = !!task
-  const { spaceById } = useSpace()
   const create = useCreateTask()
   const update = useUpdateTask()
   const setTaskTags = useSetTaskTags()
@@ -88,10 +96,10 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
   const [status, priority] = useWatch({ control: form.control, name: ['status', 'priority'] })
   const errors = form.formState.errors
   const pending = create.isPending || update.isPending
-  const space = spaceById.get(defaultSpace)
 
   // Tags are scoped to the task's own (fixed) space.
   const { data: spaceTags = [] } = useTags({ spaceIds: defaultSpace ? [defaultSpace] : [] })
+  const selectedTags = spaceTags.filter((t) => tagIds.includes(t.id))
 
   const onSubmit = form.handleSubmit((values) => {
     const payload = { ...values, description: textToDoc(values.description_text) }
@@ -128,48 +136,64 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
       }}
       noValidate
     >
-      <div className="flex items-start gap-2 px-5 pt-4">
+      <div className="flex items-start gap-3 px-5 pt-5">
         <div className="min-w-0 flex-1">
-          <DialogTitle className="text-sm font-semibold">
-            {isEdit ? 'Edit task' : 'New task'}
-          </DialogTitle>
-          <DialogDescription className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
-            <SpaceIcon icon={space?.icon} size="xs" />
-            {space?.name}
-          </DialogDescription>
+          <DialogHeader>
+            <DialogTitle>{isEdit ? 'Edit task' : 'New task'}</DialogTitle>
+            <DialogDescription>
+              {isEdit
+                ? 'Update the details of this task.'
+                : 'Add a piece of work to track, with its status, dates and links.'}
+            </DialogDescription>
+          </DialogHeader>
         </div>
-        <Button type="button" variant="ghost" size="icon-xs" onClick={onClose} aria-label="Close">
+        <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close">
           <X />
         </Button>
       </div>
 
-      <div className="px-5 pt-3">
-        <Controller
-          name="title"
-          control={form.control}
-          render={({ field }) => (
-            <input
-              {...field}
-              placeholder="Task title"
-              aria-label="Task title"
-              aria-invalid={!!errors.title}
-              autoFocus
-              autoComplete="off"
-              className="w-full bg-transparent text-xl font-semibold tracking-tight outline-none placeholder:text-faint"
-            />
+      <div className="flex flex-col gap-3 px-5 pt-5">
+        <div>
+          <Controller
+            name="title"
+            control={form.control}
+            render={({ field }) => (
+              <input
+                {...field}
+                placeholder="Task title"
+                aria-label="Task title"
+                aria-invalid={!!errors.title}
+                autoFocus
+                autoComplete="off"
+                className="w-full bg-transparent text-xl font-medium tracking-tight outline-none placeholder:text-faint"
+              />
+            )}
+          />
+          {errors.title && (
+            <p className="mt-1 text-xs text-destructive">{errors.title.message}</p>
           )}
+          <textarea
+            {...form.register('description_text')}
+            placeholder="Add description…"
+            aria-label="Description"
+            rows={2}
+            className="mt-1.5 field-sizing-content max-h-60 min-h-12 w-full resize-none bg-transparent leading-relaxed outline-none placeholder:text-faint"
+          />
+        </div>
+        <TagList
+          tags={selectedTags}
+          onRemove={(tag) => setTagIds(tagIds.filter((id) => id !== tag.id))}
         />
-        {errors.title && <p className="mt-1 text-xs text-destructive">{errors.title.message}</p>}
-        <textarea
-          {...form.register('description_text')}
-          placeholder="Add description…"
-          aria-label="Description"
-          rows={2}
-          className="mt-1.5 field-sizing-content max-h-60 min-h-12 w-full resize-none bg-transparent leading-relaxed outline-none placeholder:text-faint"
+        <LinksField
+          taskId={task?.id}
+          links={links}
+          onLinksChange={setLinks}
+          onCreate={(values, onDone) => createLink.mutate(values, { onSuccess: onDone })}
+          onDelete={(id) => deleteLink.mutate(id)}
         />
       </div>
 
-      <div className="flex flex-wrap gap-1.5 px-5 pt-2 pb-4">
+      <div className="flex flex-wrap gap-1.5 px-5 pt-4 pb-5">
         <StatusMenu value={status} onChange={(v) => form.setValue('status', v)} hoverOpen>
           <PropertyChip icon={StatusIcon} iconClassName={textClasses(TASK_STATUS_MAP[status].color)}>
             {TASK_STATUS_MAP[status].label}
@@ -198,14 +222,7 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
           icon={CalendarDays}
           weekStartsOn={weekStartsOn}
         />
-        <TagsChip spaceId={defaultSpace} tags={spaceTags} value={tagIds} onChange={setTagIds} />
-        <LinksChip
-          taskId={task?.id}
-          links={links}
-          onLinksChange={setLinks}
-          onCreate={(values, onDone) => createLink.mutate(values, { onSuccess: onDone })}
-          onDelete={(id) => deleteLink.mutate(id)}
-        />
+        <TagsChip spaceId={defaultSpace} value={tagIds} onChange={setTagIds} />
       </div>
       {(errors.due_date || errors.space_id) && (
         <p className="-mt-2 px-5 pb-3 text-xs text-destructive">

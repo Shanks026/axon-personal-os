@@ -113,6 +113,17 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Feature 04 follow-up 2: task dialog layout and status tabs (browser feedback)
+- **Task dialog:**
+  - The header uses shadcn's default `DialogHeader`/`DialogTitle`/`DialogDescription` with no extra classes. The description is a sentence, not the space name.
+  - Selected tags appear under the description as removable `text-sm` pills, and the Tags chip reads "Tags · n".
+  - Links are an inline, borderless "Add a link" field with a visible + button (`LinksField`). It replaces the `LinksChip` popover.
+  - `PropertyChip` is now `text-sm` and 32px tall. The title input is `font-medium` instead of semibold.
+  - The checklist section has one header (with its progress) instead of two stacked labels. `TodoChecklist` gets a `showTitle` prop.
+- **Tasks page tabs:** All plus the 7 statuses, each with a count, via `?tab=<status>`. `?tab=completed` is now `?tab=done`. The tab strip scrolls horizontally on narrow screens, using a new `scrollbar-none` utility in `index.css`.
+- **Rules:** `components.md` (dialog headers, multi-value fields in the body) and `design-system.md` (the task dialog spec, and `font-medium` for dialog headings).
+- **Tests:** 214, including a new one for staging two links inline during create.
+
 ### 2026-09-25: Feature 04 follow-up: task dialog UX and colour polish (browser feedback)
 - **No space picker in the task dialog** (the user's decision): a task's space is fixed at creation, either from context (the current space, or the column/status it was created from) or `useDefaultSpaceId`'s existing fallback chain. This is a deliberate, task-specific exception to `axon-feature`'s "Global create dialogs require a SpacePicker" convention — the dialog instead shows the space as a read-only title/subtitle (icon + name) under the task title.
 - **New status: On hold** (amber, `circle-pause`), between Blocked and Completed. Migration `20260925061559_tasks_add_on_hold_status` widens the `tasks.status` check constraint. The board now shows six columns (Cancelled still hidden).
