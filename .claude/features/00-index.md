@@ -114,6 +114,10 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Feature 06 plan updated (design fold + Phase 3)
+- **`06-notes.md`:** the delta-06 design fold is added to Phase 1: no sort control, Pinned then All notes sections, pinning pulled forward from 14, the auto-collapsing sidebar and 280px rail on the editor, the highlight mark, the slash-menu order, and the Tasks-era card rules. Two decisions are open for the user: the second list view (Table recommended) and "New note" in Global (default space silently, recommended).
+- **New Phase 3 "Rich task descriptions":** a compact `RichTextEditor` in `TaskDialog`, pulled forward from 07. No migration is needed. `07-task-detail-and-linking.md` is annotated to match.
+
 ### 2026-09-25: Emerald for Completed
 - The Completed status (pill, icon, board column) is now **emerald** instead of green. The "Completed 18 Sep" label (`DueLabel`, on card footers, table rows and board cards) is a darker `emerald-700` (`emerald-400` in dark mode).
 

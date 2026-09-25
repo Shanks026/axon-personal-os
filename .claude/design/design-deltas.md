@@ -88,7 +88,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
 - **Doc changes:**
   - ~~05 builds a `TodosTab` inside `TasksPage`.~~ Superseded by the G1 reversal: 05 builds its own `TodosPage` at `/s/:slug/todos` as its doc already describes, with `?highlight=<id>` and the Overdue / Today / Upcoming / Someday groups. The header's **New todo** button lives on the Todos page, not on Tasks.
 
-### 06 Notes
+### 06 Notes (✅ folded into 06 Phase 1 on 2026-09-25; tag chips go in Phase 2)
 - **Adopt (list):**
   - "New note" goes in the header. The toolbar has the grid/list toggle, **inline tag chip filters** (All, sprint, rca…) and a 220px search.
   - There's no sort control (always sorted by last updated).

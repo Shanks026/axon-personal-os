@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/06-notes.md`
-**Status**: 🔵 Planned
+**Status**: 🔵 Planned (design deltas ✅ folded 2026-09-25; Phase 3 added)
 **Depends on**: 04 (tags)
 **Last Updated**: September 2026
 
@@ -22,6 +22,9 @@ Phase 1: Editor and notes
 
 Phase 2: Organise and editor extras
   Tag filter on the list, table controls, syntax-highlighted code blocks, Copy as Markdown, Ctrl+S and a shortcuts cheat sheet.
+
+Phase 3: Rich task descriptions (added 2026-09-25, pulled forward from 07)
+  The TaskDialog description textarea becomes a compact RichTextEditor (bubble menu, markdown shortcuts, slash menu; no toolbar). No migration: tasks.description (jsonb) and description_text already exist.
 ```
 
 **After each phase, stop and wait for approval.**
@@ -29,6 +32,37 @@ Phase 2: Organise and editor extras
 ---
 
 ## Phase 1: Editor and Notes
+
+### Design fold (delta 06 and screens 07a/07b, folded on 2026-09-25). This overrides the spec below where they differ.
+- **List page** (`Notes.dc.html`):
+  - "New note" goes in the header.
+  - The toolbar has a 220px search on the left and the view switch on the right (**Grid · Table**; see decision A). The inline tag-chip filters (All, sprint, rca…) come in Phase 2.
+  - **There's no sort control.** Notes are always ordered `updated_at desc`, so `sort` is dropped from the URL, `fetchNotes` and the toolbar.
+  - Two sections: **Pinned** (only shown when something is pinned), then **All notes**.
+  - The grid has 3 columns, with cards at least 148px tall (`min-h-37`).
+  - The card's linked-task count comes with 07.
+- **Pinning ships now** (delta 14: pin toggles arrive with the note editor; Feature 14 only adds the sidebar Pinned list). `pinned_at` already exists. Add a Pin/Unpin item to the card menu and a pin button in the editor header, both through `useTogglePinNote()` (optimistic).
+- **Card, following this session's Tasks decisions:**
+  - Title in `font-semibold`, clamped to 2 lines (full title on hover).
+  - The excerpt, clamped to 2 lines.
+  - Tags **pinned above the footer**: `TagPillGroup max={3}` with the "+n" hover card.
+  - A dashed footer in the **normal font** with "Updated 2d ago". In Global, the space's emoji goes before it; there's no space name.
+- **Editor page** (`Note Editor.dc.html`):
+  - The sidebar **auto-collapses to the rail** on `notes/:noteId` and restores on leave.
+  - The header holds the save state, a pin button and a `panel-right` rail toggle.
+  - The reading column is 680px wide. The title uses the display style (`text-4xl font-semibold tracking-tight`), and the body is `text-base leading-7`.
+  - The tags row has the pills, a "+ Tag" TagPicker trigger and "Edited 2h ago".
+  - A **280px right rail** shows Created, Updated and **Words** (linked tasks come in 07). Below `lg` it becomes a Sheet.
+- **Bubble toolbar:** bold, italic, strike, code, link, H2 and **highlight** (adds `@tiptap/extension-highlight`), plus the plan's "Turn into" menu. Underline stays available through Mod+U. "Make task" comes in 07, per D2.
+- **Slash menu order:** H1, H2, bulleted list, checklist, quote, code block, table and divider come first, each with its markdown hint (`#`, `##`, `-`, `[]`, `>`, ```` ``` ````, `---`). Text, H3 and numbered list are listed last.
+- **Standing UI rules from this session apply:**
+  - shadcn default dialog headers.
+  - Literal Tailwind colour classes for badges.
+  - `text-sm` chips.
+  - Thin themed scrollbars.
+  - Menus that open on hover must be `modal={false}`.
+- **Decision A (for the user):** the notes list's second view. The recommendation is a **Table** (TanStack v9, the same pattern as the Tasks table: Title + excerpt, Tags, Updated, Space in Global, ⋮), rather than the design's dense list, since the Tasks list was replaced for looking chaotic.
+- **Decision B (for the user):** "New note" in **Global**. The recommendation is to create the note in the default space silently, as the task dialog does (`useDefaultSpaceId`: the current space, then the last active, then the first). That drops `NewNoteSpacePicker`. The alternative is to keep the plan's space picker.
 
 ### Goal
 At `/s/:slug/notes` the user sees their notes as a grid or list, each with a title, a two-line preview, a relative "updated" time, tags and (in Global) a space badge, and can search them. "New note" creates an empty note immediately and opens it. The editor page has a large title, a tags row, and a rich editor with a `/` command menu and a selection toolbar. Everything autosaves (800ms) with a Saving/Saved indicator, and a note left completely empty is discarded. Notes are soft-deleted with Undo.
@@ -288,6 +322,65 @@ src/features/notes/components/
 - [ ] `npm run lint`, `npm test` and `npm run build` pass
 - [ ] `axon-rules` audit is clean for the changed files
 - [ ] `00-index.md` status and changelog are updated
+
+**Stop here. Show the result and wait for approval.**
+
+---
+
+## Phase 3: Rich Task Descriptions
+
+### Goal
+In the task dialog, the description is a compact rich editor instead of a plain textarea. It supports markdown shortcuts (`#`, `-`, `[]`, `>`, `**bold**` and so on), the selection bubble menu, and the `/` menu, with no fixed toolbar. It keeps its borderless "Add description…" look and grows inside the dialog's scrolling body. Descriptions keep their formatting after saving, and cards and the table keep showing the plain-text preview.
+
+### Before Starting: Confirm Phase 2 Is Approved
+1. Phases 1 and 2 are `✅ Complete`. `RichTextEditor`, `EditorBubbleMenu` and the slash menu exist.
+2. `tasks.description` (jsonb) and `tasks.description_text` exist, and `TaskDialog` currently builds `description` with `textToDoc(description_text)` on submit (`features/tasks/utils.js`).
+3. `LIST_COLUMNS` omits `description` (it's heavy), so the edit dialog doesn't have the rich doc yet.
+4. Check how `@tiptap/react/menus` `BubbleMenu` and the slash suggestion popup mount **inside a modal Radix Dialog**. Radix locks pointer events outside `DialogContent` (the Sonner lesson from Feature 05), so both must render inside the dialog content, or be given `pointer-events: auto`, and must stay above the scroll container.
+
+### 3.1 Database
+None. The columns exist, and existing tasks already store a Tiptap doc (from `textToDoc`) or `null`.
+
+### 3.2 API Layer
+- `fetchTask(id)` / `useTask(id)` in `features/tasks/api.js`: `select('id, description')`, `.eq('id', id).maybeSingle()`, `enabled: !!id`, key `taskKeys.detail(id)`. The edit dialog uses it to load the rich doc. It's the only place that reads `description`.
+- `useUpdateTask` already `setQueryData(detail(row.id), row)`. Change it to **merge** (`old ? { ...old, ...row } : row`), because `row` (the list columns) has no `description`. Feature 07 plans the same change.
+
+### 3.3 Components
+- **`RichTextEditor`** gains `variant: 'full' | 'compact'` (default `full`).
+  - Compact uses `text-sm` body type, no min-height, and a placeholder of "Add description…".
+  - Headings are limited to H2–H3, and tables are off in the slash menu.
+  - The bubble menu stays.
+- **`TaskDialog`:**
+  - Replaces the description `<textarea>` with `RichTextEditor variant="compact" key={task?.id ?? 'new'} value={initialDescription}`.
+  - `initialDescription` is `taskDetail?.description ?? textToDoc(task?.description_text)`, or `null` on create.
+  - In edit mode, the editor mounts once `useTask(task.id)` resolves. Until then it shows a 2-line skeleton.
+  - `onChange(json, text)` sets form fields `description` and `description_text` (`form.setValue`, `shouldDirty`).
+  - The dialog **still saves on Save / Mod+Enter**; there's no autosave in the dialog, which keeps its current semantics. Mod+Enter must still submit from inside the editor, via a keymap that doesn't swallow it.
+- `taskSchema` gains `description: z.any().nullable()`. `description_text` stays at max 20,000 characters, and the editor's text is sliced to that.
+- `textToDoc` stays only as the fallback for old plain-text rows. Delete it if nothing else uses it.
+- **Create more:** resetting the form also resets the editor (a new `key`).
+
+### 3.4 Routes and Integration
+None. Feature 07's task detail page later reuses the same editor (`variant="full"`, autosave).
+
+### 3.5 Impact on Existing Features
+| Existing feature | Impact | Action |
+|---|---|---|
+| 04 `TaskDialog` | The description becomes rich text | As above; update the tests that type into "Description" (they now target the editor's `contenteditable`) |
+| 04 `useUpdateTask` | The detail cache merges | `{ ...old, ...row }` |
+| 04 cards and table | Still use `description_text` | None |
+| 07 plan | "Rich description" is already built | 07's `TaskDescription` reuses it; note in 07's doc |
+
+### 3.6 Not in This Phase
+- Autosave in the dialog, and `[[task]]` mentions in descriptions (07 / backlog).
+
+### 3.7 Checklist: Before Marking Complete
+- [ ] Markdown shortcuts, the bubble menu and `/` work inside the dialog. The popups are clickable (no pointer-events lock) and positioned correctly while the body scrolls.
+- [ ] Editing an existing task loads its formatted description. Old plain-text descriptions open as paragraphs.
+- [ ] Save and Mod+Enter persist `description` (JSON) and `description_text`. Card and table previews update.
+- [ ] Create more clears the editor.
+- [ ] Light and dark mode both render correctly.
+- [ ] `npm run lint`, `npm test` and `npm run build` pass. The `axon-rules` audit is clean. `00-index.md` is updated and 07's doc is annotated.
 
 **Stop here. Show the result and wait for approval.**
 

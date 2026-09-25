@@ -140,7 +140,7 @@ src/features/tasks/
 
 **`TaskDetail`**: main column (≥ `lg`, left) holds `TaskTitleInput`, `TaskDescription`, `TodoChecklist taskId spaceId` (Feature 05), then `ActivityTimeline`. `TaskMetaRail` sits on the right, and above the main column on narrow screens.
 
-**`TaskDescription`**: `RichTextEditor key={task.id} value={task.description} placeholder="Add a description… Type '/' for commands" features={{ slash: true, onSave: flush }}`. `onChange(json, text)` → `schedule({ description: json, description_text: text })` on `useAutosave({ save: (patch) => updateTask.mutateAsync({ id, patch }) })`. It reports `status` up for the header indicator.
+**`TaskDescription`** (the editor itself is already built in 06 Phase 3, for the task dialog; this is the page variant with autosave): `RichTextEditor key={task.id} value={task.description} placeholder="Add a description… Type '/' for commands" features={{ slash: true, onSave: flush }}`. `onChange(json, text)` → `schedule({ description: json, description_text: text })` on `useAutosave({ save: (patch) => updateTask.mutateAsync({ id, patch }) })`. It reports `status` up for the header indicator.
 
 **`TaskMetaRail`** (a vertical list of label/control rows)
 - Status: `StatusPopover` · Priority: DropdownMenu · Start and Due: `DatePicker` (start ≤ due is enforced by disabling invalid days; a DB rejection toasts) · all three through `useQuickUpdateTask`.
