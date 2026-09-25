@@ -1,6 +1,7 @@
 import { X } from 'lucide-react'
 import { badgeClasses } from '@/lib/tint'
 import { cn } from '@/lib/utils'
+import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 
 /**
  * Tag pill (design: tag rows and cards, board card tags). `--radius-sm`, the same square-ish
@@ -38,13 +39,20 @@ export function TagPill({ tag, size = 'sm', onRemove, className }) {
   )
 }
 
-/** Up to `max` `TagPill`s, then a "+n" pill (rows, board and grid cards). */
+/** Up to `max` `TagPill`s, then "+n" (table, board and grid cards); hover shows them all. */
 export function TagPillGroup({ tags, max = 3, size = 'sm', className }) {
   if (!tags?.length) return null
   const shown = tags.slice(0, max)
   const rest = tags.length - shown.length
-  return (
-    <div className={cn('flex min-w-0 items-center gap-1', className)}>
+  const group = (
+    <div
+      className={cn(
+        'flex min-w-0 items-center gap-1',
+        className,
+        // Callers may disable pointer events (grid card); hovering must still reach the trigger.
+        rest > 0 && 'pointer-events-auto cursor-default',
+      )}
+    >
       {shown.map((tag) => (
         <TagPill key={tag.id} tag={tag} size={size} />
       ))}
@@ -54,5 +62,21 @@ export function TagPillGroup({ tags, max = 3, size = 'sm', className }) {
         </span>
       )}
     </div>
+  )
+  if (rest === 0) return group
+
+  // Hidden tags: hovering the pills or the "+n" lists every tag (the user's request, 2026-09-25).
+  return (
+    <HoverCard openDelay={150} closeDelay={100}>
+      <HoverCardTrigger asChild>{group}</HoverCardTrigger>
+      <HoverCardContent align="start" className="w-auto max-w-72 p-2">
+        <p className="mb-1.5 text-xs text-muted-foreground">{tags.length} tags</p>
+        <div className="flex flex-wrap gap-1">
+          {tags.map((tag) => (
+            <TagPill key={tag.id} tag={tag} size={size} />
+          ))}
+        </div>
+      </HoverCardContent>
+    </HoverCard>
   )
 }

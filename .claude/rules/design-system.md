@@ -279,6 +279,7 @@ Each of these maps to a shadcn primitive.
   7. A dashed footer: **"Updated 2d ago"** (`formatRelative(updated_at)`, mono `text-xs`) on the left and the due label on the right. The title is clamped to 2 lines, with the full title on hover.
   - The footer has **no space name**. In Global, the space's emoji alone (with its name for screen readers and on hover) sits before the updated time.
   - Tag pills cap their width (`max-w-40`, or `max-w-60` for `md`) and truncate inside, everywhere they're used.
+  - **Hidden tags:** when a group shows "+n", hovering the pills or the count opens a HoverCard listing every tag (150ms open delay, 100ms close delay). With nothing hidden there's no popover. The group turns pointer events back on so hovering works inside the grid card.
   - **Checklist progress** (`ChecklistProgressBadge`, the same everywhere) has a fixed `list-checks` icon plus "3/7", and **colour carries the progress** (the user tried a filling ring and preferred this, 2026-09-25). With nothing checked it's all muted. When partly done, only the done count is emerald. When everything is done, the whole badge is emerald. Don't swap the icon by state.
 - **Kanban card / task card.** `bg-card`, a border, 9–10px radius and 12px padding. Status icon and title on the first line; priority, tag pills and a mono due date on the second. The columns are `bg-muted` wells.
 - **Note card.** `bg-card`, 12px radius, padding 14×16. Title (600), then a 2-line muted preview, then tags on the left and a mono relative time on the right.

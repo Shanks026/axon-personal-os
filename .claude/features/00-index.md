@@ -113,6 +113,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Hover to see every tag
+- `TagPillGroup`: when some tags are hidden behind "+n", hovering the pills or the count opens a HoverCard (shadcn `hover-card`) listing all of them. It applies to grid cards, table rows and board cards. The grid card's tag row now accepts the pointer only when there's something hidden.
+
 ### 2026-09-25: Tasks list view replaced by a data table
 - **The grouped list is gone** (the user found it "too chaotic"). `?view=table` is now a shadcn `Table` driven by **TanStack Table v9**: `TaskTable.jsx` and `taskTableColumns.jsx`.
   - Columns: Task (title with a 2-line description), Space (Global only), Status, Priority, Tags (3 + "+n"), Checklist, Due, Updated, and actions (links and ⋮). Status and priority change in place, and the title opens the task.

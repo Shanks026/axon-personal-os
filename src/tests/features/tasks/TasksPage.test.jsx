@@ -612,12 +612,19 @@ describe('Tags (Phase 3)', () => {
     db.taskTags.push(
       ...['tag2', 'tag3', 'tag4'].map((tag_id) => ({ task_id: 't1', tag_id, user_id: 'u1' })),
     )
+    const user = userEvent.setup()
     renderPage()
     const card = (await screen.findByText('Buyer portal: fix RFQ pagination')).closest('article')
     expect(within(card).getByText(/^Updated /)).toBeInTheDocument()
     expect(within(card).queryByText('THMP')).not.toBeInTheDocument()
     expect(await within(card).findByText('+1')).toBeInTheDocument()
     expect(within(card).queryByText('design')).not.toBeInTheDocument()
+
+    // Hovering the hidden-tags count lists every tag.
+    await user.hover(within(card).getByText('+1'))
+    const popover = (await screen.findByText('4 tags')).parentElement
+    expect(within(popover).getByText('design')).toBeInTheDocument()
+    expect(within(popover).getByText('frontend')).toBeInTheDocument()
   })
 
   it('filters by tag through the URL', async () => {
