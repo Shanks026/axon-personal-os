@@ -54,7 +54,7 @@ export function buildTaskColumns({
             </button>
             {task.description_text && (
               // The cell is nowrap (shadcn default); the description wraps to 2 lines, then clips.
-              <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed whitespace-normal text-muted-foreground">
+              <p className="mt-0.5 line-clamp-2 max-w-md text-xs leading-relaxed whitespace-normal text-muted-foreground">
                 {task.description_text}
               </p>
             )}
