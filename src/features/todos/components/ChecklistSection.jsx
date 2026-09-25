@@ -11,16 +11,17 @@ import { TodoChecklist } from '@/features/todos/components/TodoChecklist'
 /**
  * The collapsible "Checklist" section of `TaskDialog`. Editing a task, it wraps the live
  * `TodoChecklist` (saves as you go). Creating one, pass `staged` ({ items, onChange }) instead:
- * the titles are held in the dialog and saved after the task is created.
+ * the titles are held in the dialog and saved after the task is created. `className` restyles
+ * the frame (the task detail page drops the dialog's border and padding).
  */
-export function ChecklistSection({ taskId, spaceId, staged }) {
+export function ChecklistSection({ taskId, spaceId, staged, className }) {
   const [open, setOpen] = useState(true)
   // Same query (and cache entry) as the TodoChecklist below; read here for the header's progress.
   // Disabled without a taskId (create mode).
   const { data: items = [] } = useTodos({ taskId })
   const done = items.filter((t) => t.is_done).length
   return (
-    <div className="border-t px-5 py-4">
+    <div className={cn('border-t px-5 py-4', className)}>
       <button
         type="button"
         onClick={() => setOpen((o) => !o)}

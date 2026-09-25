@@ -15,14 +15,17 @@ export function useTaskActions() {
     [quick],
   )
 
+  // `onDeleted` runs before the Undo toast (the detail page navigates back to the list).
   const remove = useCallback(
-    (task) =>
+    (task, { onDeleted } = {}) =>
       del.mutate(task.id, {
-        onSuccess: () =>
+        onSuccess: () => {
+          onDeleted?.()
           toast('Task moved to Trash', {
             description: task.title,
             action: { label: 'Undo', onClick: () => restore.mutate(task.id) },
-          }),
+          })
+        },
       }),
     [del, restore],
   )

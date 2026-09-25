@@ -56,6 +56,7 @@ export function TaskBoard({
   tagsById,
   progressByTask,
   onEdit,
+  onOpen,
   onCreate,
   windowed,
   onShowAll,
@@ -183,6 +184,7 @@ export function TaskBoard({
     tags: task.tag_ids?.map((id) => tagsById.get(id)).filter(Boolean),
     progress: progressByTask?.get(task.id),
     onEdit,
+    onOpen,
     onDelete: actions.remove,
   })
   const active = activeId ? taskById.get(activeId) : null

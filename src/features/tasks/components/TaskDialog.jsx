@@ -1,12 +1,14 @@
 import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { CalendarArrowUp, CalendarDays, X } from 'lucide-react'
+import { ArrowUpRight, CalendarArrowUp, CalendarDays, X } from 'lucide-react'
+import { Link } from 'react-router'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
 import { useDefaultSpaceId } from '@/hooks/useDefaultSpaceId'
 import { isDocEmpty } from '@/lib/richText'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { Kbd } from '@/components/shared/Kbd'
+import { TitleTextarea } from '@/components/shared/TitleTextarea'
 import { PropertyChip } from '@/components/shared/PropertyChip'
 import { VersionBadge } from '@/components/shared/VersionBadge'
 import { Button } from '@/components/ui/button'
@@ -22,6 +24,7 @@ import { Switch } from '@/components/ui/switch'
 import { textClasses } from '@/lib/tint'
 import { useImageHandlers } from '@/features/attachments/api'
 import { usePreferences } from '@/features/settings/api'
+import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
 import { useSetTaskTags, useTags } from '@/features/tags/api'
 import {
   useCreateTask,
@@ -50,9 +53,17 @@ import { ChecklistSection } from '@/features/todos/components/ChecklistSection'
  * it only needs SpaceContext. `initialValues` prefills a create; `onSuccess(row)` runs after save.
  * A task's space is fixed at creation (the user's request, 2026-09-25): there is no space picker.
  * The description is the compact rich editor (Feature 06 Phase 3); it still saves with the form
- * (Save / Mod+Enter), not on its own.
+ * (Save / Mod+Enter), not on its own. In edit mode an "Open task" link goes to the detail page
+ * (`showOpenLink={false}` when the dialog is opened from that page).
  */
-export function TaskDialog({ open, onOpenChange, task, initialValues, onSuccess }) {
+export function TaskDialog({
+  open,
+  onOpenChange,
+  task,
+  initialValues,
+  onSuccess,
+  showOpenLink = true,
+}) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent
@@ -64,14 +75,16 @@ export function TaskDialog({ open, onOpenChange, task, initialValues, onSuccess 
           initialValues={initialValues}
           onClose={() => onOpenChange(false)}
           onSuccess={onSuccess}
+          showOpenLink={showOpenLink}
         />
       </DialogContent>
     </Dialog>
   )
 }
 
-function TaskForm({ task, initialValues, onClose, onSuccess }) {
+function TaskForm({ task, initialValues, onClose, onSuccess, showOpenLink }) {
   const isEdit = !!task
+  const p = useSpacePaths()
   const create = useCreateTask()
   const update = useUpdateTask()
   const setTaskTags = useSetTaskTags()
@@ -185,6 +198,14 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
             </DialogDescription>
           </DialogHeader>
         </div>
+        {isEdit && showOpenLink && (
+          <Button variant="ghost" size="sm" className="text-muted-foreground" asChild>
+            <Link to={p.task(task.id)} onClick={onClose}>
+              Open task
+              <ArrowUpRight />
+            </Link>
+          </Button>
+        )}
         <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} aria-label="Close">
           <X />
         </Button>
@@ -195,24 +216,28 @@ function TaskForm({ task, initialValues, onClose, onSuccess }) {
         <div className="flex flex-col gap-3 px-5 pt-4">
           <div>
             {/* Versions sit at the far right of the title row, as on the card. */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-start gap-3">
               <Controller
                 name="title"
                 control={form.control}
                 render={({ field }) => (
-                  <input
-                    {...field}
+                  // Wraps onto more lines instead of cutting a long title off (the user's request).
+                  <TitleTextarea
+                    ref={field.ref}
+                    name={field.name}
+                    value={field.value}
+                    onChange={field.onChange}
+                    onBlur={field.onBlur}
+                    label="Task title"
                     placeholder="Task title"
-                    aria-label="Task title"
                     aria-invalid={!!errors.title}
                     autoFocus
-                    autoComplete="off"
-                    className="min-w-0 flex-1 bg-transparent text-xl font-semibold tracking-tight outline-none placeholder:text-faint"
+                    className="min-w-0 flex-1 text-xl leading-snug"
                   />
                 )}
               />
               {versions.length > 0 && (
-                <div className="flex max-w-1/2 shrink-0 flex-wrap justify-end gap-1">
+                <div className="mt-1 flex max-w-1/2 shrink-0 flex-wrap justify-end gap-1">
                   {versions.map((v) => (
                     <VersionBadge
                       key={v}

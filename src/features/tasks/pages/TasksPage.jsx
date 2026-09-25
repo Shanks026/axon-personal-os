@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react'
+import { useCallback, useMemo, useState } from 'react'
+import { useNavigate } from 'react-router'
 import { ListTodo, Plus, SearchX } from 'lucide-react'
 import { toISODate } from '@/lib/dates'
 import { useSpace } from '@/context/SpaceContext'
@@ -10,6 +11,7 @@ import { Button } from '@/components/ui/button'
 import { usePreferences } from '@/features/settings/api'
 import { useTags } from '@/features/tags/api'
 import { useTasks } from '@/features/tasks/api'
+import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
 import { useChecklistProgress } from '@/features/todos/api'
 import { TaskBoard } from '@/features/tasks/components/TaskBoard'
 import { TaskDialog } from '@/features/tasks/components/TaskDialog'
@@ -80,6 +82,17 @@ export default function TasksPage() {
 
   const openCreate = (initialValues = null) => setDialog({ open: true, task: null, initialValues })
   const openEdit = (task) => setDialog({ open: true, task, initialValues: null })
+  // Cards open the detail page; the list order goes along for its previous / next (J/K).
+  const navigate = useNavigate()
+  const p = useSpacePaths()
+  const openOrder = useMemo(
+    () => (filters.view === 'board' ? boardTasks : sorted).map((t) => t.id),
+    [filters.view, boardTasks, sorted],
+  )
+  const openTask = useCallback(
+    (task) => navigate(p.task(task.id), { state: { order: openOrder } }),
+    [navigate, p, openOrder],
+  )
 
   const headerActions = useMemo(
     () =>
@@ -137,6 +150,7 @@ export default function TasksPage() {
             tagsById={tagsById}
             progressByTask={progressByTask}
             onEdit={openEdit}
+            onOpen={openTask}
             onCreate={(status) => openCreate({ status })}
             windowed={!allClosed}
             onShowAll={() => setFilter('tab', 'done')}
@@ -175,6 +189,7 @@ export default function TasksPage() {
             tagsById={tagsById}
             progressByTask={progressByTask}
             onEdit={openEdit}
+            onOpen={openTask}
             sort={filters.sort}
             onSortChange={(v) => setFilter('sort', v)}
             windowed={!allClosed}
@@ -187,6 +202,7 @@ export default function TasksPage() {
             tagsById={tagsById}
             progressByTask={progressByTask}
             onEdit={openEdit}
+            onOpen={openTask}
           />
         )}
       </div>

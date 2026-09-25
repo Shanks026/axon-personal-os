@@ -1,10 +1,14 @@
 import { endOfWeek } from 'date-fns'
-import { parseISODate, toISODate } from '@/lib/dates'
+import { ArrowRightLeft, CalendarDays, Pencil, Plus, SignalHigh } from 'lucide-react'
+import { formatDateShort, parseISODate, toISODate } from '@/lib/dates'
 import { needsRebalance, positionBetween } from '@/lib/position'
+import { textClasses } from '@/lib/tint'
 import {
   BOARD_STATUSES,
   CLOSED_STATUSES,
   TASK_PRIORITIES,
+  TASK_PRIORITY_MAP,
+  TASK_STATUS_MAP,
   TASK_STATUSES,
   TASK_TABS,
 } from '@/features/tasks/constants'
@@ -104,4 +108,88 @@ export function linkHost(url) {
   } catch {
     return url
   }
+}
+
+/**
+ * How a task link reads on its card: a GitLab merge request as "!1431 · group/project"
+ * (`kind: 'gitlab'`), a Jira issue as its key "THMP-123" (`kind: 'jira'`), anything else as its
+ * host (`kind: 'link'`). A saved label always wins.
+ */
+export function linkInfo(url, label) {
+  let parsed
+  try {
+    parsed = new URL(url)
+  } catch {
+    return { kind: 'link', text: label || url }
+  }
+  const mr = parsed.pathname.match(/^\/(.+?)\/-\/merge_requests\/(\d+)/)
+  if (mr) return { kind: 'gitlab', text: label || `!${mr[2]} · ${mr[1]}` }
+  const jira =
+    parsed.pathname.match(/\/browse\/([A-Z][A-Z0-9]+-\d+)/) ??
+    parsed.search.match(/selectedIssue=([A-Z][A-Z0-9]+-\d+)/)
+  if (jira) return { kind: 'jira', text: label || jira[1] }
+  return { kind: 'link', text: label || parsed.host.replace(/^www\./, '') }
+}
+
+const statusLabel = (v) => TASK_STATUS_MAP[v]?.label ?? v
+const priorityLabel = (v) => TASK_PRIORITY_MAP[v]?.label ?? v
+
+/**
+ * An automatic activity entry as `{ icon, iconClassName, text }` for the timeline:
+ * "Created in THMP", "Status In progress → In review", "Priority Low → High",
+ * "Due date set to 26 Sep" / "Due date 20 Sep → 26 Sep" / "Due date cleared",
+ * "Renamed from 'Old title'", "Moved from THMP to Personal". Comments aren't described here
+ * (they render as Work log cards). `note_linked` / `note_unlinked` arrive in Phase 2.
+ */
+export function describeActivity(entry, { spaceById } = {}) {
+  const { kind, from_value: from, to_value: to } = entry
+  const spaceName = (id) => spaceById?.get(id)?.name ?? 'a deleted space'
+
+  switch (kind) {
+    case 'created':
+      return { icon: Plus, iconClassName: 'text-faint', text: 'Created' }
+    case 'status': {
+      const s = TASK_STATUS_MAP[to]
+      return {
+        icon: s?.icon ?? ArrowRightLeft,
+        iconClassName: s ? textClasses(s.color) : 'text-muted-foreground',
+        text: `Status ${statusLabel(from)} → ${statusLabel(to)}`,
+      }
+    }
+    case 'priority':
+      return {
+        icon: SignalHigh,
+        iconClassName: 'text-muted-foreground',
+        text: `Priority ${priorityLabel(from)} → ${priorityLabel(to)}`,
+      }
+    case 'due_date':
+      return {
+        icon: CalendarDays,
+        iconClassName: 'text-muted-foreground',
+        text: !to
+          ? 'Due date cleared'
+          : from
+            ? `Due date ${formatDateShort(from)} → ${formatDateShort(to)}`
+            : `Due date set to ${formatDateShort(to)}`,
+      }
+    case 'title':
+      return {
+        icon: Pencil,
+        iconClassName: 'text-muted-foreground',
+        text: `Renamed from ‘${from}’`,
+      }
+    case 'space':
+      return {
+        icon: ArrowRightLeft,
+        iconClassName: 'text-muted-foreground',
+        text: `Moved from ${spaceName(from)} to ${spaceName(to)}`,
+      }
+    default:
+      return { icon: ArrowRightLeft, iconClassName: 'text-muted-foreground', text: kind }
+  }
+}
+
+/** "edited" shows when a comment changed more than a second after it was written. */
+export function isEdited({ created_at, updated_at }) {
+  return new Date(updated_at) - new Date(created_at) > 1000
 }

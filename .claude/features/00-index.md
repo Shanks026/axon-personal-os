@@ -22,7 +22,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 04 | Tasks: list, board and tags | [04-tasks.md](04-tasks.md) | 03 | ✅ Complete |
 | 05 | Todos: standalone Todos page, plus task checklists | [05-todos.md](05-todos.md) | 04 | ✅ Complete |
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | ✅ Complete |
-| 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🔵 Planned |
+| 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | 🟡 In progress (Phase 1 ✅) |
 | **Wave 3: Time** | | | | |
 | 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | 🔵 Planned |
 | 09 | Daily Journal / Work Log | [09-journal.md](09-journal.md) | 06, 07 | 🔵 Planned |
@@ -88,7 +88,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `notes`, `note_tags` | 06 | ✅ | Tiptap JSON plus `content_text`; generated `excerpt` (280 characters) for list cards. Migration `20260925100223` |
 | `notes.versions` (text[] + GIN index) | 06 | ✅ | Free-text versions like `tasks.versions`. Migration `20260925104452` |
 | Storage bucket `attachments` + owner-only `storage.objects` policies | 15 | ✅ | Private; `{user_id}/{space_id}/{uuid}.{ext}`; images only (10 MB) in Phase 1. Migration `20260925123002` |
-| `task_activity` (+ log trigger) | 07 | ⬜ | Auto history plus manual work-log comments |
+| `task_activity` (+ log trigger) | 07 | ✅ | Auto history plus manual work-log comments. Migration `20260925130331` (15 backfilled `created` rows) |
 | `note_task_links` + `sync_note_mentions()` | 07 | ⬜ | Sources: manual or mention |
 | `events` | 08 | ⬜ | Optional `task_id` / `note_id` |
 | `notes.kind`, `notes.journal_date` | 09 | ⬜ | One journal entry per space per day |
@@ -115,6 +115,20 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-25: Feature 07 Phase 1: Task detail page
+- **Database:** `task_activity` + the `tasks_log_activity` trigger (created, status, priority, due date, title and space changes; reorders don't log) + a backfill. Migration `20260925130331`.
+- **`/s/:slug/tasks/:taskId`**:
+  - An inline title (Enter or blur saves; Esc reverts).
+  - The rich description, autosaving with images, only as tall as its content, in `text-sm`.
+  - The checklist.
+  - One oldest-first **Activity** stream: sentences for automatic entries, **Work log** cards for manual ones (edit inline, delete with confirm), and the composer at the bottom (Ctrl/Cmd+Enter).
+  - A **320px rail**: Status, Priority, Start, Due, Space (read-only), Created, Completed, Updated, Tags, Versions, link cards (GitLab MR / Jira aware), Pinned, and Move to Trash.
+  - The header has the save state, **previous/next (J/K)** through the list you came from, a Details toggle (a Sheet below `lg`), and ⋯.
+- **Tasks page:** clicking a card, board card or table title opens the detail page (the user's decision); ⋮ → Edit keeps the dialog, which gains **Open task**.
+- **Task dialog:** the title wraps onto multiple lines (the user's request) through the new shared `TitleTextarea` (lifted from notes' `NoteTitleInput`).
+- **New:** `TaskDetail`, `TaskTitleInput`, `TaskDescription`, `TaskMetaRail`, `TaskLinkCards`, `ActivityTimeline`, `ActivityEntry`, `ActivityTime`, `CommentEntry` and `CommentComposer`; `useTaskActivity` / comment hooks; `describeActivity`, `isEdited` and `linkInfo` (tested). `RichTextEditor` takes `fit`, and `ChecklistSection` takes `className`.
+- **Manual steps for you:** none.
 
 ### 2026-09-25: Resizable editor images
 - A selected image has drag handles on both sides (the user's request). The width saves as `displayWidth` on the image node, is clamped to 80px up to the column, and keeps the aspect ratio. Arrow keys work on a focused handle, and a double-click resets.

@@ -2,8 +2,11 @@ import { describe, expect, it } from 'vitest'
 import { taskLinkUrlSchema, taskSchema } from '@/features/tasks/schemas'
 import {
   boardStatuses,
+  describeActivity,
   filterTasks,
+  isEdited,
   linkHost,
+  linkInfo,
   planBoardMove,
   sortTasks,
   tabCounts,
@@ -212,5 +215,86 @@ describe('sortTasks', () => {
     const same = [task('t2'), task('t1')]
     expect(sortTasks(same, 'priority').map((t) => t.id)).toEqual(['t1', 't2'])
     expect(same.map((t) => t.id)).toEqual(['t2', 't1'])
+  })
+})
+
+describe('describeActivity', () => {
+  const spaceById = new Map([
+    ['s1', { name: 'THMP' }],
+    ['s2', { name: 'Personal' }],
+  ])
+  const text = (entry) => describeActivity(entry, { spaceById }).text
+
+  it('describes every automatic kind as a sentence', () => {
+    expect(text({ kind: 'created', to_value: 'todo' })).toBe('Created')
+    expect(text({ kind: 'status', from_value: 'in_progress', to_value: 'in_review' })).toBe(
+      'Status In progress → In review',
+    )
+    expect(text({ kind: 'priority', from_value: 'low', to_value: 'high' })).toBe(
+      'Priority Low → High',
+    )
+    expect(text({ kind: 'title', from_value: 'Old title', to_value: 'New' })).toBe(
+      'Renamed from ‘Old title’',
+    )
+    expect(text({ kind: 'space', from_value: 's1', to_value: 's2' })).toBe(
+      'Moved from THMP to Personal',
+    )
+  })
+
+  it('covers the three due-date cases', () => {
+    expect(text({ kind: 'due_date', from_value: null, to_value: '2026-09-26' })).toBe(
+      'Due date set to 26 Sep',
+    )
+    expect(text({ kind: 'due_date', from_value: '2026-09-20', to_value: '2026-09-26' })).toBe(
+      'Due date 20 Sep → 26 Sep',
+    )
+    expect(text({ kind: 'due_date', from_value: '2026-09-20', to_value: null })).toBe(
+      'Due date cleared',
+    )
+  })
+
+  it('reads an unknown space as deleted, and gives every kind an icon', () => {
+    expect(text({ kind: 'space', from_value: 'gone', to_value: 's1' })).toBe(
+      'Moved from a deleted space to THMP',
+    )
+    for (const kind of ['created', 'status', 'priority', 'due_date', 'title', 'space']) {
+      expect(describeActivity({ kind, to_value: 'todo' }, { spaceById }).icon).toBeTruthy()
+    }
+  })
+})
+
+describe('isEdited', () => {
+  it('is true only when changed more than a second after writing', () => {
+    const at = '2026-09-25T10:00:00.000Z'
+    expect(isEdited({ created_at: at, updated_at: at })).toBe(false)
+    expect(isEdited({ created_at: at, updated_at: '2026-09-25T10:00:00.900Z' })).toBe(false)
+    expect(isEdited({ created_at: at, updated_at: '2026-09-25T10:05:00.000Z' })).toBe(true)
+  })
+})
+
+describe('linkInfo', () => {
+  it('reads GitLab merge requests as !id · project', () => {
+    expect(linkInfo('https://gitlab.com/thmp/buyer-web/-/merge_requests/1431')).toEqual({
+      kind: 'gitlab',
+      text: '!1431 · thmp/buyer-web',
+    })
+  })
+
+  it('reads Jira issues by key', () => {
+    expect(linkInfo('https://thbs.atlassian.net/browse/THMP-123')).toEqual({
+      kind: 'jira',
+      text: 'THMP-123',
+    })
+    expect(
+      linkInfo(
+        'https://thbs.atlassian.net/jira/software/c/projects/THMP/boards/1?selectedIssue=THMP-9',
+      ).text,
+    ).toBe('THMP-9')
+  })
+
+  it('falls back to the host, and a saved label wins', () => {
+    expect(linkInfo('https://www.figma.com/file/abc')).toEqual({ kind: 'link', text: 'figma.com' })
+    expect(linkInfo('https://gitlab.com/a/b/-/merge_requests/1', 'My MR').text).toBe('My MR')
+    expect(linkInfo('not a url')).toEqual({ kind: 'link', text: 'not a url' })
   })
 })

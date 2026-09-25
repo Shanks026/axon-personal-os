@@ -299,3 +299,8 @@
 .axon-prose .ProseMirror-selectednode.axon-image {
   outline: none;
 }
+
+/* `fit`: only as tall as the content (the task detail description). */
+.axon-prose-fit {
+  min-height: 0;
+}

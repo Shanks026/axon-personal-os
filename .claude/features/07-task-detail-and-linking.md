@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/07-task-detail-and-linking.md`
-**Status**: 🔵 Planned
+**Status**: 🟡 In progress (Phase 1 ✅ 2026-09-25)
 **Depends on**: 05, 06
 **Last Updated**: September 2026
 
@@ -31,7 +31,24 @@ Phase 3: Mentions
 
 ---
 
-## Phase 1: Task Detail Page
+## Phase 1: Task Detail Page ✅ Complete (2026-09-25)
+
+### Design fold (delta 07, the Task Detail screen, and the user's decisions; folded on 2026-09-25). This overrides the spec below where they differ.
+- **Clicking a card opens the detail page** (decided by the user on 2026-09-25). This applies to the grid card body, the board card and the table title. The ⋮ menu keeps **Edit** for the quick dialog, and the dialog gains an **Open task** link in edit mode.
+- **The space is fixed** (the user's rule, 2026-09-25): the rail shows the space **read-only** (emoji and name). There is **no** space Select and **no** `useMoveTaskToSpace`. The trigger still logs `space`, which is harmless.
+- **Links, not an external-link field:** tasks have `task_links` (many). The rail lists them as **link cards**: GitLab MR URLs read "!1431 · group/project", Jira URLs read the issue key, and anything else reads the host. Each card opens in a new tab and can be removed. There's an inline "Add a link" input (the `LinksField` pattern).
+- **The task dialog keeps its checklist** (the user's decision in Feature 05 follow-ups). Only the detail page's checklist is added; the dialog's isn't removed.
+- **Versions** get a rail row (`VersionPicker` + badges) through `useQuickUpdateTask`.
+- **Header:** the breadcrumb (space › Tasks › title), **previous/next** (chevron up/down, **J/K**) and a ⋯ menu (Edit in dialog, Move to Trash).
+  - Previous/next follow the list order the task was opened from, passed in router `state.order` by the Tasks page. They're hidden when there's none, such as a direct link.
+- **Activity:** one "Activity" stream, **oldest first**, with **no toggle**.
+  - The composer is at the **bottom**: "Log work or leave a note…" plus a `Kbd` Mod+Enter hint.
+  - Manual entries are cards labelled **Work log**; automatic entries are one-line sentences with a relative time.
+- **Rail:** Status, Priority, Start, Due, Space, Created, Completed, then Tags, Versions and Links.
+  - The footer has a **Pinned** switch (`tasks.pinned_at`, moved forward from 14) and **Move to Trash** (destructive).
+  - The rail is 300px (`w-75`) with 84px (`w-21`) labels. It becomes a Sheet below `lg`, like the note editor's details.
+- **Layout:** the main column is at most 720px (`max-w-180`), padded 40/56. The title is the display style.
+- **Linked notes** are Phase 2.
 
 ### Goal
 Clicking a task (row or board card) opens `/s/:slug/tasks/:taskId`. The main column holds an inline-editable title, a rich description that autosaves, the checklist from Feature 05, and an Activity & Work log timeline that reads as sentences ("Status In progress → In review · 2h ago") with a composer for manual log entries. The right rail edits status, priority, dates, tags, space, external link, shows created and completed times, and deletes the task.
@@ -177,17 +194,40 @@ src/features/tasks/
 - Activity for `start_date`, `external_url`, `description` edits: not logged by design (noise)
 
 ### 1.7 Checklist: Before Marking Complete
-- [ ] `create_task_activity` is applied and mirrored; the backfill count matches; reorders do not log; advisors are clean
-- [ ] Row and card clicks open the detail page; the canonical redirect, missing, deleted and archived states work
-- [ ] Title edits save on blur and Enter and log a `title` entry
-- [ ] The description autosaves with the indicator, survives reload, and flushes on navigation
-- [ ] Every rail control persists; status, priority and dates update the page instantly and appear in the timeline
-- [ ] Moving space moves checklist todos, removes other-space tags with the toast count, and redirects to the new URL
-- [ ] Comments add with Ctrl/Cmd+Enter, edit inline, show "edited", and delete with a confirm
-- [ ] `describeActivity` tests cover every kind
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` DB registry, status and changelog (`SaveIndicator` moved to shared) are updated
+- [x] `create_task_activity` is applied and mirrored; the backfill count matches (15 of 15); reorders don't log; advisors are clean
+- [x] Row and card clicks open the detail page; the canonical redirect, missing, deleted and archived states work
+- [x] Title edits save on blur and Enter and log a `title` entry
+- [x] The description autosaves with the indicator, survives reload, and flushes on navigation
+- [x] Every rail control persists; status, priority and dates update the page instantly and appear in the timeline
+- [x] ~~Moving space…~~ Not applicable: the space is fixed (design fold); it's shown read-only
+- [x] Comments add with Ctrl/Cmd+Enter, edit inline, show "edited", and delete with a confirm
+- [x] `describeActivity` tests cover every kind
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` DB registry, status and changelog are updated
+
+### 1.8 Implementation Notes
+- **Migration `20260925130331`** (`create_task_activity`). Verified in a rolled-back transaction: a position-only update and a no-op update log nothing, and one status change logs exactly one `status` row. Advisors show nothing new.
+- **`fetchTask`** is widened to `*` + `tag_ids` + `links` (mapped).
+  - `useOptimisticPatch` (behind `useQuickUpdateTask` and `useMoveTask`) also patches `detail(id)`, and on settle invalidates the lists, the detail and `activity(id)`.
+  - `useUpdateTask` also invalidates `activity(id)`, and `useSetTaskTags` invalidates `detail(taskId)`.
+- **Activity** is fetched newest-first with limit 200, then reversed (so it shows oldest first).
+  - Comments are hard-deleted via `ConfirmDialog`.
+  - `describeActivity` and `isEdited` are in `utils.js` (tested). `ActivityTime` has its own file (it's shared by the two entry kinds).
+- **Links:** `linkInfo(url, label)` (GitLab MR "!1431 · group/project", Jira key from `/browse/` or `selectedIssue`, else host; a label wins; tested) drives `TaskLinkCards`. Lucide has no GitLab brand icon, so MRs use `git-pull-request-arrow` and Jira uses `ticket`.
+- **Rail:** Status, Priority, Start, Due, Space (read-only), Created, Completed, Updated, then Tags, Versions and Links, then Pinned (`pinned_at`) and a `destructive` Move to Trash.
+  - The rail is 320px (**widened from the design's 300 at the user's request**) and becomes a Sheet below `lg`. The Details toggle is remembered as `axon:tasks:rail`.
+  - There's no `useMoveTaskToSpace` (the space is fixed).
+- **Header:** `SaveIndicator` (with Retry), previous/next (J/K), Details and ⋯ (Edit in dialog, Move to Trash).
+  - Previous/next use `location.state.order`, set by the Tasks page from the grid/table sort or the board's order, and navigate with `replace`, so Back returns to the list.
+- **Clicks:** grid card body, board card and table title call `onOpen` (the detail page); the ⋮ Edit calls `onEdit` (the dialog). The dialog has **Open task** in edit mode, hidden when opened from the detail page.
+- **Kept, per the user's earlier decisions:** the task dialog's checklist.
+  - `ChecklistSection` gains `className` (the page drops its border and padding).
+- **`TitleTextarea`** is new in `components/shared`, lifted from notes' `NoteTitleInput` now that tasks need it. It passes `ref` and extra props through, and is used by the note editor, the task detail title, and (at the user's request) the task dialog's title, which now wraps onto more lines instead of being cut off.
+- **Description** (at the user's request): `RichTextEditor fit` drops the 12rem minimum height (`axon-prose-fit`), so it's only as tall as its content, in `text-sm leading-6`.
+- **Known limit:** "Edit in dialog" and the page's description editor are separate editors. Saving a description change from the dialog doesn't refresh the page's (uncontrolled) editor until reload.
+- **Tests:** helpers (describeActivity, isEdited, linkInfo), an 8-case `TaskDetailPage` suite (render and activity order, title save, rail status → timeline, work-log add, J navigation, no list → no prev/next, trash → back to list, not found), and updated Tasks page tests for the new click behaviour and "Open task".
+  - Two note-flow waits get a 5s timeout because the full suite runs files in parallel.
 
 **Stop here. Show the result and wait for approval.**
 

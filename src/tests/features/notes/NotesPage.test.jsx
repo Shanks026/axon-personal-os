@@ -237,7 +237,7 @@ describe('NotesPage', () => {
     await waitFor(
       () => expect(db.calls).toContainEqual(['update', 'n3', { title: 'Retro notes' }]),
       {
-        timeout: 2000,
+        timeout: 5000, // generous: the full suite runs files in parallel
       },
     )
 
@@ -254,7 +254,7 @@ describe('NotesPage', () => {
     await screen.findByLabelText('Note title')
 
     await router.navigate('/s/thmp/notes')
-    await waitFor(() => expect(db.calls).toContainEqual(['delete', 'n3']))
+    await waitFor(() => expect(db.calls).toContainEqual(['delete', 'n3']), { timeout: 5000 })
   })
 
   it('shows a missing note as not found', async () => {

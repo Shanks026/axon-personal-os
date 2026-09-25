@@ -12,6 +12,7 @@ import { noteToMarkdown } from '@/components/editor/markdown'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
 import { SaveIndicator } from '@/components/shared/SaveIndicator'
+import { TitleTextarea } from '@/components/shared/TitleTextarea'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -26,7 +27,6 @@ import { useDiscardNote, useUpdateNote } from '@/features/notes/api'
 import { NoteActionsMenu } from '@/features/notes/components/NoteActionsMenu'
 import { NoteMetaRail } from '@/features/notes/components/NoteMetaRail'
 import { NoteTagsRow } from '@/features/notes/components/NoteTagsRow'
-import { NoteTitleInput } from '@/features/notes/components/NoteTitleInput'
 import { NoteVersionBadges } from '@/features/notes/components/NoteVersionBadges'
 import { NOTE_AUTOSAVE_DELAY } from '@/features/notes/constants'
 import { useNoteActions } from '@/features/notes/hooks/useNoteActions'
@@ -198,11 +198,13 @@ export function NoteEditor({ note }) {
         <div className="mx-auto max-w-170">
           <div className="flex items-start gap-3">
             <div className="min-w-0 flex-1">
-              <NoteTitleInput
+              <TitleTextarea
                 value={title}
                 onChange={changeTitle}
                 onEnter={() => editorRef.current?.commands.focus('start')}
                 autoFocus={!note.title && !note.content_text}
+                label="Note title"
+                className="text-4xl"
               />
             </div>
             <NoteVersionBadges note={note} />

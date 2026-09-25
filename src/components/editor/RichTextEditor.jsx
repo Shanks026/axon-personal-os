@@ -25,11 +25,14 @@ const MAX_TEXT = 100_000
  * `variant="compact"` is the task dialog's description: `text-sm`, no minimum height, the
  * placeholder "Add description…", H2–H3 only, no H1 or Table in the `/` menu, and Mod-Enter left
  * to the dialog's form. Its popups stay inside the dialog (see `suggestionRenderer`).
+ * `fit` drops the full editor's 12rem minimum height, so it's only as tall as its content (the
+ * task detail description).
  */
 export function RichTextEditor({
   value,
   onChange,
   variant = 'full',
+  fit = false,
   placeholder,
   editable = true,
   features,
@@ -60,7 +63,7 @@ export function RichTextEditor({
     shouldRerenderOnTransaction: false,
     editorProps: {
       attributes: {
-        class: compact ? 'axon-prose axon-prose-compact' : 'axon-prose',
+        class: cn('axon-prose', compact && 'axon-prose-compact', fit && 'axon-prose-fit'),
         'aria-label': label,
       },
     },

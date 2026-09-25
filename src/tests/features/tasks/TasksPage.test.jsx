@@ -273,7 +273,15 @@ function renderPage(path = '/s/thmp/tasks') {
     </SpaceProvider>
   )
   const router = createMemoryRouter(
-    [{ element: <Shell />, children: [{ path: '/s/:spaceSlug/tasks', element: <TasksPage /> }] }],
+    [
+      {
+        element: <Shell />,
+        children: [
+          { path: '/s/:spaceSlug/tasks', element: <TasksPage /> },
+          { path: '/s/:spaceSlug/tasks/:taskId', element: <p>Task detail</p> },
+        ],
+      },
+    ],
     { initialEntries: [path] },
   )
   render(
@@ -397,8 +405,9 @@ describe('TasksPage', () => {
     const user = userEvent.setup()
     renderPage()
     await user.click(
-      await screen.findByRole('button', { name: 'Edit Buyer portal: fix RFQ pagination' }),
+      await screen.findByRole('button', { name: 'Buyer portal: fix RFQ pagination options' }),
     )
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit' }))
     const dialog = await screen.findByRole('dialog')
     const description = await within(dialog).findByLabelText('Description')
     expect(description.querySelector('h2')).toHaveTextContent('Root cause')
@@ -420,8 +429,9 @@ describe('TasksPage', () => {
     const user = userEvent.setup()
     renderPage()
     await user.click(
-      await screen.findByRole('button', { name: 'Edit Buyer portal: fix RFQ pagination' }),
+      await screen.findByRole('button', { name: 'Buyer portal: fix RFQ pagination options' }),
     )
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit' }))
     const dialog = await screen.findByRole('dialog')
     const description = await within(dialog).findByLabelText('Description')
     expect(description.querySelector('p')).toHaveTextContent(
@@ -519,7 +529,7 @@ describe('TasksPage', () => {
     // The toast repeats the title, so look for the card itself.
     await waitFor(() =>
       expect(
-        screen.queryByRole('button', { name: 'Edit Storefront: lazy-load images' }),
+        screen.queryByRole('button', { name: 'Open Storefront: lazy-load images' }),
       ).not.toBeInTheDocument(),
     )
     const update = db.calls.find((c) => c[0] === 'update' && c[1] === 't3')
@@ -528,7 +538,7 @@ describe('TasksPage', () => {
     await user.click(await screen.findByRole('button', { name: 'Undo' }))
     await waitFor(() => expect(db.calls).toContainEqual(['update', 't3', { deleted_at: null }]))
     expect(
-      await screen.findByRole('button', { name: 'Edit Storefront: lazy-load images' }),
+      await screen.findByRole('button', { name: 'Open Storefront: lazy-load images' }),
     ).toBeInTheDocument()
   })
 
@@ -648,7 +658,7 @@ describe('TasksPage', () => {
 
   it('opens a task from its title and changes status in place in the table', async () => {
     const user = userEvent.setup()
-    renderPage('/s/thmp/tasks?view=table')
+    const router = renderPage('/s/thmp/tasks?view=table')
     const table = await screen.findByRole('table')
     const row = within(table).getByText('Storefront: lazy-load images').closest('tr')
     await user.click(within(row).getByRole('button', { name: 'Change status' }))
@@ -656,8 +666,9 @@ describe('TasksPage', () => {
     await waitFor(() => expect(db.calls).toContainEqual(['update', 't3', { status: 'done' }]))
 
     await user.click(within(row).getByRole('button', { name: 'Storefront: lazy-load images' }))
-    const dialog = await screen.findByRole('dialog')
-    expect(within(dialog).getByLabelText('Task title')).toHaveValue('Storefront: lazy-load images')
+    await waitFor(() => expect(router.state.location.pathname).toBe('/s/thmp/tasks/t3'))
+    // The table's order goes along for previous / next on the detail page.
+    expect(router.state.location.state.order).toContain('t3')
   })
 
   it('shows the first-run empty state', async () => {
@@ -720,13 +731,34 @@ describe('TasksPage', () => {
     expect(within(blocked).queryByLabelText('New task in Blocked')).not.toBeInTheDocument()
   })
 
-  it('opens a board card in the edit dialog', async () => {
+  it('opens a board card on the detail page', async () => {
     const user = userEvent.setup()
-    renderPage('/s/thmp/tasks?view=board')
+    const router = renderPage('/s/thmp/tasks?view=board')
     const todo = await screen.findByRole('region', { name: 'To do column' })
     await user.click(within(todo).getByRole('button', { name: 'Storefront: lazy-load images' }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/s/thmp/tasks/t3'))
+  })
+
+  it('opens a grid card on the detail page', async () => {
+    const user = userEvent.setup()
+    const router = renderPage()
+    await user.click(
+      await screen.findByRole('button', { name: 'Open Storefront: lazy-load images' }),
+    )
+    await waitFor(() => expect(router.state.location.pathname).toBe('/s/thmp/tasks/t3'))
+  })
+
+  it('edits from the card menu and offers "Open task" in the dialog', async () => {
+    const user = userEvent.setup()
+    const router = renderPage()
+    await user.click(
+      await screen.findByRole('button', { name: 'Storefront: lazy-load images options' }),
+    )
+    await user.click(await screen.findByRole('menuitem', { name: 'Edit' }))
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByLabelText('Task title')).toHaveValue('Storefront: lazy-load images')
+    await user.click(within(dialog).getByRole('link', { name: /Open task/ }))
+    await waitFor(() => expect(router.state.location.pathname).toBe('/s/thmp/tasks/t3'))
   })
 })
 

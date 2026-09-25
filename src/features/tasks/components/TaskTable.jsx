@@ -53,6 +53,7 @@ export function TaskTable({
   tagsById,
   progressByTask,
   onEdit,
+  onOpen,
   sort,
   onSortChange,
   windowed,
@@ -60,8 +61,9 @@ export function TaskTable({
 }) {
   const { isGlobal, spaceById } = useSpace()
   const columns = useMemo(
-    () => buildTaskColumns({ isGlobal, spaceById, tagsById, progressByTask, onEdit, actions }),
-    [isGlobal, spaceById, tagsById, progressByTask, onEdit, actions],
+    () =>
+      buildTaskColumns({ isGlobal, spaceById, tagsById, progressByTask, onEdit, onOpen, actions }),
+    [isGlobal, spaceById, tagsById, progressByTask, onEdit, onOpen, actions],
   )
   const sorting = useMemo(() => parseSort(sort), [sort])
 

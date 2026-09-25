@@ -25,6 +25,7 @@ export function buildTaskColumns({
   tagsById,
   progressByTask,
   onEdit,
+  onOpen,
   actions,
 }) {
   const columns = [
@@ -39,7 +40,7 @@ export function buildTaskColumns({
           <div className="py-1">
             <button
               type="button"
-              onClick={() => onEdit(task)}
+              onClick={() => onOpen(task)}
               title={task.title}
               className={cn(
                 'block max-w-full truncate rounded-sm text-left font-medium outline-none hover:underline focus-visible:ring-2 focus-visible:ring-ring',

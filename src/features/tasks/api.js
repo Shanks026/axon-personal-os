@@ -14,6 +14,8 @@ export const taskKeys = {
   details: () => [...taskKeys.all, 'detail'],
   detail: (id) => [...taskKeys.details(), id],
   versions: (spaceIds) => [...taskKeys.all, 'versions', spaceIds], // version suggestions
+  activities: () => [...taskKeys.all, 'activity'],
+  activity: (taskId) => [...taskKeys.activities(), taskId],
 }
 
 const LIST_COLUMNS =
@@ -113,17 +115,18 @@ export async function updateTask(id, patch) {
 }
 
 /**
- * A task's rich description, which the list columns leave out (it's heavy). The edit dialog
- * loads it here; it's the only read of `description`. Cached under `detail(id)`.
+ * One task with everything: the list columns plus the rich `description` (which lists leave
+ * out; it's heavy). The detail page and the edit dialog read it. Not scope-filtered: entity routes
+ * work in any scope. Cached under `detail(id)`.
  */
 export async function fetchTask(id) {
   const { data, error } = await supabase
     .from('tasks')
-    .select('id, description')
+    .select('*, tag_ids:task_tags(tag_id), links:task_links(id, url, label, position)')
     .eq('id', id)
     .maybeSingle()
   if (error) throw error
-  return data
+  return data ? mapRow(data) : null
 }
 
 export const softDeleteTask = (id) => updateTask(id, { deleted_at: new Date().toISOString() })
@@ -196,6 +199,7 @@ export function useUpdateTask() {
         ...('description' in patch && { description: patch.description }),
       }))
       if ('versions' in patch) qc.invalidateQueries({ queryKey: [...taskKeys.all, 'versions'] })
+      qc.invalidateQueries({ queryKey: taskKeys.activity(row.id) })
       // A space move cascades to checklist todos (tasks_cascade_to_todos).
       if ('space_id' in patch) qc.invalidateQueries({ queryKey: todoKeys.all })
     },
@@ -208,28 +212,40 @@ export function rebalanceTasks(orderedIds) {
   return Promise.all(orderedIds.map((id, i) => updateTask(id, { position: (i + 1) * 1000 })))
 }
 
-/** Patch every cached list optimistically; roll back with a toast on error. */
+/**
+ * Patch every cached list and the task's detail optimistically; roll back with a toast on
+ * error. Settling refreshes the lists, the detail and the task's activity (the log trigger may
+ * have added a row).
+ */
 function useOptimisticPatch(mutationFn, errorMessage) {
   const qc = useQueryClient()
   return useMutation({
     mutationFn,
     onMutate: async ({ id, patch }) => {
       await qc.cancelQueries({ queryKey: taskKeys.lists() })
+      await qc.cancelQueries({ queryKey: taskKeys.detail(id) })
       const snapshots = qc.getQueriesData({ queryKey: taskKeys.lists() })
+      const detail = qc.getQueryData(taskKeys.detail(id))
       qc.setQueriesData({ queryKey: taskKeys.lists() }, (old) =>
         old?.map((t) => (t.id === id ? { ...t, ...patch } : t)),
       )
-      return { snapshots }
+      if (detail) qc.setQueryData(taskKeys.detail(id), { ...detail, ...patch })
+      return { snapshots, detail }
     },
-    onError: (err, _vars, ctx) => {
+    onError: (err, { id }, ctx) => {
       ctx?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data))
+      if (ctx?.detail) qc.setQueryData(taskKeys.detail(id), ctx.detail)
       toast.error(err.message ?? errorMessage)
     },
-    onSettled: () => qc.invalidateQueries({ queryKey: taskKeys.lists() }),
+    onSettled: (_row, _err, { id }) => {
+      qc.invalidateQueries({ queryKey: taskKeys.lists() })
+      qc.invalidateQueries({ queryKey: taskKeys.detail(id) })
+      qc.invalidateQueries({ queryKey: taskKeys.activity(id) })
+    },
   })
 }
 
-/** Optimistic one-field changes from cards and rows: status, priority, due date. */
+/** Optimistic one-field changes from cards, rows and the detail rail (status, priority, dates, versions, pin). */
 export function useQuickUpdateTask() {
   return useOptimisticPatch(({ id, patch }) => updateTask(id, patch), 'Could not update task')
 }
@@ -380,5 +396,85 @@ export function useDeleteTaskLink(taskId) {
     mutationFn: deleteTaskLink,
     onSuccess: invalidate,
     onError: (err) => toast.error(err.message ?? 'Could not remove the link'),
+  })
+}
+
+// Activity: the automatic history (written by the tasks_log_activity trigger) plus manual
+// work-log comments. Read oldest first, the way the detail page shows it.
+const ACTIVITY_COLUMNS = 'id, kind, from_value, to_value, body, created_at, updated_at'
+const ACTIVITY_LIMIT = 200
+
+export async function fetchTaskActivity(taskId) {
+  const { data, error } = await supabase
+    .from('task_activity')
+    .select(ACTIVITY_COLUMNS)
+    .eq('task_id', taskId)
+    .order('created_at', { ascending: false })
+    .limit(ACTIVITY_LIMIT)
+  if (error) throw error
+  // Newest 200, shown oldest first.
+  return data.reverse()
+}
+
+export async function addTaskComment({ taskId, body }) {
+  const { data, error } = await supabase
+    .from('task_activity')
+    .insert({ task_id: taskId, kind: 'comment', body: body.trim() })
+    .select(ACTIVITY_COLUMNS)
+    .single()
+  if (error) throw error
+  return data
+}
+
+export async function updateTaskComment(id, body) {
+  const { data, error } = await supabase
+    .from('task_activity')
+    .update({ body: body.trim() })
+    .eq('id', id)
+    .eq('kind', 'comment')
+    .select(ACTIVITY_COLUMNS)
+    .single()
+  if (error) throw error
+  return data
+}
+
+/** Hard delete: work-log entries aren't soft-deletable (the UI confirms first). */
+export async function deleteTaskComment(id) {
+  const { error } = await supabase.from('task_activity').delete().eq('id', id).eq('kind', 'comment')
+  if (error) throw error
+}
+
+export function useTaskActivity(taskId) {
+  return useQuery({
+    queryKey: taskKeys.activity(taskId),
+    queryFn: () => fetchTaskActivity(taskId),
+    enabled: !!taskId,
+  })
+}
+
+export function useAddTaskComment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: addTaskComment,
+    onSuccess: (_row, { taskId }) => qc.invalidateQueries({ queryKey: taskKeys.activity(taskId) }),
+    onError: (err) => toast.error(err.message ?? 'Could not add the entry'),
+  })
+}
+
+export function useUpdateTaskComment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, body }) => updateTaskComment(id, body),
+    onSuccess: () => qc.invalidateQueries({ queryKey: taskKeys.activities() }),
+    onError: (err) => toast.error(err.message ?? 'Could not save the entry'),
+  })
+}
+
+export function useDeleteTaskComment() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: deleteTaskComment,
+    onSuccess: () => qc.invalidateQueries({ queryKey: taskKeys.activities() }),
+    onError: (err) => toast.error(err.message ?? 'Could not delete the entry'),
   })
 }

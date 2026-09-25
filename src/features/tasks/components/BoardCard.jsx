@@ -88,7 +88,8 @@ export function BoardCard({
 
 /**
  * Draggable wrapper. While its card is lifted, the card stays in place (keeping the list's
- * measurements) but shows as the dashed accent drop slot. Click or Enter opens `onEdit`;
+ * measurements) but shows as the dashed accent drop slot. Click or Enter opens the task
+ * (`onOpen`, the detail page); the ⋮ menu's Edit keeps the dialog (`onEdit`);
  * Space picks the card up for keyboard dragging.
  */
 export function SortableBoardCard({ task, ...props }) {
@@ -102,9 +103,9 @@ export function SortableBoardCard({ task, ...props }) {
       {...attributes}
       {...listeners}
       aria-label={task.title}
-      onClick={() => props.onEdit(task)}
+      onClick={() => props.onOpen(task)}
       onKeyDown={(e) => {
-        if (e.key === 'Enter' && !isDragging) props.onEdit(task)
+        if (e.key === 'Enter' && !isDragging) props.onOpen(task)
         else listeners?.onKeyDown?.(e)
       }}
       className={cn(

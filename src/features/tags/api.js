@@ -152,8 +152,9 @@ export function useSetTaskTags() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ taskId, tagIds }) => setTaskTags(taskId, tagIds),
-    onSuccess: () => {
+    onSuccess: (_data, { taskId }) => {
       qc.invalidateQueries({ queryKey: taskKeys.lists() })
+      qc.invalidateQueries({ queryKey: taskKeys.detail(taskId) })
       qc.invalidateQueries({ queryKey: tagKeys.all }) // usage counts
     },
     onError: (err) => toast.error(err.message ?? 'Could not save tags'),

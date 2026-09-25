@@ -14,9 +14,20 @@ import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistPro
  * Grid card (design 04a/G2): status + priority pills, MR chip and menu on top; a 2-line title
  * (full title on hover); a 2-line description; a meta row (checklist progress); then, pinned to
  * the bottom, up to 3 tags (+n) and a dashed footer with "Updated 2d ago" and the due label. `showSpace` (Global) adds the space's
- * emoji. The card body opens `onEdit`.
+ * emoji. The card body opens the task (`onOpen`, the detail page); the ⋮ menu's Edit opens the
+ * quick dialog (`onEdit`).
  */
-export function TaskCard({ task, space, showSpace, tags, progress, onEdit, onSetField, onDelete }) {
+export function TaskCard({
+  task,
+  space,
+  showSpace,
+  tags,
+  progress,
+  onOpen,
+  onEdit,
+  onSetField,
+  onDelete,
+}) {
   const closed = isClosed(task)
   return (
     <article
@@ -27,9 +38,9 @@ export function TaskCard({ task, space, showSpace, tags, progress, onEdit, onSet
     >
       <button
         type="button"
-        onClick={() => onEdit(task)}
+        onClick={() => onOpen(task)}
         className="absolute inset-0 z-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
-        aria-label={`Edit ${task.title}`}
+        aria-label={`Open ${task.title}`}
         title={task.title}
       />
 
