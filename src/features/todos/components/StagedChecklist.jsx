@@ -20,7 +20,10 @@ export function StagedChecklist({ items, onChange }) {
     <div className="mt-2 flex flex-col">
       {items.map((item, i) => (
         <div key={`${i}-${item}`} className="group/item flex h-8.5 items-center gap-2.5 px-1">
-          <span className="ml-6 size-3.75 shrink-0 rounded-sm border border-border-strong" aria-hidden />
+          <span
+            className="ml-6 size-3.75 shrink-0 rounded-sm border border-border-strong"
+            aria-hidden
+          />
           <span className="min-w-0 flex-1 truncate">{item}</span>
           <Button
             type="button"

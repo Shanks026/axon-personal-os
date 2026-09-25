@@ -241,11 +241,11 @@ describe('TodoChecklist (in TaskDialog)', () => {
     const user = userEvent.setup()
     renderDialog()
     await screen.findByText('Reset page to 1')
-    expect(screen.getByText('0/2')).toBeInTheDocument()
+    expect(screen.getByLabelText('Checklist 0 of 2 done')).toBeInTheDocument()
 
     await user.click(screen.getByRole('checkbox', { name: 'Mark "Reset page to 1" done' }))
     await waitFor(() => expect(db.calls).toContainEqual(['update', 'd1', { is_done: true }]))
-    expect(await screen.findByText('1/2')).toBeInTheDocument()
+    expect(await screen.findByLabelText('Checklist 1 of 2 done')).toBeInTheDocument()
   })
 
   it('edits a title inline', async () => {
@@ -288,7 +288,7 @@ describe('ChecklistProgressBadge on task views', () => {
     ]
     renderWithShell(<TasksPage />)
     const card = (await screen.findByText('Buyer portal: fix RFQ pagination')).closest('article')
-    expect(within(card).getByText('1/2')).toBeInTheDocument()
+    expect(within(card).getByLabelText('Checklist 1 of 2 done')).toBeInTheDocument()
   })
 
   it('renders nothing for a task with no checklist items', async () => {

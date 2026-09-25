@@ -29,10 +29,17 @@ export function TaskLinksButton({
           className={cn(
             'flex shrink-0 items-center justify-center rounded-full bg-muted text-muted-foreground transition-colors hover:text-foreground',
             size,
+            // Several links: widen into a pill with the count beside the icon.
+            links.length > 1 && 'w-auto gap-1 px-2',
             className,
           )}
         >
           <GitPullRequestArrow className={iconSize} />
+          {links.length > 1 && (
+            <span aria-hidden className="font-mono text-xs tabular-nums">
+              {links.length}
+            </span>
+          )}
         </button>
       </PopoverTrigger>
       <PopoverContent align="start" className="w-64 p-1.5" {...hoverProps}>

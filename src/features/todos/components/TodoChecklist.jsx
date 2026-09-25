@@ -5,7 +5,7 @@ import { ErrorState } from '@/components/shared/ErrorState'
 import { Skeleton } from '@/components/ui/skeleton'
 import { useCreateTodo, useTodos } from '@/features/todos/api'
 import { ChecklistItem } from '@/features/todos/components/ChecklistItem'
-import { ChecklistProgress } from '@/features/todos/components/ChecklistProgress'
+import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
 import { SortableTodoList } from '@/features/todos/components/SortableTodoList'
 
 /**
@@ -34,7 +34,7 @@ export function TodoChecklist({ taskId, spaceId, showTitle = true, className }) 
       {showTitle && (
         <div className="flex h-5 items-center gap-2">
           <span className="text-sm font-medium">Checklist</span>
-          {items.length > 0 && <ChecklistProgress done={done} total={items.length} />}
+          {items.length > 0 && <ChecklistProgressBadge progress={{ done, total: items.length }} />}
         </div>
       )}
 

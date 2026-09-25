@@ -532,7 +532,7 @@ describe('Tags (Phase 3)', () => {
     expect(within(row).getByText('frontend')).toBeInTheDocument()
   })
 
-  it('shows the created date (not the space) and at most 3 tags on a card', async () => {
+  it('shows the updated time (not the space) and at most 3 tags on a card', async () => {
     db.tags.push(
       { id: 'tag2', space_id: null, name: 'backend', color: 'green' },
       { id: 'tag3', space_id: null, name: 'infra', color: 'amber' },
@@ -543,7 +543,7 @@ describe('Tags (Phase 3)', () => {
     )
     renderPage()
     const card = (await screen.findByText('Buyer portal: fix RFQ pagination')).closest('article')
-    expect(within(card).getByText(/^Created /)).toBeInTheDocument()
+    expect(within(card).getByText(/^Updated /)).toBeInTheDocument()
     expect(within(card).queryByText('THMP')).not.toBeInTheDocument()
     expect(await within(card).findByText('+1')).toBeInTheDocument()
     expect(within(card).queryByText('design')).not.toBeInTheDocument()

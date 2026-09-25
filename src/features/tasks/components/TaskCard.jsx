@@ -1,4 +1,4 @@
-import { formatDateShort } from '@/lib/dates'
+import { formatRelative } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { DueLabel } from '@/components/shared/DueLabel'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
@@ -10,9 +10,9 @@ import { isClosed } from '@/features/tasks/utils'
 import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
 
 /**
- * Grid card (design 04a/G2): status + priority pills, MR chip and menu on top; title; a 2-line
- * description; a meta row (checklist progress); then, pinned to the bottom, up to 3 tags (+n) and
- * a dashed footer with the created date and the due label. `showSpace` (Global) adds the space's
+ * Grid card (design 04a/G2): status + priority pills, MR chip and menu on top; a 2-line title
+ * (full title on hover); a 2-line description; a meta row (checklist progress); then, pinned to
+ * the bottom, up to 3 tags (+n) and a dashed footer with "Updated 2d ago" and the due label. `showSpace` (Global) adds the space's
  * emoji. The card body opens `onEdit`.
  */
 export function TaskCard({ task, space, showSpace, tags, progress, onEdit, onSetField, onDelete }) {
@@ -29,6 +29,7 @@ export function TaskCard({ task, space, showSpace, tags, progress, onEdit, onSet
         onClick={() => onEdit(task)}
         className="absolute inset-0 z-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
         aria-label={`Edit ${task.title}`}
+        title={task.title}
       />
 
       <div className="pointer-events-none relative flex h-6.5 items-center gap-1.5">
@@ -65,7 +66,7 @@ export function TaskCard({ task, space, showSpace, tags, progress, onEdit, onSet
 
       <h3
         className={cn(
-          'pointer-events-none relative mt-3.5 text-base leading-snug font-semibold tracking-tight text-pretty',
+          'pointer-events-none relative mt-3.5 line-clamp-2 text-base leading-snug font-semibold tracking-tight text-pretty',
           closed && 'text-muted-foreground line-through decoration-faint',
         )}
       >
@@ -96,7 +97,7 @@ export function TaskCard({ task, space, showSpace, tags, progress, onEdit, onSet
           </span>
         )}
         <span className="font-mono text-xs whitespace-nowrap text-muted-foreground">
-          Created {formatDateShort(task.created_at)}
+          Updated {formatRelative(task.updated_at)}
         </span>
         <div className="flex-1" />
         <DueLabel date={task.due_date} completedAt={task.completed_at} closed={closed} />

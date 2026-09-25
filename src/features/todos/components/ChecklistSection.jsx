@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { cn } from '@/lib/utils'
 import { springs } from '@/components/motion/presets'
 import { useTodos } from '@/features/todos/api'
-import { ChecklistProgress } from '@/features/todos/components/ChecklistProgress'
+import { ChecklistProgressBadge } from '@/features/todos/components/ChecklistProgressBadge'
 import { StagedChecklist } from '@/features/todos/components/StagedChecklist'
 import { TodoChecklist } from '@/features/todos/components/TodoChecklist'
 
@@ -37,7 +37,7 @@ export function ChecklistSection({ taskId, spaceId, staged }) {
             <span className="text-muted-foreground">· {staged.items.length}</span>
           )
         ) : items.length > 0 ? (
-          <ChecklistProgress done={done} total={items.length} />
+          <ChecklistProgressBadge progress={{ done, total: items.length }} />
         ) : (
           <span className="text-muted-foreground">· saves as you go</span>
         )}

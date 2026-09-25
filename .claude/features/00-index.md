@@ -113,6 +113,11 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-25: Card polish, full tag palette, checklist progress colours
+- **Card:** the footer shows "Updated 2d ago" instead of the created date. The title is clamped to 2 lines, with the full title on hover. `TaskLinksButton` widens into a pill with a count when a task has several links.
+- **Checklist progress** (on cards, rows, the board and the task dialog header): a fixed icon plus "3/7", and colour carries the progress. Muted means nothing checked, an emerald done count means partly done, and an all-emerald badge means complete. A filling ring was tried and dropped at the user's request. The old `ChecklistProgress` (count plus thin bar) is **removed**, and the dialog uses the badge.
+- **Tags can use all 26 Tailwind v4.3 palettes** (`TAILWIND_COLORS`). The literal class maps in `lib/tint.js` were regenerated for every colour, so status and priority can use any of them too. Spaces keep the 10 `HUE_KEYS`. There's no DB change, since `tags.color` has no check constraint. The swatch picker is now a 9-column grid.
+
 ### 2026-09-25: Grid task card layout
 - **Footer:** "Created <date>" replaces the space name. Global keeps only the space emoji, since the view mixes spaces.
 - **Checklist progress** moved from the footer to a new meta row under the description, which is where the Feature 07 notes count will go.

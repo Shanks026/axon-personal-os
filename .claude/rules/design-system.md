@@ -102,7 +102,7 @@ Components store a **key** (`spaces.color`, `tags.color`) and never a hex value.
   - text: `color-mix(in oklab, <hue> 72%, var(--foreground))`
 
   Put the recipe in one utility. Add `@utility tint-*` in `index.css`, or a `tintStyle(hueKey)` helper in `lib/tint.js` that returns CSS variables. Use it everywhere.
-- **Tags** get the next free colour key automatically when they're created.
+- **Tags** can use **every Tailwind v4.3 palette** (26: the 17 chromatic colours, then the 9 neutrals slate, gray, zinc, neutral, stone, mauve, olive, mist and taupe; `TAILWIND_COLORS` in `lib/tint.js`). They get the next unused colour automatically when they're created, and the swatch picker is a 9-column grid. **Spaces** keep the 10 `HUE_KEYS`, which also drive the CSS-variable accent (the user's request, 2026-09-25).
 
 ## Status, priority and due date
 
@@ -152,7 +152,7 @@ This is a **different mechanism from the space-accent tint recipe** below, which
   - `Overdue · 3d` / `Overdue 20 Sep`: destructive.
   - Completed: ok (`Completed 18 Sep`).
   - No date: faint.
-- **Links** (MR, ticket, doc — a task can have any number, `git-pull-request-arrow` icon): one button (`TaskLinksButton`, shared by the row, card and board card), hidden entirely when a task has none, opening a hover popover that lists every link. It replaces a per-row Tooltip.
+- **Links** (MR, ticket, doc — a task can have any number, `git-pull-request-arrow` icon): one button (`TaskLinksButton`, shared by the row, card and board card), hidden entirely when a task has none, opening a hover popover that lists every link. It replaces a per-row Tooltip. When a task has several links, the button widens into a pill showing the count next to the icon.
 
 ## Typography
 
@@ -275,9 +275,10 @@ Each of these maps to a shadcn primitive.
   4. A **meta row**: checklist progress now, and the linked-notes count from Feature 07. It's rendered only when there's something to show.
   5. A flexible spacer.
   6. **Tags pinned just above the footer.** At most 3, then "+n". Each pill truncates a long name, and hovering shows the full name.
-  7. A dashed footer: **"Created 12 Sep"** (mono `text-xs`) on the left and the due label on the right.
+  7. A dashed footer: **"Updated 2d ago"** (`formatRelative(updated_at)`, mono `text-xs`) on the left and the due label on the right. The title is clamped to 2 lines, with the full title on hover.
   - The footer has **no space name**. In Global, the space's emoji alone (with its name for screen readers and on hover) sits before the created date.
   - Tag pills cap their width (`max-w-40`, or `max-w-60` for `md`) and truncate inside, everywhere they're used.
+  - **Checklist progress** (`ChecklistProgressBadge`, the same everywhere) has a fixed `list-checks` icon plus "3/7", and **colour carries the progress** (the user tried a filling ring and preferred this, 2026-09-25). With nothing checked it's all muted. When partly done, only the done count is emerald. When everything is done, the whole badge is emerald. Don't swap the icon by state.
 - **Kanban card / task card.** `bg-card`, a border, 9–10px radius and 12px padding. Status icon and title on the first line; priority, tag pills and a mono due date on the second. The columns are `bg-muted` wells.
 - **Note card.** `bg-card`, 12px radius, padding 14×16. Title (600), then a 2-line muted preview, then tags on the left and a mono relative time on the right.
 - **Date picker** (Popover + Calendar), 260px wide. Quick chips first: Today, Tomorrow, Fri, Next week. The selected day is `bg-primary`; today uses red text with a muted background.

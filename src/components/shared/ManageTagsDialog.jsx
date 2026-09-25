@@ -40,7 +40,7 @@ function ColorSwatchButton({ color, onChange }) {
         <TooltipContent>Colour</TooltipContent>
       </Tooltip>
       <PopoverContent className="w-auto p-2" align="start">
-        <div role="radiogroup" aria-label="Colour" className="flex flex-wrap gap-1.5">
+        <div role="radiogroup" aria-label="Colour" className="grid grid-cols-9 gap-1.5">
           {TAG_COLORS.map((key) => (
             <button
               key={key}
