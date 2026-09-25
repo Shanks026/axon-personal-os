@@ -24,7 +24,7 @@ function AddPill({ children, ...props }) {
 
 /**
  * Under the title (design 07b): the note's tags (removable), dashed "+ Tag" and "+ Version"
- * pickers, and "Edited 2h ago". The chosen versions sit at the end of the title row
+ * pickers, and "Edited 2h ago" on its own line below them. The chosen versions sit at the end of the title row
  * (`NoteVersionBadges`). Tags can be created in the note's space;
  * versions are free text, suggested from the tasks and notes in that space (like the task card).
  */
@@ -46,31 +46,32 @@ export function NoteTagsRow({ note }) {
   const saveVersions = (next) => setVersions.mutate({ id: note.id, versions: next })
 
   return (
-    <div className="mt-3.5 flex flex-wrap items-center gap-1.5">
-      {selected.map((tag) => (
-        <TagPill
-          key={tag.id}
-          tag={tag}
-          size="md"
-          onRemove={() => saveTags(note.tag_ids.filter((id) => id !== tag.id))}
+    <div className="mt-3.5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {selected.map((tag) => (
+          <TagPill
+            key={tag.id}
+            tag={tag}
+            size="md"
+            onRemove={() => saveTags(note.tag_ids.filter((id) => id !== tag.id))}
+          />
+        ))}
+        <TagPicker
+          value={note.tag_ids}
+          onChange={saveTags}
+          spaceIds={spaceIds}
+          createSpaceId={note.space_id}
+          trigger={<AddPill>Tag</AddPill>}
         />
-      ))}
-      <TagPicker
-        value={note.tag_ids}
-        onChange={saveTags}
-        spaceIds={spaceIds}
-        createSpaceId={note.space_id}
-        trigger={<AddPill>Tag</AddPill>}
-      />
-      <VersionPicker
-        value={versions}
-        onChange={saveVersions}
-        known={knownVersions}
-        trigger={<AddPill>Version</AddPill>}
-      />
-      <span className="ml-2 font-mono text-xs text-faint">
-        Edited {formatRelative(note.updated_at)}
-      </span>
+        <VersionPicker
+          value={versions}
+          onChange={saveVersions}
+          known={knownVersions}
+          trigger={<AddPill>Version</AddPill>}
+        />
+      </div>
+      {/* Its own line, so it never wraps in tight against the pills. */}
+      <p className="mt-3 font-mono text-xs text-faint">Edited {formatRelative(note.updated_at)}</p>
     </div>
   )
 }
