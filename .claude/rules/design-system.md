@@ -276,7 +276,7 @@ Each of these maps to a shadcn primitive.
   5. A flexible spacer.
   6. **Tags pinned just above the footer.** At most 3, then "+n". Each pill truncates a long name, and hovering shows the full name.
   7. A dashed footer: **"Updated 2d ago"** (`formatRelative(updated_at)`, mono `text-xs`) on the left and the due label on the right. The title is clamped to 2 lines, with the full title on hover.
-  - The footer has **no space name**. In Global, the space's emoji alone (with its name for screen readers and on hover) sits before the created date.
+  - The footer has **no space name**. In Global, the space's emoji alone (with its name for screen readers and on hover) sits before the updated time.
   - Tag pills cap their width (`max-w-40`, or `max-w-60` for `md`) and truncate inside, everywhere they're used.
   - **Checklist progress** (`ChecklistProgressBadge`, the same everywhere) has a fixed `list-checks` icon plus "3/7", and **colour carries the progress** (the user tried a filling ring and preferred this, 2026-09-25). With nothing checked it's all muted. When partly done, only the done count is emerald. When everything is done, the whole badge is emerald. Don't swap the icon by state.
 - **Kanban card / task card.** `bg-card`, a border, 9–10px radius and 12px padding. Status icon and title on the first line; priority, tag pills and a mono due date on the second. The columns are `bg-muted` wells.
