@@ -3,7 +3,8 @@ import { LayoutGrid, Search, Sheet, X } from 'lucide-react'
 import { useDebouncedCallback } from 'use-debounce'
 import { useSpace } from '@/context/SpaceContext'
 import { SegmentedControl } from '@/components/shared/SegmentedControl'
-import { NoteTagFilter } from '@/features/notes/components/NoteTagFilter'
+import { TagPicker } from '@/components/shared/TagPicker'
+import { Button } from '@/components/ui/button'
 
 const VIEWS = [
   { value: 'grid', label: <LayoutGrid className="size-3.75" aria-label="Grid" /> },
@@ -11,10 +12,11 @@ const VIEWS = [
 ]
 
 /**
- * Search on the left (debounced into `?q=`), then the inline tag chips (`?tag=`), and the
- * Grid · Table switch on the right (design 07a).
+ * Search on the left (debounced into `?q=`); on the right, Clear (when filtering), the Tags filter
+ * (`?tag=`, any-of: the same searchable picker as the Tasks page, so it scales to many tags; it
+ * replaced inline chips at the user's request) and the Grid · Table switch.
  */
-export function NotesToolbar({ filters, setFilter, tags }) {
+export function NotesToolbar({ filters, setFilter, clear }) {
   const { scopeSpaceIds } = useSpace()
   // Local text so typing stays instant; the URL updates after a short pause.
   const [text, setText] = useState(filters.q)
@@ -56,14 +58,29 @@ export function NotesToolbar({ filters, setFilter, tags }) {
         )}
       </label>
 
-      <NoteTagFilter
-        tags={tags}
+      <div className="flex-1" />
+
+      {(filters.q || filters.tag.length > 0) && (
+        <Button
+          variant="ghost"
+          className="h-9 text-muted-foreground"
+          onClick={() => {
+            setText('')
+            pushQuery.cancel()
+            clear()
+          }}
+        >
+          Clear
+        </Button>
+      )}
+
+      <TagPicker
+        mode="filter"
         value={filters.tag}
         onChange={(ids) => setFilter('tag', ids)}
         spaceIds={scopeSpaceIds}
+        align="end"
       />
-
-      <div className="flex-1" />
 
       <SegmentedControl
         label="View"

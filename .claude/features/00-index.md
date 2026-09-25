@@ -117,6 +117,9 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
+### 2026-09-26: Notes tag filter uses the Tasks-style picker
+- The inline tag chips on the Notes toolbar are replaced by the Tasks page's Tags filter (`TagPicker mode="filter"`: searchable, multi-select, a count on the button), so many tags stay manageable. A "Clear" button appears when search or tags are active. `NoteTagFilter` is removed. Tested.
+
 ### 2026-09-26: Note icon on note cards
 - Note cards (the Notes grid) and the "Link a note" picker rows show a muted `file-text` icon before the title, on its first line (the user's request).
 

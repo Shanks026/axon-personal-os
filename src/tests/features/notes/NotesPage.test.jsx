@@ -285,24 +285,19 @@ describe('NotesPage', () => {
     expect(await screen.findByText('This note doesn’t exist or is in Trash')).toBeInTheDocument()
   })
 
-  it('filters by tag chips through ?tag=, with All to clear', async () => {
+  it('filters by tags from the Tags dropdown through ?tag=, and Clear resets', async () => {
     const user = userEvent.setup()
     const router = renderApp()
     await screen.findByText('Sprint 42 planning')
-    const group = screen.getByRole('group', { name: 'Filter by tag' })
-    // Only tags that notes use get a chip, most used first.
-    expect(
-      within(group)
-        .getAllByRole('button')
-        .map((b) => b.textContent),
-    ).toEqual(['All', 'sprint', 'rca'])
-    await user.click(within(group).getByRole('button', { name: 'rca' }))
+    await user.click(screen.getByRole('button', { name: /^Tags/ }))
+    const input = await screen.findByPlaceholderText('Search tags…')
+    const popover = within(input.closest('[data-slot="popover-content"]'))
+    await user.click(popover.getByRole('option', { name: /rca/ }))
     expect(router.state.location.search).toBe('?tag=t2')
-    expect(within(group).getByRole('button', { name: 'rca' })).toHaveAttribute(
-      'aria-pressed',
-      'true',
-    )
-    await user.click(within(group).getByRole('button', { name: 'All' }))
+    await user.keyboard('{Escape}')
+    // The trigger shows how many tags are selected.
+    expect(screen.getByRole('button', { name: /^Tagss*1/ })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: 'Clear' }))
     expect(router.state.location.search).toBe('')
   })
 })

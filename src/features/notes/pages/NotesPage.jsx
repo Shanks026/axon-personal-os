@@ -67,7 +67,7 @@ export default function NotesPage() {
       </div>
 
       <div className="mt-6">
-        <NotesToolbar filters={filters} setFilter={setFilter} tags={tags} />
+        <NotesToolbar filters={filters} setFilter={setFilter} clear={clear} />
       </div>
 
       <div className="mt-6">
