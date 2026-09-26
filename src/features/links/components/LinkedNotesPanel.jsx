@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { FileText, Link2, Loader2, Plus } from 'lucide-react'
+import { FileText, Link2, Loader2, NotebookPen, Plus } from 'lucide-react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Link, useNavigate } from 'react-router'
 import { formatRelative } from '@/lib/dates'
@@ -18,7 +18,8 @@ import { useCreateNote } from '@/features/notes/api'
  * "Linked notes" on the task detail page (design Task Detail): excerpt cards in two columns,
  * "Link note" (search picker, any space) and "New linked note" (created in the task's space with
  * the task's title, linked, then opened). A card opens its note; ✕ unlinks a manual link, and a
- * note that mentions the task shows "Mentioned" instead.
+ * note that mentions the task shows "Mentioned" instead. A journal entry (Feature 09) opens its
+ * journal day and shows a notebook icon.
  */
 export function LinkedNotesPanel({ task }) {
   const navigate = useNavigate()
@@ -77,6 +78,9 @@ export function LinkedNotesPanel({ task }) {
           <AnimatePresence initial={false}>
             {links.map(({ note, source }) => {
               const space = spaceById.get(note.space_id)
+              const sp = paths.space(space?.slug)
+              const isJournal = note.kind === 'journal'
+              const NoteIcon = isJournal ? NotebookPen : FileText
               return (
                 <motion.article
                   key={note.id}
@@ -88,12 +92,12 @@ export function LinkedNotesPanel({ task }) {
                   className="group relative flex min-h-22 flex-col rounded-xl border bg-card px-4 py-3 transition-colors hover:border-border-strong"
                 >
                   <Link
-                    to={paths.space(space?.slug).note(note.id)}
+                    to={isJournal ? sp.journal(note.journal_date) : sp.note(note.id)}
                     className="absolute inset-0 rounded-xl outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     aria-label={`Open note ${note.title || 'Untitled'}`}
                   />
                   <div className="pointer-events-none relative flex items-center gap-2">
-                    <FileText className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
+                    <NoteIcon className="size-3.5 shrink-0 text-muted-foreground" aria-hidden />
                     <span className="min-w-0 flex-1 truncate font-medium">
                       {note.title || 'Untitled'}
                     </span>

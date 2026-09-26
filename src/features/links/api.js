@@ -17,7 +17,7 @@ export async function fetchNotesForTask(taskId) {
   const { data, error } = await supabase
     .from('note_task_links')
     .select(
-      'source, created_at, note:notes!inner(id, space_id, title, excerpt, updated_at, deleted_at)',
+      'source, created_at, note:notes!inner(id, space_id, kind, journal_date, title, excerpt, updated_at, deleted_at)',
     )
     .eq('task_id', taskId)
     .is('note.deleted_at', null)

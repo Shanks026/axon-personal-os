@@ -305,3 +305,24 @@
 .axon-prose-fit {
   min-height: 0;
 }
+
+/* Journal (Feature 09, design Journal.dc): small uppercase section headings, Blockers in red
+   (data-tone comes from the HeadingTones extension). Sized from the 15px reading wrapper. */
+.axon-journal .axon-prose h2 {
+  font-size: 0.8em;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+  margin-top: 1.75em;
+}
+.axon-journal .axon-prose h2[data-tone='destructive'] {
+  color: var(--destructive);
+}
+.axon-journal .axon-prose h2 + * {
+  margin-top: 0.4em;
+}
+.axon-journal .axon-prose > :first-child {
+  margin-top: 0;
+}

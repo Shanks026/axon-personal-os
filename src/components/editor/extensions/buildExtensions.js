@@ -4,6 +4,7 @@ import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table
 import { Placeholder } from '@tiptap/extensions'
 import StarterKit from '@tiptap/starter-kit'
 import { CodeBlockHighlighted } from '@/components/editor/extensions/CodeBlockHighlighted'
+import { HeadingTones } from '@/components/editor/extensions/HeadingTones'
 import { ImageBlock } from '@/components/editor/extensions/ImageBlock'
 import { ImageUpload } from '@/components/editor/extensions/ImageUpload'
 import { KeyboardShortcuts } from '@/components/editor/extensions/KeyboardShortcuts'
@@ -22,6 +23,8 @@ import { TaskMention } from '@/components/editor/extensions/TaskMention'
  *   show anywhere); paste, drop and "/ Image" need the handlers (set via `setImageHandlers`).
  * - `taskMentions` (Feature 07): `{ search, create, NodeView }` for `[[` mentions and "Make task".
  *   The node itself is always registered, so docs with mentions open (as chips) anywhere.
+ * - `headingTones` (Feature 09): `{ [headingText]: tone }`, adds `data-tone` to matching headings
+ *   (the journal's red Blockers).
  */
 export function buildExtensions({ placeholder, features = {} }) {
   const highlight = features.codeHighlight !== false
@@ -47,6 +50,8 @@ export function buildExtensions({ placeholder, features = {} }) {
     KeyboardShortcuts.configure({ swallowModEnter: !!features.compact }),
   ]
   if (highlight) extensions.push(CodeBlockHighlighted)
+  if (features.headingTones)
+    extensions.push(HeadingTones.configure({ tones: features.headingTones }))
   if (features.slash) {
     extensions.push(
       SlashCommand.configure({

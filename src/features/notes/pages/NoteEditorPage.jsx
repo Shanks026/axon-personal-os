@@ -78,6 +78,10 @@ export default function NoteEditorPage() {
       </NoteStatus>
     )
   }
+  // A journal entry (Feature 09) lives on its journal day, in its own space.
+  if (note.kind === 'journal') {
+    return <Navigate to={paths.space(noteSpace.slug).journal(note.journal_date)} replace />
+  }
   // Canonical URL: a note opened under another space moves to its own (Global shows any note).
   if (!isGlobal && note.space_id !== space?.id) {
     return <Navigate to={paths.space(noteSpace.slug).note(note.id)} replace />

@@ -25,7 +25,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | ✅ Complete (UI refinements pending) |
 | **Wave 3: Time** | | | | |
 | 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | ✅ Complete |
-| 09 | Daily Journal / Work Log | [09-journal.md](09-journal.md) | 06, 07 | 🔵 Planned |
+| 09 | Daily Journal / Work Log | [09-journal.md](09-journal.md) | 06, 07 | 🟡 In progress (Phase 1 ✅) |
 | **Wave 4: Insight** | | | | |
 | 10 | Dashboard (per space and Global) | [10-dashboard.md](10-dashboard.md) | 08, 09 | 🔵 Planned |
 | 11 | Quarterly Reports (fiscal year) | [11-reports.md](11-reports.md) | 10 | 🔵 Planned |
@@ -92,7 +92,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `note_task_links` (+ activity log trigger) | 07 | ✅ | Sources: manual or mention. Migration `20260925180253` |
 | `sync_note_mentions()` | 07 | ✅ | RPC, security invoker; migration `20260925184644` |
 | `events` | 08 | ✅ | Optional `task_id` / `note_id`. Migration `20260925201716` |
-| `notes.kind`, `notes.journal_date` | 09 | ⬜ | One journal entry per space per day |
+| `notes.kind`, `notes.journal_date` (+ `notes_journal_unique` partial index) | 09 | ✅ | One live journal entry per space per day; existing rows became `kind = 'note'`. Migration `20260926071151` |
 | `week_start_of()`, `dashboard_summary()` | 10 | ⬜ | RPCs; they read the profile's time zone and week start |
 | `reports` + `report_stats()` | 11 | ⬜ | `space_id` NULL means a Global report; "at end" statuses are rebuilt from `task_activity` |
 | `search_all()`, `reports_title_trgm` index | 12 | ⬜ | RPC with `p_include_global` |
@@ -116,6 +116,17 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-26: Feature 09 plan — carry-forward added to Phase 2
+- The user asked why each entry has both Yesterday and Today. They stay separate (plan vs outcome), and Phase 2 now adds **carry-forward**: a day with no entry opens with Yesterday prefilled from the most recent entry's Today (same space, within 7 days), copied once and never synced. New helpers planned: `getSectionContent`, `buildCarriedTemplate`, `fetchPreviousJournalEntry`.
+
+### 2026-09-26: Feature 09 Phase 1 — Daily journal entry
+- **Plan updated first:** the Journal design deltas are folded into `09-journal.md` (14-day strip with ‹ ›, date title with "Q2 · W13", uppercase headings with Blockers in red, "Done today" rail with status changes; streak and entry count dropped to the backlog; the mini month and "Insert into Today" in Phase 2). **Global is stacked, read-only cards** (the user's decision).
+- **Migration `20260926071151_add_journal_to_notes`** (via the Supabase MCP): `notes.kind` (`note` | `journal`), `notes.journal_date`, a check tying them together, and the partial unique index `notes_journal_unique` (one live entry per space per day). Verified in a rolled-back block; advisors show only the pre-existing warnings.
+- `/s/:slug/journal[/:date]`: the day strip (dots on written days), the standup template, lazy creation on the first edit, 800ms autosave with the header save state, `[[task]]` / `@` mentions synced to `note_task_links`, images, Clear entry with Undo, and alt+←/→ between days. The rail (`DetailRail`, Sheet below `lg`) lists the day's status changes and done todos.
+- The Notes list filters `kind = 'note'`. A journal entry in a task's Linked notes opens its journal day (notebook icon); `/notes/:id` for a journal row redirects there.
+- **New:** `features/journal/` (api, constants, utils, `useJournalDate`, `useJournalAutosave`, `DateStrip`, `JournalDateHeading`, `JournalEditor`, `JournalGlobalDay`, `DoneThatDay`, `JournalEntryMenu`, `JournalSkeleton`); `fetchStatusChanges` / `useStatusChanges` (tasks api); `doneFrom` / `doneTo` on `fetchTodos`; shared editor extension **`HeadingTones`** (`features.headingTones`) and `.axon-journal` styles.
+- Tests: 389 (+13, `tests/features/journal/utils.test.js`). Lint and build pass; `axon-rules` audit clean after moving date formatting into `journal/utils.js` and using `linkKeys`.
 
 ### 2026-09-26: Feature 08 Phase 3 — Meeting notes (Feature 08 complete)
 - The event dialog's footer can create a **meeting note**: a note in the event's space titled "<event> — 24 Sep 2026", from a template (date/time/location line, meeting link, Agenda, Notes and Action items as a checklist). It sets `events.note_id`, links the event's task (manual), and opens the note. With a live note it says "Open meeting note" instead; a trashed note brings "Create" back.

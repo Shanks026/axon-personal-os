@@ -24,12 +24,13 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
 | 06 Notes | ✅ Complete (editor, list, autosave, pinning, versions, tag chips, code highlight, tables, Markdown, shortcuts, rich task descriptions) |
 | 07 Task detail and linking | ✅ Complete (task detail page, activity and work log, note ↔ task links, `@` / `[[` mentions, Make task, and the user's UI refinements) |
 | 08 Calendar and Events | ✅ Complete (Month, Week, Day, Agenda; events CRUD; drag to move/resize; meeting notes) |
-| 09–14 | Planned (docs in `.claude/features/`) |
+| 09 Journal | 🟡 Phase 1 ✅ (daily entry, strip, rail, Global cards); Phase 2 in progress |
+| 10–14 | Planned (docs in `.claude/features/`) |
 | 15 Attachments and Media | 🟡 Phase 1 ✅ (images in notes and task descriptions, private bucket, signed URLs); Phases 2–3 later |
 
 ### Resume here (session handoff)
 
-1. **Next step: Feature 09 (Journal) Phase 1.** Feature 08 (Calendar) is complete (2026-09-26). Its browser checks are still open: drag move and resize, Back/Forward through months, the todo-chip toggle, the meeting-note template, and dark mode.
+1. **Next step: Feature 09 (Journal) Phase 2** (mini month, "Insert into Today", carry-forward). Phase 1 was approved and committed on 2026-09-26; its browser checks are listed in `09-journal.md`. Feature 08's browser checks are still open too: drag move and resize, Back/Forward through months, the todo-chip toggle, the meeting-note template, and dark mode.
    - Run the `axon-feature` skill, Step 4, on `.claude/features/09-journal.md`. First fold the Journal items from `.claude/design/design-deltas.md` and the Journal screen (`Journal.dc.html`) into the doc.
    - **Check the plan against later decisions** and put anything unclear to the user:
      - Spaces are fixed at creation, with no space pickers in dialogs (use `useDefaultSpaceId`, as `TaskDialog` and `EventDialog` do).
@@ -40,7 +41,7 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
    - The shared editor (`RichTextEditor`) takes `features`: `slash`, `images` (`useImageHandlers`), `taskMentions` (`useTaskMentionsConfig`), `onSave`, and `variant="compact"` for dialogs. The journal reuses the same editor and `lib/dates.js` helpers.
    - Tests run with `maxWorkers: 2` (the suite takes about 4 minutes). Feature 15 Phases 2–3 (task file attachments, space images) wait until later.
    - **Still to confirm in the browser:** todo drag reorder (pointer and keyboard).
-   - The Supabase MCP tools didn't load in the 2026-09-25/26 sessions; the Management API fallback (item 3) worked. Scratchpad helpers `sb.js` and `q.js` must be re-created in a new session.
+   - **Supabase MCP fixed (2026-09-26):** the VS Code extension looks up this project as `c:/Users/chris_austin/Desktop/axon` (lowercase drive) in `~/.claude.json`, while `claude mcp add` had saved the server under `C:/…`. A copy under the lowercase key made the tools load. If they vanish again, check both keys have `mcpServers.supabase`. The Management API fallback (item 3) still works.
 2. **Workflow the user expects:**
    - Build one phase, verify it (lint, tests, build, the `axon-rules` audit), and update the feature doc, `00-index.md` and the patterns catalogue.
    - **Then ask before committing and pushing to `main`** (github.com/Shanks026/axon-personal-os), and stop for approval. **Never commit each small change**: leave UI tweaks uncommitted and batch them when the user says so (their request, 2026-09-26).

@@ -133,7 +133,7 @@ Global decisions that already apply everywhere are recorded in `.claude/rules/de
   - Dragging lifts the event, leaves a dashed origin ghost, and shows a resize bar.
 - **Adopt (event dialog):** read-style icon rows, plus a footer button "Create meeting note" (Phase 3).
 
-### 09 Journal
+### 09 Journal (✅ folded into 09 Phase 1 on 2026-09-26; mini month and "Insert into Today" in Phase 2; streak dropped to backlog)
 - **Adopt:**
   - The date strip is a **fixed 14-day grid with ‹ ›** (day cells 56px tall). A "Sep 2026" button opens the mini month.
   - The title is the date plus "Q2 · W13" (D4). The state shows "Saved".

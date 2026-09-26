@@ -321,7 +321,7 @@ create index notes_title_trgm on public.notes using gin (title extensions.gin_tr
 create index notes_versions_idx on public.notes using gin (versions);
 -- + updated_at trigger, RLS owner policy
 
--- Feature 09 (journal):
+-- Feature 09 (journal), applied as migration 20260926071151_add_journal_to_notes:
 alter table public.notes
   add column kind text not null default 'note' check (kind in ('note','journal')),
   add column journal_date date,

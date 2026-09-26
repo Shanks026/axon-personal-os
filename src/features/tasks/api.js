@@ -16,6 +16,7 @@ export const taskKeys = {
   versions: (spaceIds) => [...taskKeys.all, 'versions', spaceIds], // version suggestions
   activities: () => [...taskKeys.all, 'activity'],
   activity: (taskId) => [...taskKeys.activities(), taskId],
+  statusChanges: (params) => [...taskKeys.activities(), 'status', params], // { spaceIds, from, to }
   search: (params) => [...taskKeys.all, 'search', params], // { spaceIds, q }
   summary: (id) => [...taskKeys.all, 'summary', id], // hover previews
 }
@@ -428,6 +429,36 @@ export async function fetchTaskActivity(taskId) {
   if (error) throw error
   // Newest 200, shown oldest first.
   return data.reverse()
+}
+
+/**
+ * Status changes in a time window across a scope, newest first (the journal's "Done today" rail).
+ * `from` / `to` are UTC ISO instants (half-open). Tasks in Trash are left out.
+ */
+export async function fetchStatusChanges({ spaceIds, from, to }) {
+  const { data, error } = await supabase
+    .from('task_activity')
+    .select(
+      'id, from_value, to_value, created_at, task:tasks!inner(id, space_id, title, status, deleted_at)',
+    )
+    .eq('kind', 'status')
+    .gte('created_at', from)
+    .lt('created_at', to)
+    .in('task.space_id', spaceIds)
+    .is('task.deleted_at', null)
+    .order('created_at', { ascending: false })
+  if (error) throw error
+  return data
+}
+
+/** Always refetched on mount: status changes happen on other pages, which don't invalidate it. */
+export function useStatusChanges(params) {
+  return useQuery({
+    queryKey: taskKeys.statusChanges(params),
+    queryFn: () => fetchStatusChanges(params),
+    enabled: params.spaceIds?.length > 0 && !!params.from,
+    staleTime: 0,
+  })
 }
 
 export async function addTaskComment({ taskId, body }) {

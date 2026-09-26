@@ -9,7 +9,7 @@ import { toProgressMap } from '@/features/todos/utils'
 export const todoKeys = {
   all: ['todos'],
   lists: () => [...todoKeys.all, 'list'],
-  list: (params) => [...todoKeys.lists(), params], // { spaceIds, taskId, includeDone, doneSince, checklist, dueFrom, dueTo }
+  list: (params) => [...todoKeys.lists(), params], // { spaceIds, taskId, includeDone, doneSince, checklist, dueFrom, dueTo, doneFrom, doneTo }
   progress: (params) => [...todoKeys.all, 'progress', params], // Phase 2
 }
 
@@ -21,7 +21,8 @@ const COLUMNS =
  * item for that task, in position order. Otherwise this is the space-scoped Todos page: open
  * todos plus done ones from the last `DONE_WINDOW_DAYS`, optionally hiding checklist items.
  * A due-date window (`dueFrom` / `dueTo`, inclusive: the calendar) replaces the done window, so
- * done todos stay on the day they were due.
+ * done todos stay on the day they were due. A done window (`doneFrom` / `doneTo`, UTC ISO instants,
+ * half-open: the journal) returns only the todos ticked off in it.
  */
 export async function fetchTodos({
   spaceIds,
@@ -31,11 +32,19 @@ export async function fetchTodos({
   checklist,
   dueFrom,
   dueTo,
+  doneFrom,
+  doneTo,
 }) {
   let query = supabase.from('todos').select(COLUMNS).is('deleted_at', null).order('position')
 
   if (taskId) {
     query = query.eq('task_id', taskId)
+  } else if (doneFrom) {
+    query = query
+      .in('space_id', spaceIds)
+      .eq('is_done', true)
+      .gte('done_at', doneFrom)
+      .lt('done_at', doneTo)
   } else if (dueFrom || dueTo) {
     query = query.in('space_id', spaceIds)
     if (dueFrom) query = query.gte('due_date', dueFrom)
@@ -54,11 +63,21 @@ export async function fetchTodos({
 }
 
 export function useTodos(
-  { spaceIds, taskId, includeDone = true, checklist, dueFrom, dueTo } = {},
+  { spaceIds, taskId, includeDone = true, checklist, dueFrom, dueTo, doneFrom, doneTo } = {},
   { enabled = true } = {},
 ) {
   const doneSince = daysAgoISO(toISODate(new Date()), DONE_WINDOW_DAYS)
-  const params = { spaceIds, taskId, includeDone, doneSince, checklist, dueFrom, dueTo }
+  const params = {
+    spaceIds,
+    taskId,
+    includeDone,
+    doneSince,
+    checklist,
+    dueFrom,
+    dueTo,
+    doneFrom,
+    doneTo,
+  }
   return useQuery({
     queryKey: todoKeys.list(params),
     queryFn: () => fetchTodos(params),

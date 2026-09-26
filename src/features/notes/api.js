@@ -16,7 +16,7 @@ export const noteKeys = {
 
 // `excerpt` (generated, 280 chars) keeps list payloads small: never select content_text here.
 const LIST_COLUMNS =
-  'id, space_id, title, excerpt, versions, pinned_at, created_at, updated_at, tag_ids:note_tags(tag_id), link_count:note_task_links(count)'
+  'id, space_id, kind, journal_date, title, excerpt, versions, pinned_at, created_at, updated_at, tag_ids:note_tags(tag_id), link_count:note_task_links(count)'
 
 /**
  * Flattens the embedded `note_tags(tag_id)` rows into a plain `tag_ids: string[]`, and the
@@ -41,6 +41,7 @@ export async function fetchNotes({ spaceIds, q, tag = [] }) {
     .from('notes')
     .select(tag.length ? `${LIST_COLUMNS}, tag_match:note_tags!inner(tag_id)` : LIST_COLUMNS)
     .in('space_id', spaceIds)
+    .eq('kind', 'note') // journal entries (Feature 09) are read through the journal API
     .is('deleted_at', null)
     .order('updated_at', { ascending: false })
 

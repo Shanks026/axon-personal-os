@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/09-journal.md`
-**Status**: 🔵 Planned
+**Status**: 🟡 In progress (Phase 1 ✅, Phase 2 next)
 **Depends on**: 06, 07
 **Last Updated**: September 2026
 
@@ -22,25 +22,35 @@ Phase 1: Daily entry
   DateStrip, lazy-created templated entry with autosave and mentions, Global stacked read view,
   "Done that day" side panel.
 
-Phase 2: Navigation and insight
-  Mini month popover with entry dots, entry count and streak indicator, "Insert completed tasks" into Today.
+Phase 2: Navigation, insert and carry-forward
+  Mini month popover with entry dots, "Insert into Today" in the rail, and a new day's Yesterday
+  prefilled from the previous entry's Today.
 ```
 
 **After each phase, stop and wait for approval.**
 
 ---
 
-## Phase 1: Daily Entry
+## Phase 1: Daily Entry ✅ Complete
+
+> **Design deltas ✅ folded (2026-09-26)** from `design-deltas.md` §09 and `Journal.dc.html`, and checked against later decisions:
+> - The date strip is a **fixed 14-day grid with ‹ ›** (56px cells), not a scrolling strip. The "Sep 2026" mini-month button is Phase 2.
+> - The page header is the plain `Journal` title; the body opens with the **date as a 30px title plus "Q2 · W13"** (`getFiscalWeek`, D4), then "Standup template · Saved".
+> - Section headings are **uppercase, small and muted, with Blockers in red**. Body max-width 680 (`max-w-170`, the design-system reading width; the design shows 660).
+> - The rail is **"Done today · Auto-listed for reference"** (or "Done on Tue 22 Sep" for other days) and includes **status changes from `task_activity`**, not just completions. It uses the shared `DetailRail` (304px `w-76`, the later decision) instead of the design's 300px, with a `panel-right` toggle and a Sheet below `lg`, like the note editor.
+> - **Dropped:** the streak and entry-count indicator (backlog). "Insert into Today" moves into the rail (Phase 2).
+> - **Global (user decision 2026-09-26):** stacked, read-only cards per space, with "Write in <space>". No space picker anywhere.
+> - Colours: rail icons use literal Tailwind classes via `lib/tint.js` status colours, never the space accent.
 
 ### Goal
-At `/s/:slug/journal` (today in the profile time zone) or `/s/:slug/journal/:date`, the user sees a date strip with dots on days that have entries, moves between days, and writes in an editor prefilled with the template. The entry is saved (and created on the first keystroke) with autosave and a "Saving… / Saved" indicator. `[[task]]` mentions link the entry to tasks. A side panel lists the tasks completed and todos done that day. In Global, each active space's entry for the date is shown read-only, stacked, with "Write in <space>" for spaces without one. The Notes list and note search no longer show journal entries.
+At `/s/:slug/journal` (today in the profile time zone) or `/s/:slug/journal/:date`, the user sees a 14-day strip with dots on days that have entries, moves between days, and writes in an editor prefilled with the standup template. The entry is created on the first edit and then autosaved, with a "Saving… / Saved" indicator. `[[task]]` mentions link the entry to tasks. A rail lists the tasks completed, the task status changes and the todos done that day. In Global, each active space's entry for the date is shown read-only, stacked, with "Write in <space>" for spaces without one. The Notes list no longer shows journal entries.
 
-### Before Starting: Confirm With Codebase
-1. Features 06 and 07 are complete. Confirm the exact exports: `fetchNotes`, `noteKeys`, `updateNote(id, patch)`, `syncNoteMentions(noteId, taskIds)` (or 07's combined save hook), `linkKeys`, and the helper that collects `taskMention` ids from a Tiptap doc (07). If the collector is private to notes, move it to `components/editor/` (it is shared by 2+ features now) and record the move.
-2. Confirm the `RichTextEditor` props (`value`, `onChange(json, text)`, `editable`, `features: { taskMentions: true }`) and whether it re-initialises when `value` changes. The page keys the editor by `${spaceId}:${date}` to force a clean remount.
-3. `lib/dates.js` has `todayISO(timeZone)` and `zonedDayRange(isoDate, timeZone)` (Feature 08). `useDebouncedCallback` (`use-debounce`) is installed.
-4. Confirm the task API's completion filter. If `fetchTasks` has no `completedFrom`/`completedTo` yet, it is added here (see 1.2). The same applies to `doneFrom`/`doneTo` on `fetchTodos`.
-5. Use the MCP `execute_sql` to confirm `public.notes` has no `kind` column yet, and count the existing notes (they all become `kind = 'note'`).
+### Before Starting: Confirm With Codebase (done 2026-09-26)
+1. ✅ `features/notes/api.js`: `fetchNotes`, `noteKeys`, `updateNote(id, patch)`, `softDeleteNote`, `restoreNote`. Mentions: `features/links/api.js` `syncNoteMentions({ noteId, taskIds })`, `linkKeys`; collector `features/links/utils.js` `collectTaskMentionIds(doc)` and `sameIds` (already shared, no move needed). `useTaskMentionsConfig(note)` only reads `note.space_id`.
+2. ✅ `RichTextEditor` props: `value` (read once on mount, so key by `${spaceId}:${date}`), `onChange(json, text)`, `editable`, `features: { slash, taskMentions, images, onSave }`, `onEditorReady`, `label`, `className`.
+3. ✅ `lib/dates.js` `todayISO`, `zonedDayRange`, `zonedParts`, `formatTime`; `lib/fiscal.js` `getFiscalQuarter`, `getFiscalWeek`; `usePreferences()` (settings api) gives `{ timezone, weekStartsOn, fyStartMonth }`. `hooks/useAutosave` serialises saves in order, so the journal builds on it: no separate in-flight-promise logic.
+4. ✅ `fetchTasks` has no completion filter and `fetchTodos` no done window. Instead of `completedFrom/To` on `fetchTasks`, the rail reads `task_activity` status rows (they include completions: `to_value = 'done'`), which the design asks for anyway.
+5. ✅ `public.notes` has no `kind` column. `task_activity` columns: `id, user_id, task_id, kind, from_value, to_value, body, created_at, updated_at`.
 
 ### 1.1 Database
 Migration `add_journal_to_notes`: the SQL from `data-model.md` **notes**, Feature 09 block:
@@ -57,188 +67,166 @@ create unique index notes_journal_unique on public.notes (user_id, space_id, jou
 - The unique index is partial on `deleted_at is null`, so after an entry is trashed a fresh one can be written for the same day.
 - No new policy is needed: the `notes` owner policy covers journal rows.
 
-Verify:
-- Existing rows are `kind = 'note'`.
-- A journal row without `journal_date` is rejected, and so is a note with one.
-- A second live journal entry for the same space and day is rejected.
-
-Run advisors.
+Verify (rolled-back transaction): existing rows are `kind = 'note'`; a journal row without `journal_date` is rejected, and so is a note with one; a second live journal entry for the same space and day is rejected. Run advisors.
 
 ### 1.2 API Layer
 **Notes API changes (`features/notes/api.js`):**
-- `fetchNotes` adds `.eq('kind', 'note')` unconditionally. Journal entries are reached only through the journal API.
-- `LIST_COLUMNS` and `useNote(id)` include `kind` and `journal_date`, so shared consumers (`EntityLink`, linked notes on task detail) can route journal entries to `paths.journal(date)` instead of `paths.note(id)`.
+- `fetchNotes` adds `.eq('kind', 'note')` unconditionally.
+- `LIST_COLUMNS` includes `kind, journal_date`; `fetchNote` already selects `*`.
+
+**Links API (`features/links/api.js`):** `fetchNotesForTask` selects `kind, journal_date` on the note, so the task's Linked notes route journal entries to the journal day.
 
 **Task and todo API additions (additive):**
 
-| File | New params | Query |
-|---|---|---|
-| `features/tasks/api.js` `fetchTasks` | `completedFrom`, `completedTo` (UTC ISO, half-open) | `.gte('completed_at', completedFrom).lt('completed_at', completedTo)` |
-| `features/todos/api.js` `fetchTodos` | `doneFrom`, `doneTo` (UTC ISO, half-open) | `.gte('done_at', doneFrom).lt('done_at', doneTo)` |
+| File | Addition |
+|---|---|
+| `features/tasks/api.js` | `taskKeys.statusChanges(params)`; `fetchStatusChanges({ spaceIds, from, to })` / `useStatusChanges(params)`: `task_activity` rows with `kind = 'status'` and `created_at` in `[from, to)`, joined `task:tasks!inner(id, space_id, title, status, deleted_at)` filtered `.in('task.space_id', spaceIds)` and `.is('task.deleted_at', null)`, newest first. |
+| `features/todos/api.js` `fetchTodos` / `useTodos` | `doneFrom`, `doneTo` (UTC ISO, half-open): `.in('space_id', spaceIds).eq('is_done', true).gte('done_at', doneFrom).lt('done_at', doneTo)` |
 
 **`src/features/journal/api.js`:**
 
 | Export | Details |
 |---|---|
 | `journalKeys` | `{ all: ['journal'], entry: (p) => ['journal','entry', p], day: (p) => ['journal','day', p], dates: (p) => ['journal','dates', p] }` |
-| `fetchJournalEntry({ spaceId, date })` / `useJournalEntry(params)` | `from('notes').select('*').eq('kind','journal').eq('space_id', spaceId).eq('journal_date', date).is('deleted_at', null).maybeSingle()`. Returns `null` when nothing is written. `enabled: !!spaceId && !!date`. |
-| `fetchJournalDay({ spaceIds, date })` / `useJournalDay(params)` | same filters with `.in('space_id', spaceIds)`, which returns an array (for Global) |
-| `fetchJournalDates({ spaceIds, from, to })` / `useJournalDates(params)` | `select('space_id, journal_date')` with `kind = 'journal'`, `deleted_at is null` and `journal_date` between `from` and `to` (inclusive `yyyy-MM-dd`). Returns rows; the helper `toDateSet(rows)` gives a `Set<isoDate>`. `placeholderData: keepPreviousData`. |
-| `getOrCreateJournalEntry({ spaceId, date, content, content_text })` | Selects first. If there is none, it inserts `{ space_id, kind: 'journal', journal_date: date, title: journalTitle(date), content, content_text }` and returns the row. On a unique violation (`23505`, a race with another tab) it re-selects and returns the winner. |
-| `useSaveJournalEntry()` | `mutationFn({ entryId, spaceId, date, content, content_text, taskIds })`: if there is no `entryId`, `getOrCreateJournalEntry`; otherwise `updateNote(entryId, { content, content_text })`. Then `syncNoteMentions(id, taskIds)`. `onSuccess` calls `setQueryData(journalKeys.entry({ spaceId, date }), row)`, and invalidates `journalKeys.dates` and `journalKeys.day` (only when the row was created) plus `linkKeys.all`. Errors toast. |
-| `useClearJournalEntry()` | soft-deletes the entry (`softDeleteNote`) with an Undo toast; invalidates `journalKeys.all` |
-| `restoreJournalEntry(id)` / `useRestoreJournalEntry()` | Calls `restoreNote(id)`. A unique violation (`23505` on `notes_journal_unique`, meaning a new live entry was written for that day since the delete) is rethrown as `new Error('An entry for this day already exists — open it and copy what you need from Trash')`, so the hook's error toast is friendly. Invalidates `journalKeys.all` and `linkKeys.all`. It is used by the Undo toast and by Trash (14) for `kind = 'journal'` rows. |
+| `fetchJournalEntry({ spaceId, date })` / `useJournalEntry(params)` | `from('notes').select('*').eq('kind','journal').eq('space_id', spaceId).eq('journal_date', date).is('deleted_at', null).maybeSingle()`. `null` when nothing is written. |
+| `fetchJournalDay({ spaceIds, date })` / `useJournalDay(params)` | same filters with `.in('space_id', spaceIds)`, an array (Global) |
+| `fetchJournalDates({ spaceIds, from, to })` / `useJournalDates(params)` | `select('space_id, journal_date')`, live journal rows with `journal_date` between `from` and `to` (inclusive). `placeholderData: keepPreviousData`. `toDateSet(rows)` (utils) gives a `Set<isoDate>`. |
+| `getOrCreateJournalEntry({ spaceId, date, content, content_text })` | Selects first; if none, inserts `{ space_id, kind: 'journal', journal_date, title: journalTitle(date), content, content_text }`. On `23505` (another tab won the race) it re-selects and updates that row with the content. |
+| `useSaveJournalEntry()` | `mutationFn({ entryId, spaceId, date, content, content_text })`: `entryId` ? `updateNote` : `getOrCreateJournalEntry`. `onSuccess` seeds `journalKeys.entry({ spaceId, date })`; on create it also invalidates `journalKeys.dates` and `journalKeys.day`. Errors surface in the save indicator. |
+| `useClearJournalEntry()` | soft-deletes the entry with an Undo toast (calls `restoreJournalEntry`); invalidates `journalKeys.all` and `['links']` |
+| `restoreJournalEntry(id)` / `useRestoreJournalEntry()` | `restoreNote(id)`; a `23505` is rethrown as `'An entry for this day already exists — open it and copy what you need from Trash'`. Invalidates `journalKeys.all` and `['links']`. Used by Undo and later Trash (14). |
 
-**`src/features/journal/constants.js`:**
-- `JOURNAL_TEMPLATE`: a Tiptap doc of `heading` (level 2) nodes "Yesterday", "Today", "Blockers" and "Notes", each followed by an empty `bulletList` (one empty `listItem`). The final "Notes" heading is followed by an empty paragraph.
-- `JOURNAL_SECTIONS = ['Yesterday','Today','Blockers','Notes']`.
+**`src/features/journal/constants.js`:** `JOURNAL_SECTIONS = ['Yesterday','Today','Blockers','Notes']`; `JOURNAL_TEMPLATE`: a level-2 heading per section, each followed by an empty `bulletList` (one empty `listItem`), except "Notes", followed by an empty paragraph. `JOURNAL_AUTOSAVE_DELAY = 800`. `JOURNAL_STRIP_DAYS = 14`.
 
 **`src/features/journal/utils.js`** (tests in `src/tests/features/journal/utils.test.js`):
 - `journalTitle(isoDate)` gives "Journal · Wed 23 Sep 2026".
-- `buildStripDays(centerISO, { weekStartsOn, before = 21, after = 14 })` returns days aligned so the first day is a week start, each with an `isWeekStart` flag.
-- `parseJournalDateParam(param, todayISO)` returns a valid ISO date, or `null` when the param is invalid.
+- `buildStripDays(anchorISO, { weekStartsOn, count = 14 })`: `count` consecutive ISO dates starting at the week start on or before the week that precedes `anchorISO` (so the anchor sits in the second week).
+- `shiftStrip(anchorISO, direction)` moves the anchor by 14 days.
+- `parseJournalDateParam(param)` returns the ISO date when valid (real calendar date, `yyyy-MM-dd`), else `null`.
+- `toDateSet(rows)`.
 
-**`src/features/journal/hooks/useJournalAutosave.js`**: `useJournalAutosave({ entry, spaceId, date })` returns `{ onChange, status }`, where `status` is `'idle' | 'saving' | 'saved' | 'error'`.
-- 800ms debounce via `useDebouncedCallback`, flushed on unmount and on `beforeunload`.
-- It holds the in-flight creation promise in a ref, so edits during the first insert are applied to the created row rather than inserting twice.
-- `taskIds` come from 07's mention collector.
+**`src/features/journal/hooks/useJournalAutosave.js`**: `useJournalAutosave({ entry, spaceId, date })` → `{ onChange, flush, status }`, built on `useAutosave` (800ms, serialised, flushed on unmount and `beforeunload`). The entry id lives in a ref: the first save creates the row and later saves (queued behind it) update it, so fast typing never inserts twice. After a content save, `collectTaskMentionIds` and, when changed, `syncNoteMentions` (as `NoteEditor` does).
 
-### 1.3 Components
+### 1.3 Shared editor change
+`buildExtensions` gains `features.headingTones` (`{ [headingText]: tone }`): a small decoration plugin (`components/editor/extensions/HeadingTones.js`) adding `data-tone` to headings whose text matches. The journal passes `{ Blockers: 'destructive' }`; `editor.css` styles `.axon-journal` headings (uppercase, 12px, semibold, tracking, muted; `[data-tone=destructive]` red).
+
+### 1.4 Components
 
 ```
 src/features/journal/
 ├── api.js
 ├── constants.js
 ├── utils.js
-├── hooks/useJournalDate.js          # { date, isToday, goTo(iso), goPrev, goNext } from :date param + todayISO(tz)
+├── hooks/useJournalDate.js          # { date, today, isToday, goTo(iso), goPrev, goNext, goToday }
 ├── hooks/useJournalAutosave.js
 ├── components/
-│   ├── DateStrip.jsx
-│   ├── JournalDayNav.jsx            # prev / date label / next / "Today" button
-│   ├── JournalEditor.jsx
-│   ├── JournalGlobalDay.jsx
-│   ├── DoneThatDayPanel.jsx
-│   └── SaveStatus.jsx               # "Saving… / Saved / Couldn't save — retry"
-└── pages/JournalPage.jsx            # /s/:slug/journal and /s/:slug/journal/:date
+│   ├── DateStrip.jsx                # ‹ 14-day grid ›
+│   ├── JournalDateHeading.jsx       # "Tuesday, 23 September" + "Q2 · W13" + template / save line
+│   ├── JournalEditor.jsx            # one space's entry
+│   ├── JournalGlobalDay.jsx         # Global: stacked read-only cards
+│   ├── DoneThatDay.jsx              # rail contents
+│   └── JournalSkeleton.jsx
+└── pages/JournalPage.jsx
 ```
 
-- **`JournalPage`**: `usePageHeader({ title: 'Journal', breadcrumbs: [formatDate(date)] })`. The layout is a two-column grid on wide screens (editor, then the `DoneThatDayPanel`), stacked on narrow ones. In a space it renders `JournalEditor`; in Global it renders `JournalGlobalDay`.
-- **`useJournalDate()`**: the date comes from `:date`, validated by `parseJournalDateParam`. An invalid date navigates with `replace` to `paths.journal(todayISO(tz))`. With no param it is today, and the URL stays `/journal`. `goTo` navigates to `paths.journal(iso)`, except that today goes to `paths.journal()`.
-- **`DateStrip`** `({ selected, datesWithEntries, weekStartsOn, onSelect })`:
-  - A horizontal `ScrollArea` of day buttons from `buildStripDays`, each showing the weekday initial and the day number, with a dot when the date is in `datesWithEntries`. Week-start days get a subtle separator and a month label when the month changes.
-  - The selection indicator is a `motion.div` with `layoutId="journal-date-indicator"`, so it glides between days.
-  - When the selection changes, the selected day is scrolled into view (`inline: 'center'`), smoothly unless the user prefers reduced motion.
-  - Days are `<button>`s with `aria-pressed` and `aria-label="Wed 23 September 2026, has entry"`.
-- **`JournalDayNav`** `({ date, onPrev, onNext, onToday, isToday })`: icon buttons with tooltips. Hotkeys `alt+←` / `alt+→` (page-scoped, and disabled while the editor has focus so they don't clash with word navigation).
-- **`JournalEditor`** `({ spaceId, date })`:
-  - `useJournalEntry`, then `RichTextEditor` with `value={entry?.content ?? JOURNAL_TEMPLATE}`, `features={{ taskMentions: true }}` and `onChange` from `useJournalAutosave`.
-  - Keyed by `${spaceId}:${date}` so switching days flushes and remounts.
-  - Shows `SaveStatus` in the page header actions.
-  - An entry menu offers "Clear entry" (soft delete with Undo).
-- **`JournalGlobalDay`** `({ date })`: `useJournalDay({ spaceIds: scopeSpaceIds, date })`. For each active space, in `position` order:
-  - With an entry: a card with a `SpaceBadge` header and `RichTextEditor editable={false}`.
-  - Without one: a compact card with "Nothing written in <space>" and a "Write in <space>" button linking to `paths.space(slug).journal(date)`.
-  - Empty (no active spaces) is impossible here, because `SpaceBoundary` handles it.
-- **`DoneThatDayPanel`** `({ spaceIds, date })`:
-  - `useTasks({ spaceIds, completedFrom, completedTo })` and `useTodos({ spaceIds, doneFrom, doneTo })`, with the range from `zonedDayRange(date, tz)`.
-  - A read-only list: tasks as `EntityLink` chips with the completion time, and todos as struck-through rows. `SpaceBadge` in Global.
-  - Empty: a quiet inline line, "Nothing completed on this day", not a full `EmptyState`.
-- **States:**
-  - Loading: an editor-shaped skeleton (four heading bars) and strip dots appearing once the dates load. The strip itself renders immediately.
-  - Error: `ErrorState` in the editor area with `refetch`.
-  - Empty: there is no empty state, because the template is the invitation.
-- **Motion:** the editor area cross-fades between days (`fadeIn` keyed by date). Global cards use `staggerContainer`. The panel list uses `AnimatedList`.
+- **`JournalPage`**: `usePageHeader({ title: 'Journal', actions })`; actions are the `SaveIndicator` (space only), a "Today" button when not on today, the rail toggle and the entry `…` menu (Clear entry). Layout: `DateStrip` under the header (full width, bottom border), then a row of the body (`JournalEditor` or `JournalGlobalDay`, padding `px-4 pt-10 md:px-14`, `max-w-170` centred (the rule's 680px reading width)) and `DetailRail` with `DoneThatDay`. Below `lg`, the toggle opens a Sheet. Rail state in `useLocalStorage('axon:journal:rail', true)`.
+- **`useJournalDate()`**: `:date` via `parseJournalDateParam`; invalid → `Navigate replace` to `p.journal()`. No param = today (`todayISO(timezone)`), URL stays `/journal`. `goTo(today)` goes to `p.journal()`. Hotkeys `alt+←` / `alt+→` (not while typing in the editor).
+- **`DateStrip`** `({ selected, today, datesWithEntries, weekStartsOn, onSelect })`: ‹ and › icon buttons shift a local anchor by 14 days (reset to the selection when it leaves the visible range). A `grid-cols-14` of 56px day buttons: weekday (3 letters), day number (tabular), and a 4px dot when the date has an entry. The selected day has a `motion.div` background (`layoutId="journal-date-indicator"`, card fill and border). Today's weekday is in the foreground colour and semibold; future days are faint. `aria-pressed`, `aria-label="Wednesday 23 September 2026, has entry"`.
+- **`JournalDateHeading`** `({ date, status })`: `format(date, 'EEEE, d MMMM')` at `text-3xl font-semibold tracking-tight`, the mono `Q2 · W13` (`getFiscalQuarter` / `getFiscalWeek` with the preferences), and a muted line: `LayoutTemplate` "Standup template".
+- **`JournalEditor`** `({ spaceId, date, onStatus })`: `useJournalEntry`; skeleton while loading, `ErrorState` on error; then an inner component keyed by `${spaceId}:${date}` renders `RichTextEditor` with `value={entry?.content ?? JOURNAL_TEMPLATE}`, `features={{ slash: true, taskMentions, images, onSave: flush, headingTones }}` and `className="axon-journal"`. The editor area fades in per date (`fadeIn`).
+- **`JournalGlobalDay`** `({ date })`: `useJournalDay`. For each active space in `position` order, a card (`staggerItem`): a `SpaceBadge` header plus a read-only `RichTextEditor` when there's an entry, or "Nothing written in <space>" with a "Write in <space>" outline button (`paths.space(slug).journal(date)`).
+- **`DoneThatDay`** `({ spaceIds, date, isToday })`: `useStatusChanges` and `useTodos({ doneFrom, doneTo })` over `zonedDayRange(date, timezone)`; merged and sorted by time. Rows (min-height 34): a status icon in the target status's tint (`TASK_STATUS_MAP`), the task title as an `EntityLink` (completions) or "Title → In review" (other changes), and the mono local time; todos use a `CircleCheck` emerald icon and the struck todo title. `SpaceBadge` in Global. Empty: a quiet "Nothing completed on this day". Uses `AnimatedList`.
 
-### 1.4 Routes and Integration
-- `router.jsx`: `journal` and `journal/:date` both render `features/journal/pages/JournalPage.jsx` (replacing the placeholder).
-- `EntityLink` and any note link (07 linked-notes list, 12 search results) use `note.kind === 'journal' ? p.journal(note.journal_date) : p.note(note.id)`.
-- `notes/:noteId` for a journal row redirects (`replace`) to `journal/:date` in that note's space.
+### 1.5 Routes and Integration
+- `router.jsx` already maps `journal` and `journal/:date` to `JournalPage`; the placeholder is replaced.
+- Journal-aware links: `EntityLink` gets optional `journalDate`; when set, the note link goes to `paths.space(slug).journal(journalDate)` with a `NotebookPen` icon. `LinkedNotesPanel` routes by `note.kind`.
+- `NoteEditorPage`: a journal row opened via `/notes/:id` redirects (`replace`) to its space's `journal/:date`.
 
-### 1.5 Impact on Existing Features
+### 1.6 Impact on Existing Features
 | Existing feature | Impact | Action |
 |---|---|---|
-| 06 Notes list / search | Would show journal entries | `fetchNotes` filters `kind = 'note'`; select `kind, journal_date` |
-| 06 Note detail route | A journal id is opened via `/notes/:id` | Redirect to `journal/:date` |
-| 07 `EntityLink` / linked notes | Journal entries appear as linked notes | Route by `kind`; show a journal icon |
-| 04 / 05 `fetchTasks` / `fetchTodos` | New `completedFrom/To` and `doneFrom/To` | Add the params |
-| 12 `search_all` | Journal rows are notes | Return `kind` and `journal_date` so results route correctly and are labelled "Journal" |
-| 14 Trash | Cleared entries are trashed notes | Trash restores `kind = 'journal'` rows through `restoreJournalEntry` (friendly error on a date conflict) |
+| 06 Notes list / search | Would show journal entries | `fetchNotes` filters `kind = 'note'` |
+| 06 Note detail route | A journal id opened via `/notes/:id` | Redirect to `journal/:date` |
+| 07 `EntityLink` / Linked notes | Journal entries appear as linked notes | Route by `kind`; journal icon |
+| 05 `fetchTodos` | New `doneFrom/To` | Add the params |
+| 04 tasks api | New status-change read | `fetchStatusChanges` |
+| 06 editor | Journal heading styles | `features.headingTones`, `.axon-journal` CSS |
+| 12 `search_all` | Journal rows are notes | Return `kind` and `journal_date` (Feature 12) |
+| 14 Trash | Cleared entries are trashed notes | Restore through `restoreJournalEntry` |
 
-### 1.6 Not in This Phase
-- The mini month popover, streak indicator and "Insert completed tasks" (Phase 2)
-- Tags on journal entries
+### 1.7 Not in This Phase
+- The mini month popover and "Insert into Today" (Phase 2)
+- Tags on journal entries; choosable templates (D3, backlog); streak / entry count (dropped, backlog)
 
-### 1.7 Checklist: Before Marking Complete
-- [ ] The migration is applied and mirrored; advisors are clean; the three verification checks pass
-- [ ] The Notes list and note search never show journal entries
-- [ ] Opening a day with no entry creates nothing in the DB; the first keystroke creates exactly one row (also when typing fast); a later edit updates it
-- [ ] `/journal` shows today in the profile time zone; `/journal/2026-09-22` shows that day; an invalid date redirects to today
-- [ ] The date strip shows dots for days with entries, respects week start, and the selection animates
+### 1.8 Checklist: Before Marking Complete
+- [x] The migration is applied and mirrored; advisors are clean; the three verification checks pass
+- [x] The Notes list never shows journal entries
+- [ ] Opening a day with no entry creates nothing in the DB; the first edit creates exactly one row (also when typing fast); a later edit updates it
+- [x] `/journal` shows today in the profile time zone; `/journal/2026-09-22` shows that day; an invalid date redirects to today
+- [ ] The 14-day strip shows dots for days with entries, respects week start, pages with ‹ ›, and the selection animates
+- [ ] Headings are uppercase with Blockers in red; the date title shows "Q2 · W13"
 - [ ] A `[[task]]` mention in an entry appears on that task's linked notes and routes back to the journal day
-- [ ] "Done that day" lists the tasks completed and todos done on that local day
+- [ ] The rail lists tasks completed, status changes and todos done on that local day
 - [ ] Global shows each space's entry read-only, with "Write in <space>" for spaces without one
 - [ ] Switching days mid-typing flushes the pending save
-- [ ] Clear entry, then Undo, restores it; clearing, writing a new entry for the same day and then restoring the old one shows the friendly conflict error and changes nothing
-- [ ] `utils.js` tests pass
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` DB registry, status and changelog are updated
+- [ ] Clear entry, then Undo, restores it; the date-conflict restore shows the friendly error
+- [x] `utils.js` tests pass
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` DB registry, status and changelog are updated
+
+### Implementation Notes (2026-09-26)
+- **Migration `20260926071151_add_journal_to_notes`** applied through the Supabase MCP and mirrored. Verified in a rolled-back block: existing rows are `note`; a journal row without a date and a note with one are rejected; a second live entry for the same space and day is rejected (4/4). Advisors: only the pre-existing warnings (`rls_auto_enable`, leaked-password protection).
+- **"Done today" reads `task_activity`** (`fetchStatusChanges` / `useStatusChanges` in `tasks/api.js`, key `taskKeys.statusChanges`, `staleTime: 0` because status changes happen on other pages) instead of adding `completedFrom/To` to `fetchTasks`. Each task shows **once**, at its latest change that day (`buildDoneItems`): a completion is the task chip with its emerald check; other moves read "Title → In review". Todos use the new `doneFrom/doneTo` window on `fetchTodos`.
+- **Autosave** builds on the shared `useAutosave` (serialised saves), so the in-flight-promise logic from the plan wasn't needed: the first save creates the row, later saves queue behind it and update it. `getOrCreateJournalEntry` also handles a race with another tab (23505 → re-read and update).
+- **Clear / Undo** remount the editor through a `resetKey` (the editor reads its content once): `useClearJournalEntry({ onReset })` sets the cached entry to `null` (or the restored row on Undo) before bumping it. The page flushes the pending save before clearing.
+- **Strip dots** are fetched by `DateStrip` itself for its visible 14 days, since ‹ › page it independently of the selected day. On narrow screens it shows one week (the selected day's).
+- **Shared editor:** new `HeadingTones` extension (`features.headingTones`), decorations only; `.axon-journal` styles in `editor.css`.
+- **Save state** sits in the page header (like the note editor) rather than on the "Standup template" line.
+- **Deviation:** no `journalDate` prop on `EntityLink`: nothing renders a note `EntityLink` yet. Journal routing is in `LinkedNotesPanel` (notebook icon) and the `notes/:id` redirect. `NotePickerDialog` uses `fetchNotes`, so journal entries can't be linked manually (mentions only).
+- **Reading width** is the design system's 680px (`max-w-170`), not the design's 660.
+- **Still to confirm in the browser:** lazy creation (one row on fast typing), dots and paging, the selection animation, heading styles in both themes, mention → linked notes → journal day, the rail contents, Global cards, switching days mid-typing, Clear + Undo and the restore conflict.
 
 **Stop here. Show the result and wait for approval.**
 
 ---
 
-## Phase 2: Navigation and Insight
+## Phase 2: Navigation, Insert and Carry-forward
 
 ### Goal
-A calendar button opens a mini month with dots on days that have entries, for jumping to any date. The page header shows how many entries the user has written this fiscal quarter and their current streak. "Insert completed tasks" appends a bullet list of the day's completed tasks (as task mentions) to the Today section.
+A "Sep 2026" button in the page header opens a mini month with dots on days that have entries, for jumping to any date. "Insert into Today" in the rail appends a bullet list of the day's completed tasks (as task mentions) to the Today section. A day with no entry opens with **Yesterday prefilled from the previous entry's Today** (carry-forward, the user's request 2026-09-26), so the plan written yesterday becomes the starting point for what actually happened.
+
+> **Carry-forward rules (decided 2026-09-26):** Yesterday (the outcome) and Today (the plan) stay independent text: the copy happens **once**, when a day without an entry is opened, and is never kept in sync, so editing one day never rewrites another. The source is the **most recent earlier entry in the same space within 7 days** (Monday carries Friday's plan; a stale plan from weeks ago isn't carried). Like the plain template, nothing is saved until the first edit.
 
 ### Before Starting: Confirm Phase 1 Is Approved
 1. Phase 1 is `✅ Complete`.
 2. Check the current shadcn `calendar` (react-day-picker) props: `modifiers`, `modifiersClassNames`, `weekStartsOn`, `month` / `onMonthChange`.
-3. Confirm that `RichTextEditor` exposes the editor instance (a ref or an `onReady(editor)` prop). If it doesn't, add an `editorRef` prop: a minimal change to the shared editor, recorded in the changelog.
-4. `lib/fiscal.js` `getFiscalQuarter` exists (02).
+3. `RichTextEditor` exposes the instance through `onEditorReady(editor)` (confirmed in Phase 1).
 
 ### 2.1 Database
 No database changes.
 
+### 2.1b API
+- `journalKeys.previous(params)`; `fetchPreviousJournalEntry({ spaceId, date, since })` / `usePreviousJournalEntry(params)`: `select('id, journal_date, content')`, live journal rows in the space with `journal_date < date` and `>= since` (`date` − 7 days), `order('journal_date', { ascending: false }).limit(1).maybeSingle()`. `enabled` only when the day has no entry (the page knows after `useJournalEntry` settles).
+
 ### 2.2 Utils
 Additions to `journal/utils.js`, tested:
-- `computeStreak(dateSet, todayISO)`: the number of consecutive days with entries ending today, or ending yesterday when today has no entry yet (so the streak isn't "broken" in the morning). A gap gives 0.
-- `appendToSection(doc, sectionTitle, nodes)` returns a new doc with `nodes` inserted at the end of the section, before the next level-2 heading. If the section's trailing block is an empty bullet list, it is replaced rather than appended after. If the heading is missing, a new heading and the nodes go at the end of the doc.
-- `completedTasksToBulletList(tasks, existingMentionIds)` builds a `bulletList` of `listItem > paragraph > taskMention { id, label: title }` nodes, skipping tasks already mentioned in the doc. It returns `null` when nothing is left.
+- `appendToSection(doc, sectionTitle, nodes)` returns a new doc with `nodes` inserted at the end of the section, before the next level-2 heading. If the section's trailing block is an empty bullet list, it is replaced. If the heading is missing, a new heading and the nodes go at the end.
+- `completedTasksToBulletList(tasks, existingMentionIds)` builds a `bulletList` of `listItem > paragraph > taskMention { id, label }`, skipping tasks already mentioned; `null` when nothing is left.
+- `getSectionContent(doc, sectionTitle)` returns the blocks between that level-2 heading and the next one, with empty list items and empty paragraphs dropped (an empty list is dropped entirely); `[]` when the heading is missing or the section is blank.
+- `buildCarriedTemplate(previousDoc)` returns `JOURNAL_TEMPLATE` with the Yesterday section's empty bullet replaced by `getSectionContent(previousDoc, 'Today')` (mention chips kept, so they sync on the first save). With nothing to carry it returns the plain template.
 
 ### 2.3 Components
-- **`features/journal/components/JournalMonthPopover.jsx`** `({ selected, onSelect })`:
-  - A popover trigger (a `CalendarDays` icon button next to the day nav) opens the shadcn `Calendar` with `weekStartsOn`.
-  - `modifiers={{ hasEntry: dates }}` comes from `useJournalDates` for the visible month (the fetch follows `onMonthChange`), and renders as a dot.
-  - Selecting a day calls `goTo` and closes the popover.
-- **`features/journal/components/JournalStats.jsx`**: two quiet chips in the page header.
-  - "12 entries this quarter": `useJournalDates` over the current fiscal quarter range.
-  - "5-day streak": `computeStreak` over a trailing 365-day `useJournalDates` query. It is shown only when the streak is 2 or more, and has a subtle `scaleIn` when it increments.
-  - In Global, both count the union of dates across spaces.
-- **"Insert completed tasks" button** (`JournalEditor` toolbar, in a space only):
-  - Reuses the `DoneThatDayPanel` query.
-  - On click: build the list, `appendToSection(editor.getJSON(), 'Today', [list])`, then `editor.commands.setContent(newDoc, { emitUpdate: true })` (check the current Tiptap `setContent` signature) so autosave and mention sync fire.
-  - It is disabled with the tooltip "No completed tasks today" when there are none, and shows `toast('Nothing new to insert')` when every task is already mentioned.
+- **`JournalMonthPopover`** `({ selected, onSelect })`: a header button (`Calendar` icon + "Sep 2026") opens the shadcn `Calendar` with `weekStartsOn`; `modifiers={{ hasEntry }}` from `useJournalDates` for the visible month (follows `onMonthChange`), rendered as a dot. Selecting a day calls `goTo` and closes.
+- **"Insert into Today"** (bottom of the rail, space only, design: 34px outline button with `CornerDownLeft`): builds the list from the day's completions, `appendToSection(editor.getJSON(), 'Today', [list])`, then `editor.commands.setContent(newDoc, { emitUpdate: true })` so autosave and mention sync fire. Disabled when there are none; `toast('Nothing new to insert')` when all are already mentioned.
 
-### 2.4 Routes and Integration
-None.
+- **Carry-forward** (`JournalEditor`): when `entry` is `null`, wait for `usePreviousJournalEntry` (skeleton meanwhile), then mount the editor with `buildCarriedTemplate(previous?.content)`. The "Standup template" line adds "· Yesterday from Fri 26 Sep" (`formatWeekdayDate`) when something was carried.
 
-### 2.5 Impact on Existing Features
-| Existing feature | Impact | Action |
-|---|---|---|
-| 06 `RichTextEditor` | Needs editor access | Add `editorRef` if missing |
-
-### 2.6 Not in This Phase
-- "On this day" (same date in previous months or years): backlog
-- Weekly summary view of entries
-
-### 2.7 Checklist: Before Marking Complete
+### 2.4 Checklist: Before Marking Complete
 - [ ] The mini month shows dots for days with entries, follows month navigation, respects week start, and jumping works
-- [ ] The quarter count matches the entries in the current fiscal quarter; the streak rule (today or yesterday) is tested
-- [ ] "Insert completed tasks" adds mention chips under Today, never duplicates, triggers autosave, and the mentions sync to `note_task_links`
-- [ ] `computeStreak`, `appendToSection` and `completedTasksToBulletList` tests pass
+- [ ] "Insert into Today" adds mention chips under Today, never duplicates, triggers autosave, and the mentions sync to `note_task_links`
+- [ ] A new day's Yesterday is prefilled from the most recent entry's Today (within 7 days, same space); Monday carries Friday; nothing carries from 8+ days back; nothing is saved until the first edit; editing either day never changes the other
+- [ ] `appendToSection`, `completedTasksToBulletList`, `getSectionContent` and `buildCarriedTemplate` tests pass
 - [ ] `npm run lint`, `npm test` and `npm run build` pass
 - [ ] `axon-rules` audit is clean for the changed files
 - [ ] `00-index.md` status and changelog are updated
