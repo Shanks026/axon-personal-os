@@ -1,10 +1,11 @@
-import { CornerDownRight } from 'lucide-react'
+import { CornerDownRight, NotebookPen } from 'lucide-react'
 import { formatTime } from '@/lib/dates'
 import { ItemMarker } from '@/features/calendar/components/ItemMarker'
 
 /**
- * A chip's face for an event or a task: the marker, the start time (timed events, first day) and
- * the title. Later days of a multi-day event show a continuation arrow. The drag overlay reuses it.
+ * A chip's face for an event or a task: the marker, the start time (timed events, first day), the
+ * title, and a note icon when the event has a meeting note. Later days of a multi-day event show a
+ * continuation arrow. The drag overlay reuses it.
  */
 export function ChipFace({ item, isStart = true, color, timeZone }) {
   if (item.kind === 'task') {
@@ -28,6 +29,12 @@ export function ChipFace({ item, isStart = true, color, timeZone }) {
         </span>
       )}
       <span className="truncate">{item.title}</span>
+      {item.raw?.note_id && (
+        <NotebookPen
+          className="size-3 shrink-0 text-muted-foreground"
+          aria-label="Has meeting note"
+        />
+      )}
     </>
   )
 }

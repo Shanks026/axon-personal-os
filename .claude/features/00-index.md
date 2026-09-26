@@ -24,7 +24,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | ✅ Complete |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | ✅ Complete (UI refinements pending) |
 | **Wave 3: Time** | | | | |
-| 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | 🟡 Phases 1–2 ✅ (Phase 3 next) |
+| 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | ✅ Complete |
 | 09 | Daily Journal / Work Log | [09-journal.md](09-journal.md) | 06, 07 | 🔵 Planned |
 | **Wave 4: Insight** | | | | |
 | 10 | Dashboard (per space and Global) | [10-dashboard.md](10-dashboard.md) | 08, 09 | 🔵 Planned |
@@ -116,6 +116,13 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-26: Feature 08 Phase 3 — Meeting notes (Feature 08 complete)
+- The event dialog's footer can create a **meeting note**: a note in the event's space titled "<event> — 24 Sep 2026", from a template (date/time/location line, meeting link, Agenda, Notes and Action items as a checklist). It sets `events.note_id`, links the event's task (manual), and opens the note. With a live note it says "Open meeting note" instead; a trashed note brings "Create" back.
+- A note icon (`NotebookPen`) marks events with a meeting note on month chips, agenda rows and time-grid blocks.
+- The note rail (`NoteMetaRail`) shows **Meeting** (`LinkedEventCard`) above Linked tasks, with "Open in calendar" (that day, event open).
+- **New:** `MeetingNoteButton`, `EventLinkedTask` (split out of `EventDialog`), `LinkedEventCard`, `buildMeetingNote`, `createMeetingNote` / `useCreateMeetingNote`, `useEventForNote` (`eventKeys.forNote`). Delete in the event dialog is now an icon button.
+- **No database changes.** Tests: 376 (+8).
 
 ### 2026-09-26: Feature 08 Phase 2 — Week and Day time grid, drag and drop
 - **Folded:** the week-view design deltas: a 56px gutter and 56px hours, all-day chips in the header cells, soft event blocks with a 3px left border in the space colour, a red now-line with a dot, the dashed origin ghost, a resize bar, and weekend tint.

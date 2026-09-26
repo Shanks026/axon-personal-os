@@ -17,7 +17,6 @@ import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { useDefaultSpaceId } from '@/hooks/useDefaultSpaceId'
 import { DatePicker } from '@/components/shared/DatePicker'
-import { EntityLink } from '@/components/shared/EntityLink'
 import { Kbd } from '@/components/shared/Kbd'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import { TitleTextarea } from '@/components/shared/TitleTextarea'
@@ -32,6 +31,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import {
   useCreateEvent,
   useDeleteEvent,
@@ -46,9 +46,10 @@ import {
   newEventDefaults,
   toEventTimestamps,
 } from '@/features/calendar/utils'
+import { EventLinkedTask } from '@/features/calendar/components/EventLinkedTask'
+import { MeetingNoteButton } from '@/features/calendar/components/MeetingNoteButton'
 import { TaskPickerDialog } from '@/features/links/components/TaskPickerDialog'
 import { usePreferences } from '@/features/settings/api'
-import { useTaskSummary } from '@/features/tasks/api'
 
 /**
  * Create (no `event`) or edit an event (design: Overlays → event): a large title, then read-style
@@ -77,12 +78,17 @@ export function EventDialog({ open, onOpenChange, event, initialValues, onSucces
   )
 }
 
-/** One read-style row: a muted 15px icon (or `iconNode`), then the content. */
+/**
+ * One read-style row: a muted 15px icon (or `iconNode`), then the content. The icon sits in a
+ * 38px box at the top, so it lines up with the first line when the content wraps or grows.
+ */
 function Row({ icon: Icon, iconNode, label, children, className }) {
   return (
-    <div className={cn('flex min-h-9.5 items-center gap-3', className)}>
-      {iconNode ?? <Icon className="size-3.75 shrink-0 text-muted-foreground" aria-label={label} />}
-      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1">{children}</div>
+    <div className={cn('flex items-start gap-3', className)}>
+      <span className="flex h-9.5 w-3.75 shrink-0 items-center justify-center">
+        {iconNode ?? <Icon className="size-3.75 text-muted-foreground" aria-label={label} />}
+      </span>
+      <div className="flex min-h-9.5 min-w-0 flex-1 flex-wrap items-center gap-1">{children}</div>
     </div>
   )
 }
@@ -102,38 +108,12 @@ function DateButton({ value, onChange, weekStartsOn, label }) {
         type="button"
         variant="ghost"
         size="sm"
-        className="px-1.5 font-mono font-normal"
+        className="h-8 px-1.5 text-sm font-normal"
         aria-label={label}
       >
         {formatWeekdayDate(value)}
       </Button>
     </DatePicker>
-  )
-}
-
-function LinkedTask({ taskId, onRemove }) {
-  const { data: task } = useTaskSummary(taskId)
-  return (
-    <span className="group/linked flex min-w-0 items-center gap-1">
-      <EntityLink
-        kind="task"
-        id={taskId}
-        spaceId={task?.space_id}
-        label={task?.title ?? 'Loading…'}
-        status={task?.status}
-        deleted={!!task?.deleted_at}
-      />
-      <Button
-        type="button"
-        variant="ghost"
-        size="icon-xs"
-        onClick={onRemove}
-        aria-label="Unlink task"
-        className="text-muted-foreground opacity-0 group-hover/linked:opacity-100 focus-visible:opacity-100"
-      >
-        <X />
-      </Button>
-    </span>
   )
 }
 
@@ -279,7 +259,7 @@ function EventForm({ event, initialValues, onClose, onSuccess }) {
                   aria-label="Start time"
                   value={startTime}
                   onChange={(e) => e.target.value && moveStart(startDate, e.target.value)}
-                  className={cn(BARE_INPUT, 'w-auto font-mono')}
+                  className={cn(BARE_INPUT, 'w-auto')}
                 />
               )}
               <span className="px-0.5 text-muted-foreground">–</span>
@@ -290,7 +270,7 @@ function EventForm({ event, initialValues, onClose, onSuccess }) {
                   aria-label="End time"
                   value={endTime}
                   onChange={(e) => e.target.value && set('end_time', e.target.value)}
-                  className={cn(BARE_INPUT, 'w-auto font-mono')}
+                  className={cn(BARE_INPUT, 'w-auto')}
                 />
               )}
               <DateButton
@@ -299,9 +279,12 @@ function EventForm({ event, initialValues, onClose, onSuccess }) {
                 weekStartsOn={weekStartsOn}
                 onChange={(d) => set('end_date', d)}
               />
-              <label className="ml-auto flex items-center gap-2 text-xs text-muted-foreground">
-                All day
+            </Row>
+            {/* On its own line: beside the dates it wrapped unpredictably (the user's report). */}
+            <Row iconNode={<span />} className="-mt-1.5">
+              <label className="flex h-8 items-center gap-2 px-1.5 text-muted-foreground">
                 <Switch size="sm" checked={allDay} onCheckedChange={(v) => set('all_day', v)} />
+                All day
               </label>
             </Row>
             {errors.end_date && (
@@ -338,18 +321,18 @@ function EventForm({ event, initialValues, onClose, onSuccess }) {
               <p className="-mt-1 pl-7 text-xs text-destructive">{errors.url.message}</p>
             )}
 
-            <Row icon={AlignLeft} label="Description" className="items-start pt-1.5">
+            <Row icon={AlignLeft} label="Description">
               <Textarea
                 {...form.register('description')}
                 placeholder="Add a description"
                 aria-invalid={!!errors.description}
-                className="-mt-1.5 min-h-8 flex-1 resize-none border-0 bg-transparent px-1.5 py-1.5 shadow-none hover:bg-accent focus-visible:bg-transparent focus-visible:ring-0 dark:bg-transparent"
+                className="min-h-8 flex-1 resize-none border-0 bg-transparent px-1.5 py-1.5 shadow-none hover:bg-accent focus-visible:bg-transparent focus-visible:ring-0 dark:bg-transparent"
               />
             </Row>
 
             <Row icon={SquareCheckBig} label="Linked task">
               {taskId ? (
-                <LinkedTask taskId={taskId} onRemove={() => set('task_id', null)} />
+                <EventLinkedTask taskId={taskId} onRemove={() => set('task_id', null)} />
               ) : (
                 <button
                   type="button"
@@ -371,11 +354,23 @@ function EventForm({ event, initialValues, onClose, onSuccess }) {
         </div>
 
         <div className="flex h-13 shrink-0 items-center gap-2 border-t px-4">
+          {isEdit && <MeetingNoteButton event={event} />}
           {isEdit && (
-            <Button type="button" variant="destructive" size="sm" onClick={onDelete}>
-              <Trash2 />
-              Delete
-            </Button>
+            // Icon-only so the footer fits beside the meeting-note button at 520px.
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="destructive"
+                  size="icon"
+                  onClick={onDelete}
+                  aria-label="Delete event"
+                >
+                  <Trash2 />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Move to Trash</TooltipContent>
+            </Tooltip>
           )}
           <div className="flex-1" />
           <Button type="button" variant="outline" onClick={onClose}>

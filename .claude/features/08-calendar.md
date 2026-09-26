@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/08-calendar.md`
-**Status**: 🟡 Phases 1–2 ✅, Phase 3 next
+**Status**: ✅ Complete (Phases 1–3)
 **Depends on**: 07
 **Last Updated**: September 2026
 
@@ -335,7 +335,7 @@ None beyond enabling `view=week|day` (already parsed in Phase 1).
 
 ---
 
-## Phase 3: Meeting Notes
+## Phase 3: Meeting Notes ✅ Complete
 
 ### Goal
 From an event, the user clicks "Create meeting note". Axon creates a note in the event's space, titled "<event title> — 23 Sep 2026", prefilled with a meeting template, links it to the event (`events.note_id`) and opens it. If the event has a linked task, the note is linked to that task too. Event chips and blocks show a note icon. The note's side panel shows the linked event with a link back to the calendar.
@@ -377,15 +377,24 @@ No database changes. `events.note_id` already exists.
 - Converting a note back into an event
 
 ### 3.7 Checklist: Before Marking Complete
-- [ ] "Create meeting note" creates a note in the event's space with the template, sets `events.note_id` and navigates to the note
-- [ ] A note created from an event with a linked task shows that task under linked tasks, with source manual
-- [ ] Chips and time-grid blocks show the note icon; the popover shows "Open meeting note"
-- [ ] Trashing the note brings back "Create meeting note"; restoring it brings back "Open"
-- [ ] The note side panel shows the linked event and its link opens the calendar on that day with the event open
-- [ ] `buildMeetingNote` tests pass
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` status and changelog are updated
+- [x] "Create meeting note" creates a note in the event's space with the template, sets `events.note_id` and navigates to the note (tested)
+- [x] A note created from an event with a linked task links that task with source manual (tested; it shows under the note's Linked tasks)
+- [x] Chips, agenda rows and time-grid blocks show the note icon; the dialog shows "Open meeting note" (tested)
+- [x] Trashing the note brings back "Create meeting note" (tested); restoring it brings back "Open"
+- [x] The note side panel shows the linked event, and its link opens the calendar on that day with the event open (tested)
+- [x] `buildMeetingNote` tests pass
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` status and changelog are updated
+
+### 3.8 Implementation Notes (2026-09-26)
+- **Where the action lives:** there's no popover (Phase 1), so the event dialog's footer holds `MeetingNoteButton`: "Create meeting note" (pending "Creating…", then it opens the note) or "Open meeting note" as an outline link button. That follows the design's footer button, instead of the planned `EntityLink`. Delete became an icon button (`destructive`, tooltip "Move to Trash") so the footer fits at 520px.
+- **Template:** a line with the date, time and location, the meeting link as a link mark, then H2 "Agenda" (a bullet list), "Notes" and "Action items". Action items is a **checklist** (`taskList`, which the editor supports), rather than the planned bullet list.
+- **API:** `createMeetingNote({ event, timeZone })` runs `createNote`, then `updateEvent(note_id)`, then `linkNoteTask` when the event has a task. `useCreateMeetingNote` seeds the note's detail cache and refreshes events, note lists, links, task lists and activity. `eventKeys.forNote` / `useEventForNote` serve the note rail, and `useUpdateEvent` also refreshes `forNote`, so a moved event's time updates there.
+- **Unsaved dialog edits aren't saved** when you create or open the meeting note: the page navigates away. Leaving keeps `?event=` in history, so Back reopens the event.
+- **Split for length:** `EventLinkedTask` moved out of `EventDialog`.
+- **New:** `MeetingNoteButton`, `EventLinkedTask`, `LinkedEventCard` (shown in the note rail's `NoteMetaRail` above Linked tasks, titled "Meeting").
+- **Browser checks still to do:** the created note's template in the editor, the rail card, and "Open in calendar".
 
 **Stop here. Show the result and wait for approval.**
 

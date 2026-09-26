@@ -10,7 +10,14 @@ import {
   startOfMonth,
   startOfWeek,
 } from 'date-fns'
-import { parseISODate, toISODate, zonedDayRange, zonedInstant, zonedParts } from '@/lib/dates'
+import {
+  formatDate,
+  parseISODate,
+  toISODate,
+  zonedDayRange,
+  zonedInstant,
+  zonedParts,
+} from '@/lib/dates'
 import {
   AGENDA_DAYS,
   DEFAULT_EVENT_MINUTES,
@@ -410,4 +417,47 @@ export function rescheduleTask(task, isoDate) {
   if (!task.due_date) return { ...patch, start_date: isoDate }
   const days = differenceInCalendarDays(parseISODate(isoDate), parseISODate(task.due_date))
   return { ...patch, start_date: toISODate(addDays(parseISODate(task.start_date), days)) }
+}
+
+// ── Meeting notes (Phase 3) ─────────────────────────────────────────────────────────────────
+
+const textNode = (text, marks) => ({ type: 'text', text, ...(marks && { marks }) })
+const para = (...content) => ({ type: 'paragraph', ...(content.length && { content }) })
+const h2 = (text) => ({ type: 'heading', attrs: { level: 2 }, content: [textNode(text)] })
+
+/**
+ * A new meeting note for `event`: `{ title, content, content_text }`. The title is
+ * "<event title> — 24 Sep 2026" (the local start date). The body (Tiptap JSON the shared editor
+ * accepts) is a line with the date, time and location, the meeting link, then "Agenda" (a bullet
+ * list), "Notes" and "Action items" (a checklist), each ready to type into.
+ */
+export function buildMeetingNote(event, timeZone) {
+  const start = zonedParts(event.starts_at, timeZone)
+  const when = event.all_day
+    ? 'All day'
+    : `${start.time}–${zonedParts(event.ends_at, timeZone).time}`
+  const meta = [formatRangeTitle('day', start.isoDate), when, event.location]
+    .filter(Boolean)
+    .join(' · ')
+
+  const content = [para(textNode(meta))]
+  if (event.url)
+    content.push(para(textNode(event.url, [{ type: 'link', attrs: { href: event.url } }])))
+  content.push(
+    h2('Agenda'),
+    { type: 'bulletList', content: [{ type: 'listItem', content: [para()] }] },
+    h2('Notes'),
+    para(),
+    h2('Action items'),
+    {
+      type: 'taskList',
+      content: [{ type: 'taskItem', attrs: { checked: false }, content: [para()] }],
+    },
+  )
+
+  return {
+    title: `${event.title} — ${formatDate(start.isoDate)}`,
+    content: { type: 'doc', content },
+    content_text: [meta, event.url, 'Agenda', 'Notes', 'Action items'].filter(Boolean).join('\n\n'),
+  }
 }

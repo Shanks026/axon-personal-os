@@ -1,4 +1,4 @@
-import { CalendarDays, CornerDownRight, MapPin, Plus } from 'lucide-react'
+import { CalendarDays, CornerDownRight, MapPin, NotebookPen, Plus } from 'lucide-react'
 import { Link } from 'react-router'
 import { formatTimeRange, formatTime, formatWeekdayDate } from '@/lib/dates'
 import { cn } from '@/lib/utils'
@@ -55,6 +55,12 @@ function AgendaRow({ entry, timeZone, isGlobal, spaceById, onOpenEvent, onToggle
           <CornerDownRight className="size-3 shrink-0 text-faint" aria-label="Continues" />
         )}
         <span className="min-w-0 truncate">{item.title}</span>
+        {item.raw.note_id && (
+          <NotebookPen
+            className="size-3 shrink-0 text-muted-foreground"
+            aria-label="Has meeting note"
+          />
+        )}
         {trailing}
       </button>
     )

@@ -1,6 +1,7 @@
 import { formatDate, formatRelative } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
+import { LinkedEventCard } from '@/features/calendar/components/LinkedEventCard'
 import { LinkedTasksSection } from '@/features/links/components/LinkedTasksSection'
 import { NoteTagsRow } from '@/features/notes/components/NoteTagsRow'
 import { NoteVersionBadges } from '@/features/notes/components/NoteVersionBadges'
@@ -16,7 +17,8 @@ function Row({ label, children }) {
 
 /**
  * The editor's side panel: the note's space, Created, Updated, Words, Tags and Versions (all of a note's metadata), then its Linked tasks
- * (moved below the details at the user's request, 2026-09-26). Rendered in the 320px rail on large screens and in
+ * (moved below the details at the user's request, 2026-09-26), with the meeting it belongs to above them
+ * when it is an event's meeting note (Feature 08). Rendered in the 320px rail on large screens and in
  * a Sheet below `lg`.
  */
 export function NoteMetaRail({ note, space, words, className }) {
@@ -35,6 +37,7 @@ export function NoteMetaRail({ note, space, words, className }) {
       <NoteTagsRow note={note} />
       <NoteVersionBadges note={note} />
       <div className="my-2 border-t" />
+      <LinkedEventCard noteId={note.id} />
       <LinkedTasksSection note={note} />
     </div>
   )

@@ -3,6 +3,7 @@ import {
   addTime,
   applyMove,
   applyResize,
+  buildMeetingNote,
   buildMonthGrid,
   eventMinutesOnDay,
   endAfter,
@@ -391,5 +392,65 @@ describe('slot and task helpers', () => {
     expect(
       rescheduleTask({ start_date: '2026-09-22', due_date: '2026-09-25' }, '2026-09-28'),
     ).toEqual({ due_date: '2026-09-28' })
+  })
+})
+
+describe('buildMeetingNote', () => {
+  const event = {
+    title: 'Sprint review',
+    starts_at: '2026-09-24T09:30:00.000Z',
+    ends_at: '2026-09-24T10:30:00.000Z',
+    all_day: false,
+    location: 'Room 4',
+    url: 'https://meet.google.com/abc',
+  }
+
+  it('titles the note with the event and its local date', () => {
+    expect(buildMeetingNote(event, 'Asia/Kolkata').title).toBe('Sprint review — 24 Sep 2026')
+    // 23:30 UTC on the 23rd is already the 24th in Kolkata
+    const late = {
+      ...event,
+      starts_at: '2026-09-23T23:30:00.000Z',
+      ends_at: '2026-09-24T00:30:00.000Z',
+    }
+    expect(buildMeetingNote(late, 'Asia/Kolkata').title).toBe('Sprint review — 24 Sep 2026')
+    expect(buildMeetingNote(late, 'UTC').title).toBe('Sprint review — 23 Sep 2026')
+  })
+
+  it('builds a template from node types the editor accepts', () => {
+    const { content, content_text } = buildMeetingNote(event, 'Asia/Kolkata')
+    expect(content.type).toBe('doc')
+    const allowed = [
+      'paragraph',
+      'heading',
+      'bulletList',
+      'listItem',
+      'taskList',
+      'taskItem',
+      'text',
+    ]
+    const walk = (node) => {
+      expect(allowed).toContain(node.type)
+      node.content?.forEach(walk)
+    }
+    content.content.forEach(walk)
+    expect(content.content[0].content[0].text).toBe('Thu 24 Sep 2026 · 15:00–16:00 · Room 4')
+    expect(content.content[1].content[0].marks).toEqual([
+      { type: 'link', attrs: { href: 'https://meet.google.com/abc' } },
+    ])
+    const headings = content.content.filter((n) => n.type === 'heading')
+    expect(headings.map((h) => [h.attrs.level, h.content[0].text])).toEqual([
+      [2, 'Agenda'],
+      [2, 'Notes'],
+      [2, 'Action items'],
+    ])
+    expect(content_text).toContain('Agenda')
+  })
+
+  it('says All day and skips missing details', () => {
+    const allDay = { ...event, all_day: true, location: null, url: null }
+    const { content } = buildMeetingNote(allDay, 'UTC')
+    expect(content.content[0].content[0].text).toBe('Thu 24 Sep 2026 · All day')
+    expect(content.content[1].type).toBe('heading')
   })
 })

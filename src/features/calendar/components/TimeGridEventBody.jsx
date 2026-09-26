@@ -1,3 +1,4 @@
+import { NotebookPen } from 'lucide-react'
 import { formatTimeRange } from '@/lib/dates'
 import { eventBlockClasses } from '@/lib/tint'
 import { cn } from '@/lib/utils'
@@ -17,7 +18,15 @@ export function TimeGridEventBody({ item, color, timeZone, short, lifted = false
         className,
       )}
     >
-      <span className="truncate text-xs font-medium text-foreground">{item.title}</span>
+      <span className="flex min-w-0 items-center gap-1">
+        <span className="truncate text-xs font-medium text-foreground">{item.title}</span>
+        {item.raw?.note_id && (
+          <NotebookPen
+            className="size-3 shrink-0 text-muted-foreground"
+            aria-label="Has meeting note"
+          />
+        )}
+      </span>
       {!short && (
         <span className="truncate font-mono text-xs text-muted-foreground tabular-nums">
           {formatTimeRange(item.start, item.end, timeZone)}

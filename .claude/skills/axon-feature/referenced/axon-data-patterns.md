@@ -216,6 +216,7 @@ export function useTaskFilters() {
 | Link pickers `NotePickerDialog` / `TaskPickerDialog` (CommandDialog, debounced, cross-space) | `features/links/components/` | 07 Phase 2 |
 
 | `[[task]]` mentions: `TaskMention` node (always registered) + `MentionList`; `features.taskMentions` from `useTaskMentionsConfig(note)`; `collectTaskMentionIds` / `sameIds` (`features/links/utils.js`) + `useSyncNoteMentions` after content saves | `components/editor/`, `features/links/` | 07 Phase 3 (09 journal reuses) |
+| `LinkedEventCard` (a note's meeting, for its rail); `EventDialog` (standalone, `initialValues` / `onSuccess`) | `features/calendar/components/` | 08 |
 | `useNow(intervalMs)` (minute-aligned clock) | `hooks/` | 08 Phase 2 |
 | `SegmentedControl` options take `disabled` / `hint`; `Kbd` renders `left` / `right` arrows | `components/shared/` | 08 Phase 1 |
 | `lib/dates.js` zone helpers (`todayISO`, `zonedInstant`, `zonedDayRange`, `zonedParts`, `formatTime(Range)`, `formatWeekdayDate`); `lib/tint.js` `eventBlockClasses` | `lib/` | 08 |

@@ -9,9 +9,10 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider'
 import { Toaster } from '@/components/ui/sonner'
 import { TooltipProvider } from '@/components/ui/tooltip'
 import { EventDialog } from '@/features/calendar/components/EventDialog'
+import { LinkedEventCard } from '@/features/calendar/components/LinkedEventCard'
 import CalendarPage from '@/features/calendar/pages/CalendarPage'
 
-const db = vi.hoisted(() => ({ events: [], tasks: [], todos: [], calls: [] }))
+const db = vi.hoisted(() => ({ events: [], tasks: [], todos: [], calls: [], note: null }))
 
 vi.mock('@/context/AuthContext', () => ({
   AuthProvider: ({ children }) => children,
@@ -37,10 +38,12 @@ vi.mock('@/lib/supabase', () => {
       overlaps: () => b,
       eq: (col, val) => {
         if (col === 'id') state.id = val
+        if (col === 'note_id') state.noteId = val
         return b
       },
       insert: (values) => ((state.op = 'insert'), (state.patch = values), b),
       update: (patch) => ((state.op = 'update'), (state.patch = patch), b),
+      upsert: (values) => ((state.op = 'upsert'), (state.patch = values), b),
       single: () => ((state.single = true), b),
       maybeSingle: () => ((state.single = true), b),
       then: (resolve, reject) => run().then(resolve, reject),
@@ -62,8 +65,21 @@ vi.mock('@/lib/supabase', () => {
           return result(db.events.find((e) => e.id === state.id))
         }
         const live = db.events.filter((e) => !e.deleted_at)
+        if (state.noteId) return result(live.find((e) => e.note_id === state.noteId) ?? null)
         if (state.single) return result(live.find((e) => e.id === state.id) ?? null)
         return result(live)
+      }
+      if (table === 'notes') {
+        if (state.op === 'insert') {
+          const row = { id: 'n1', deleted_at: null, note_tags: [], ...state.patch }
+          db.calls.push(['note:insert', row])
+          return result(row)
+        }
+        return result(state.single ? (db.note ?? null) : [])
+      }
+      if (table === 'note_task_links') {
+        db.calls.push(['link', state.patch])
+        return result(null)
       }
       if (table === 'tasks') return result(state.single ? null : db.tasks)
       if (table === 'todos') return result(db.todos)
@@ -94,7 +110,15 @@ function renderInShell(element, url = '/s/thmp/calendar') {
     </SpaceProvider>
   )
   const router = createMemoryRouter(
-    [{ element: <Shell />, children: [{ path: '/s/:spaceSlug/calendar', element }] }],
+    [
+      {
+        element: <Shell />,
+        children: [
+          { path: '/s/:spaceSlug/calendar', element },
+          { path: '/s/:spaceSlug/notes/:noteId', element: <p>Note page</p> },
+        ],
+      },
+    ],
     { initialEntries: [url] },
   )
   render(
@@ -115,6 +139,7 @@ beforeEach(() => {
   db.calls = []
   db.tasks = []
   db.todos = []
+  db.note = null
   db.events = [
     {
       id: 'e1',
@@ -190,7 +215,7 @@ describe('CalendarPage', () => {
       await screen.findByRole('heading', { name: 'September 2026', hidden: true }),
     ).toBeInTheDocument()
 
-    await userEvent.click(within(dialog).getByRole('button', { name: /delete/i }))
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Delete event' }))
     expect(await screen.findByText('Event moved to Trash')).toBeInTheDocument()
     await waitFor(() => expect(router.state.location.search).not.toContain('event='))
     expect(db.calls.find((c) => c[0] === 'update')[2]).toHaveProperty('deleted_at')
@@ -222,5 +247,77 @@ describe('Week view (Phase 2)', () => {
     const dialog = await screen.findByRole('dialog')
     expect(within(dialog).getByLabelText('Start time')).toHaveValue('09:00')
     expect(within(dialog).getByLabelText('End time')).toHaveValue('10:00')
+  })
+})
+
+describe('Meeting notes (Phase 3)', () => {
+  it('creates the note from the template, links it to the event and its task, and opens it', async () => {
+    db.events[0].task_id = '7a1c2b58-2f0c-4a8e-9a1a-3c2b1d0e9f22'
+    const router = renderInShell(<CalendarPage />, '/s/thmp/calendar?date=2026-09-24&event=e1')
+    const dialog = await screen.findByRole('dialog')
+    await userEvent.click(
+      await within(dialog).findByRole('button', { name: /create meeting note/i }),
+    )
+
+    await waitFor(() => expect(router.state.location.pathname).toBe('/s/thmp/notes/n1'))
+    const [, note] = db.calls.find((c) => c[0] === 'note:insert')
+    expect(note).toMatchObject({ space_id: SPACE.id, title: 'Sprint review — 24 Sep 2026' })
+    expect(note.content.type).toBe('doc')
+    expect(db.calls.find((c) => c[0] === 'update')).toEqual(['update', 'e1', { note_id: 'n1' }])
+    expect(db.calls.find((c) => c[0] === 'link')[1]).toMatchObject({
+      note_id: 'n1',
+      task_id: '7a1c2b58-2f0c-4a8e-9a1a-3c2b1d0e9f22',
+      source: 'manual',
+    })
+  })
+
+  it('shows the note icon and offers "Open meeting note" when the note is live', async () => {
+    db.events[0].note_id = 'n9'
+    db.note = { id: 'n9', space_id: SPACE.id, title: 'Notes', deleted_at: null, note_tags: [] }
+    renderInShell(<CalendarPage />, '/s/thmp/calendar?date=2026-09-24')
+    expect(await screen.findByLabelText('Has meeting note')).toBeInTheDocument()
+    await userEvent.click(screen.getByRole('button', { name: /sprint review/i }))
+    const dialog = await screen.findByRole('dialog')
+    expect(await within(dialog).findByRole('link', { name: /open meeting note/i })).toHaveAttribute(
+      'href',
+      '/s/thmp/notes/n9',
+    )
+  })
+
+  it('a trashed meeting note brings back "Create meeting note"', async () => {
+    db.events[0].note_id = 'n9'
+    db.note = {
+      id: 'n9',
+      space_id: SPACE.id,
+      title: 'Notes',
+      deleted_at: '2026-09-25T10:00:00Z',
+      note_tags: [],
+    }
+    renderInShell(<CalendarPage />, '/s/thmp/calendar?date=2026-09-24&event=e1')
+    const dialog = await screen.findByRole('dialog')
+    expect(
+      await within(dialog).findByRole('button', { name: /create meeting note/i }),
+    ).toBeEnabled()
+  })
+})
+
+describe('LinkedEventCard (note rail)', () => {
+  it('shows the meeting and links to that day with the event open', async () => {
+    db.events[0].note_id = 'n9'
+    db.events[0].location = 'Room 4'
+    renderInShell(<LinkedEventCard noteId="n9" />)
+    expect(await screen.findByText('Sprint review')).toBeInTheDocument()
+    // The year shows only outside the current one.
+    expect(screen.getByText(/^Thu 24 Sep( 2026)? · 15:00–16:00$/)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /open in calendar/i })).toHaveAttribute(
+      'href',
+      '/s/thmp/calendar?view=day&date=2026-09-24&event=e1',
+    )
+  })
+
+  it('renders nothing for a note without an event', async () => {
+    renderInShell(<LinkedEventCard noteId="nope" />)
+    await waitFor(() => expect(db.events).toBeTruthy())
+    expect(screen.queryByText('Meeting')).not.toBeInTheDocument()
   })
 })
