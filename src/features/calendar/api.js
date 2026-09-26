@@ -95,15 +95,30 @@ export function useCreateEvent() {
   })
 }
 
+/**
+ * Optimistic: the patch lands in every cached range at once (drag moves and resizes feel instant),
+ * rolls back with a toast on error, and the lists refetch when it settles.
+ */
 export function useUpdateEvent() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: ({ id, patch }) => updateEvent(id, patch),
+    onMutate: async ({ id, patch }) => {
+      await qc.cancelQueries({ queryKey: eventKeys.lists() })
+      const snapshots = qc.getQueriesData({ queryKey: eventKeys.lists() })
+      qc.setQueriesData({ queryKey: eventKeys.lists() }, (old) =>
+        old?.map((e) => (e.id === id ? { ...e, ...patch } : e)),
+      )
+      return { snapshots }
+    },
     onSuccess: (row) => {
       qc.setQueryData(eventKeys.detail(row.id), (old) => (old ? { ...old, ...row } : old))
-      qc.invalidateQueries({ queryKey: eventKeys.lists() })
     },
-    onError: (err) => toast.error(err.message ?? 'Could not save event'),
+    onError: (err, _vars, ctx) => {
+      ctx?.snapshots.forEach(([key, data]) => qc.setQueryData(key, data))
+      toast.error(err.message ?? 'Could not save event')
+    },
+    onSettled: () => qc.invalidateQueries({ queryKey: eventKeys.lists() }),
   })
 }
 

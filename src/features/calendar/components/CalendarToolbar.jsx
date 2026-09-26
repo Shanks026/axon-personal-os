@@ -38,7 +38,7 @@ function IconButton({ label, shortcut, onClick, children }) {
 /**
  * The calendar's title row (design: Calendar header, laid out like the Tasks page): the range
  * title with a mono fiscal subtitle, then Today, previous / next, the view switch, the layers
- * menu and "New event". Hotkeys (t, ←, →, m, a, n) are off while a dialog is open.
+ * menu and "New event". Hotkeys (t, ←, →, m, w, d, a, n) are off while a dialog is open.
  */
 export function CalendarToolbar({
   title,
@@ -58,6 +58,8 @@ export function CalendarToolbar({
   useHotkeys('left', onPrev, opts, [onPrev])
   useHotkeys('right', onNext, opts, [onNext])
   useHotkeys('m', () => onViewChange('month'), opts, [onViewChange])
+  useHotkeys('w', () => onViewChange('week'), opts, [onViewChange])
+  useHotkeys('d', () => onViewChange('day'), opts, [onViewChange])
   useHotkeys('a', () => onViewChange('agenda'), opts, [onViewChange])
   useHotkeys('n', () => onCreate(), { ...opts, preventDefault: true }, [onCreate])
 

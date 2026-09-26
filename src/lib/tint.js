@@ -169,6 +169,25 @@ export const RING_CLASSES = {
   taupe: 'ring-taupe-400',
 }
 
+/**
+ * A calendar event block in the week/day grid (design: soft fill, 3px left border in the space
+ * colour). Keyed by the space hue keys (`HUE_KEYS`), since only spaces colour events.
+ */
+export const EVENT_BLOCK_CLASSES = {
+  slate: 'border-l-slate-400 bg-slate-500/10 dark:bg-slate-400/15',
+  blue: 'border-l-blue-500 bg-blue-500/10 dark:bg-blue-500/15',
+  indigo: 'border-l-indigo-500 bg-indigo-500/10 dark:bg-indigo-500/15',
+  violet: 'border-l-violet-500 bg-violet-500/10 dark:bg-violet-500/15',
+  pink: 'border-l-pink-500 bg-pink-500/10 dark:bg-pink-500/15',
+  red: 'border-l-red-500 bg-red-500/10 dark:bg-red-500/15',
+  orange: 'border-l-orange-500 bg-orange-500/10 dark:bg-orange-500/15',
+  amber: 'border-l-amber-500 bg-amber-500/10 dark:bg-amber-500/15',
+  green: 'border-l-green-500 bg-green-500/10 dark:bg-green-500/15',
+  teal: 'border-l-teal-500 bg-teal-500/10 dark:bg-teal-500/15',
+}
+
+export const eventBlockClasses = (key) => EVENT_BLOCK_CLASSES[key] ?? EVENT_BLOCK_CLASSES.slate
+
 /** Falls back to slate for an unrecognised key, same as `hueVar`. */
 export const badgeClasses = (key) => BADGE_CLASSES[key] ?? BADGE_CLASSES.slate
 export const textClasses = (key) => TEXT_CLASSES[key] ?? TEXT_CLASSES.slate

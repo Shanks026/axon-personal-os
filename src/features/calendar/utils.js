@@ -259,3 +259,155 @@ export function formatAgendaDay(isoDate, today) {
   if (diff === -1) return 'Yesterday'
   return isSameYear(d, parseISODate(today)) ? format(d, 'EEE d MMM') : format(d, 'EEE d MMM yyyy')
 }
+
+// ── Week / Day time grid (Phase 2) ──────────────────────────────────────────────────────────
+
+const DAY_MINUTES = 1440
+const minutesOf = (time) => {
+  const [h, m] = time.split(':').map(Number)
+  return h * 60 + m
+}
+
+/**
+ * A timed event's wall-clock minutes on local day `isoDay` (0–1440), clipped to the day: an event
+ * that started the day before begins at 0, one running past midnight ends at 1440. Wall-clock (not
+ * elapsed) minutes, so blocks line up with the hour labels on DST change days too.
+ */
+export function eventMinutesOnDay({ start, end }, isoDay, timeZone) {
+  const s = zonedParts(start, timeZone)
+  const e = zonedParts(end, timeZone)
+  return {
+    startMin: s.isoDate < isoDay ? 0 : minutesOf(s.time),
+    endMin: e.isoDate > isoDay ? DAY_MINUTES : minutesOf(e.time),
+  }
+}
+
+/**
+ * Side-by-side layout for one day's timed events (`{ id, startMin, endMin }`). Returns
+ * `[{ id, top, height, left, width }]` in percent of the day column.
+ *
+ * Events are sorted by start (longer first on ties) and grouped into clusters of transitively
+ * overlapping events. In a cluster each event takes the first column whose last event has ended;
+ * width is 1 / the cluster's column count, and an event widens into free columns to its right.
+ * Every event is at least `minMinutes` tall.
+ */
+export function layoutDayEvents(events, { minMinutes = 15 } = {}) {
+  const items = events
+    .map((e) => ({
+      id: e.id,
+      start: e.startMin,
+      end: Math.min(DAY_MINUTES, Math.max(e.endMin, e.startMin + minMinutes)),
+    }))
+    .sort((a, b) => a.start - b.start || b.end - a.end)
+
+  const clusters = []
+  let current = null
+  for (const item of items) {
+    if (!current || item.start >= current.end) {
+      current = { items: [], end: item.end }
+      clusters.push(current)
+    }
+    current.items.push(item)
+    current.end = Math.max(current.end, item.end)
+  }
+
+  const out = []
+  for (const cluster of clusters) {
+    const columnEnds = []
+    for (const item of cluster.items) {
+      let col = columnEnds.findIndex((end) => end <= item.start)
+      if (col === -1) {
+        col = columnEnds.length
+        columnEnds.push(item.end)
+      } else {
+        columnEnds[col] = item.end
+      }
+      item.col = col
+    }
+    const count = columnEnds.length
+    for (const item of cluster.items) {
+      let span = 1
+      for (let c = item.col + 1; c < count; c++) {
+        const blocked = cluster.items.some(
+          (o) => o.col === c && o.start < item.end && o.end > item.start,
+        )
+        if (blocked) break
+        span++
+      }
+      out.push({
+        id: item.id,
+        top: (item.start / DAY_MINUTES) * 100,
+        height: ((item.end - item.start) / DAY_MINUTES) * 100,
+        left: (item.col / count) * 100,
+        width: (span / count) * 100,
+      })
+    }
+  }
+  return out
+}
+
+/** A pointer's y offset in the grid → minutes since midnight, snapped (0–1440). */
+export function minutesFromOffset(y, pxPerHour, snap = 15) {
+  const minutes = Math.round(((y / pxPerHour) * 60) / snap) * snap
+  return Math.min(DAY_MINUTES, Math.max(0, minutes))
+}
+
+/** A dnd-kit modifier that rounds the vertical drag to `stepPx` (15 minutes). */
+export function snapModifier(stepPx) {
+  return ({ transform }) => ({ ...transform, y: Math.round(transform.y / stepPx) * stepPx })
+}
+
+/** Minutes since midnight → 'HH:mm' (1440 → '24:00' is not a time, so callers roll the day). */
+export const minutesToTime = (minutes) =>
+  `${String(Math.floor(minutes / 60)).padStart(2, '0')}:${String(minutes % 60).padStart(2, '0')}`
+
+/**
+ * Moves an event by whole days (keeping its local wall-clock times across DST) and by minutes,
+ * preserving its duration. All-day events move by days and keep the all-day convention.
+ * Returns `{ starts_at, ends_at }`.
+ */
+export function applyMove(event, { dayDelta = 0, minuteDelta = 0 }, timeZone) {
+  if (event.all_day) {
+    const span = eventDaySpan({ start: event.starts_at, end: event.ends_at }, timeZone)
+    const { starts_at, ends_at } = toEventTimestamps(
+      {
+        all_day: true,
+        start_date: toISODate(addDays(parseISODate(span.start), dayDelta)),
+        end_date: toISODate(addDays(parseISODate(span.end), dayDelta)),
+      },
+      timeZone,
+    )
+    return { starts_at, ends_at }
+  }
+  const start = zonedParts(event.starts_at, timeZone)
+  const duration = new Date(event.ends_at) - new Date(event.starts_at)
+  const day = toISODate(addDays(parseISODate(start.isoDate), dayDelta))
+  const startMs = zonedInstant(day, start.time, timeZone).getTime() + minuteDelta * 60_000
+  return {
+    starts_at: new Date(startMs).toISOString(),
+    ends_at: new Date(startMs + duration).toISOString(),
+  }
+}
+
+/** Moves an event's end by `minuteDelta`, never below `minMinutes` after its start. */
+export function applyResize(event, minuteDelta, minMinutes = 15) {
+  const start = new Date(event.starts_at).getTime()
+  const end = new Date(event.ends_at).getTime() + minuteDelta * 60_000
+  return { ends_at: new Date(Math.max(end, start + minMinutes * 60_000)).toISOString() }
+}
+
+/** Form values for a slot picked in the grid (a selection ending at 24:00 ends 00:00 next day). */
+export function slotToFormValues(isoDay, startMin, endMin) {
+  const start_time = minutesToTime(startMin)
+  const { end_date, end_time } = endAfter(isoDay, start_time, endMin - startMin)
+  return { start_date: isoDay, start_time, end_date, end_time, all_day: false }
+}
+
+/** Moves a task's due date to `isoDate`; a start date that would end up after it shifts too. */
+export function rescheduleTask(task, isoDate) {
+  const patch = { due_date: isoDate }
+  if (!task.start_date || task.start_date <= isoDate) return patch
+  if (!task.due_date) return { ...patch, start_date: isoDate }
+  const days = differenceInCalendarDays(parseISODate(isoDate), parseISODate(task.due_date))
+  return { ...patch, start_date: toISODate(addDays(parseISODate(task.start_date), days)) }
+}

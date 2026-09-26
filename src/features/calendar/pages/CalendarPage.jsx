@@ -10,14 +10,16 @@ import { AgendaView } from '@/features/calendar/components/AgendaView'
 import { CalendarToolbar } from '@/features/calendar/components/CalendarToolbar'
 import { EventDialog } from '@/features/calendar/components/EventDialog'
 import { MonthView } from '@/features/calendar/components/MonthView'
+import { TimeGrid } from '@/features/calendar/components/TimeGrid'
+import { useCalendarDragActions } from '@/features/calendar/hooks/useCalendarDragActions'
 import { useCalendarItems } from '@/features/calendar/hooks/useCalendarItems'
 import { useCalendarLayers } from '@/features/calendar/hooks/useCalendarLayers'
 import { useCalendarState } from '@/features/calendar/hooks/useCalendarState'
-import { formatRangeTitle, groupItemsByDay } from '@/features/calendar/utils'
+import { formatRangeTitle, groupItemsByDay, slotToFormValues } from '@/features/calendar/utils'
 import { usePreferences } from '@/features/settings/api'
 import { useToggleTodo } from '@/features/todos/api'
 
-/** Calendar (design: Calendar): Month and Agenda views of events plus due tasks and todos. */
+/** Calendar (design: Calendar): Month, Week, Day and Agenda views of events plus due tasks and todos. */
 export default function CalendarPage() {
   usePageHeader({ title: 'Calendar' })
   const { isGlobal, scopeSpaceIds } = useSpace()
@@ -34,6 +36,7 @@ export default function CalendarPage() {
     [items, cal.range.days, cal.timeZone],
   )
   const toggleTodo = useToggleTodo()
+  const { moveEvent, resizeEvent, moveTask } = useCalendarDragActions(cal.timeZone)
   const [create, setCreate] = useState({ open: false, initialValues: null })
 
   // The open event: from the loaded range when it's there, else the deep-link fetch.
@@ -47,6 +50,11 @@ export default function CalendarPage() {
         open: true,
         initialValues: isoDate ? { start_date: isoDate, end_date: isoDate } : null,
       }),
+    [],
+  )
+  const onCreateRange = useCallback(
+    (day, startMin, endMin) =>
+      setCreate({ open: true, initialValues: slotToFormValues(day, startMin, endMin) }),
     [],
   )
   const { openEvent } = cal
@@ -112,11 +120,21 @@ export default function CalendarPage() {
         >
           {cal.view === 'agenda' ? (
             <AgendaView days={cal.range.days} {...viewProps} />
+          ) : cal.view === 'week' || cal.view === 'day' ? (
+            <TimeGrid
+              days={cal.range.days}
+              onCreateRange={onCreateRange}
+              onMoveEvent={moveEvent}
+              onResizeEvent={resizeEvent}
+              {...viewProps}
+            />
           ) : (
             <MonthView
               date={cal.date}
               weekStartsOn={cal.weekStartsOn}
               direction={cal.direction}
+              onMoveEvent={moveEvent}
+              onMoveTask={moveTask}
               {...viewProps}
             />
           )}

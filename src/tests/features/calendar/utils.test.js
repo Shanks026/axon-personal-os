@@ -1,15 +1,23 @@
 import { describe, expect, it } from 'vitest'
 import {
   addTime,
+  applyMove,
+  applyResize,
   buildMonthGrid,
+  eventMinutesOnDay,
   endAfter,
   formatAgendaDay,
   formatRangeTitle,
   fromEvent,
   getViewRange,
   groupItemsByDay,
+  layoutDayEvents,
   minutesBetween,
+  minutesFromOffset,
+  rescheduleTask,
   shiftDate,
+  slotToFormValues,
+  snapModifier,
   toEventTimestamps,
   weekdayLabels,
 } from '@/features/calendar/utils'
@@ -226,5 +234,162 @@ describe('time helpers', () => {
     expect(formatAgendaDay('2026-09-24', '2026-09-23')).toBe('Tomorrow')
     expect(formatAgendaDay('2026-09-25', '2026-09-23')).toBe('Fri 25 Sep')
     expect(formatAgendaDay('2027-01-05', '2026-09-23')).toBe('Tue 5 Jan 2027')
+  })
+})
+
+describe('layoutDayEvents', () => {
+  const ev = (id, startMin, endMin) => ({ id, startMin, endMin })
+  const byId = (out) => Object.fromEntries(out.map((o) => [o.id, o]))
+
+  it('non-overlapping events take the full width', () => {
+    const out = byId(layoutDayEvents([ev('a', 540, 600), ev('b', 600, 660)]))
+    expect(out.a).toMatchObject({ left: 0, width: 100 })
+    expect(out.b).toMatchObject({ left: 0, width: 100 })
+    expect(out.a.top).toBeCloseTo((540 / 1440) * 100)
+    expect(out.a.height).toBeCloseTo((60 / 1440) * 100)
+  })
+
+  it('two overlapping events sit side by side', () => {
+    const out = byId(layoutDayEvents([ev('a', 540, 600), ev('b', 570, 630)]))
+    expect(out.a).toMatchObject({ left: 0, width: 50 })
+    expect(out.b).toMatchObject({ left: 50, width: 50 })
+  })
+
+  it('a chain A–B–C where A and C do not overlap uses two columns', () => {
+    const out = byId(layoutDayEvents([ev('a', 540, 600), ev('b', 570, 630), ev('c', 600, 660)]))
+    expect(out.a).toMatchObject({ left: 0, width: 50 })
+    expect(out.b).toMatchObject({ left: 50, width: 50 })
+    expect(out.c).toMatchObject({ left: 0, width: 50 })
+  })
+
+  it('a nested event and identical times', () => {
+    const nested = byId(layoutDayEvents([ev('outer', 540, 720), ev('inner', 600, 630)]))
+    expect(nested.outer).toMatchObject({ left: 0, width: 50 })
+    expect(nested.inner).toMatchObject({ left: 50, width: 50 })
+    const same = layoutDayEvents([ev('a', 540, 600), ev('b', 540, 600), ev('c', 540, 600)])
+    expect(same.map((o) => Math.round(o.left))).toEqual([0, 33, 67])
+  })
+
+  it('widens into free columns to the right', () => {
+    // a and b overlap (2 columns); c starts after b ends, so it reuses column 1 beside a
+    const out = byId(
+      layoutDayEvents([ev('a', 540, 720), ev('b', 540, 570), ev('c', 600, 630), ev('d', 660, 690)]),
+    )
+    expect(out.a.width).toBe(50)
+    expect(out.c).toMatchObject({ left: 50, width: 50 })
+  })
+
+  it('gives very short events the minimum height and clips at midnight', () => {
+    const [short] = layoutDayEvents([ev('a', 600, 600)])
+    expect(short.height).toBeCloseTo((15 / 1440) * 100)
+    const [late] = layoutDayEvents([ev('b', 1430, 1440)])
+    expect(late.top + late.height).toBeCloseTo(100)
+  })
+})
+
+describe('eventMinutesOnDay', () => {
+  it('clips an event crossing midnight to each day', () => {
+    const e = { start: '2026-09-23T22:00:00Z', end: '2026-09-24T01:30:00Z' }
+    expect(eventMinutesOnDay(e, '2026-09-23', 'UTC')).toEqual({ startMin: 1320, endMin: 1440 })
+    expect(eventMinutesOnDay(e, '2026-09-24', 'UTC')).toEqual({ startMin: 0, endMin: 90 })
+  })
+
+  it('uses wall-clock minutes on a DST change day', () => {
+    // 29 Mar 2026, London: clocks jump 01:00 → 02:00; a 09:00 BST event is 08:00 UTC
+    const e = { start: '2026-03-29T08:00:00Z', end: '2026-03-29T09:00:00Z' }
+    expect(eventMinutesOnDay(e, '2026-03-29', 'Europe/London')).toEqual({
+      startMin: 540,
+      endMin: 600,
+    })
+  })
+})
+
+describe('snapping', () => {
+  it('minutesFromOffset snaps to 15 minutes and clamps', () => {
+    expect(minutesFromOffset(56 * 9 + 20, 56)).toBe(9 * 60 + 15)
+    expect(minutesFromOffset(-10, 56)).toBe(0)
+    expect(minutesFromOffset(56 * 30, 56)).toBe(1440)
+  })
+
+  it('snapModifier rounds the vertical transform', () => {
+    expect(snapModifier(14)({ transform: { x: 5, y: 20, scaleX: 1, scaleY: 1 } })).toEqual({
+      x: 5,
+      y: 14,
+      scaleX: 1,
+      scaleY: 1,
+    })
+  })
+})
+
+describe('applyMove / applyResize', () => {
+  const timed = {
+    all_day: false,
+    starts_at: '2026-09-23T09:00:00.000Z',
+    ends_at: '2026-09-23T10:30:00.000Z',
+  }
+
+  it('moves by minutes and days, keeping the duration', () => {
+    expect(applyMove(timed, { minuteDelta: 45 }, 'UTC')).toEqual({
+      starts_at: '2026-09-23T09:45:00.000Z',
+      ends_at: '2026-09-23T11:15:00.000Z',
+    })
+    expect(applyMove(timed, { dayDelta: -2 }, 'UTC')).toEqual({
+      starts_at: '2026-09-21T09:00:00.000Z',
+      ends_at: '2026-09-21T10:30:00.000Z',
+    })
+  })
+
+  it('keeps the wall-clock time when a day move crosses DST', () => {
+    const e = {
+      all_day: false,
+      starts_at: '2026-10-24T08:00:00.000Z',
+      ends_at: '2026-10-24T09:00:00.000Z',
+    }
+    // 09:00 BST on Sat → 09:00 GMT on Mon
+    expect(applyMove(e, { dayDelta: 2 }, 'Europe/London')).toEqual({
+      starts_at: '2026-10-26T09:00:00.000Z',
+      ends_at: '2026-10-26T10:00:00.000Z',
+    })
+  })
+
+  it('moves all-day events by days and keeps the all-day bounds', () => {
+    const e = {
+      all_day: true,
+      starts_at: '2026-09-22T18:30:00.000Z',
+      ends_at: '2026-09-23T18:29:59.999Z',
+    }
+    expect(applyMove(e, { dayDelta: 1 }, 'Asia/Kolkata')).toEqual({
+      starts_at: '2026-09-23T18:30:00.000Z',
+      ends_at: '2026-09-24T18:29:59.999Z',
+    })
+  })
+
+  it('resizes with a 15-minute minimum', () => {
+    expect(applyResize(timed, 30)).toEqual({ ends_at: '2026-09-23T11:00:00.000Z' })
+    expect(applyResize(timed, -600)).toEqual({ ends_at: '2026-09-23T09:15:00.000Z' })
+  })
+})
+
+describe('slot and task helpers', () => {
+  it('slotToFormValues rolls a 24:00 end into the next day', () => {
+    expect(slotToFormValues('2026-09-23', 1380, 1440)).toEqual({
+      start_date: '2026-09-23',
+      start_time: '23:00',
+      end_date: '2026-09-24',
+      end_time: '00:00',
+      all_day: false,
+    })
+  })
+
+  it('rescheduleTask shifts a start date that would pass the new due date', () => {
+    expect(rescheduleTask({ start_date: null, due_date: '2026-09-25' }, '2026-09-20')).toEqual({
+      due_date: '2026-09-20',
+    })
+    expect(
+      rescheduleTask({ start_date: '2026-09-22', due_date: '2026-09-25' }, '2026-09-20'),
+    ).toEqual({ due_date: '2026-09-20', start_date: '2026-09-17' })
+    expect(
+      rescheduleTask({ start_date: '2026-09-22', due_date: '2026-09-25' }, '2026-09-28'),
+    ).toEqual({ due_date: '2026-09-28' })
   })
 })

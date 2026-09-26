@@ -216,7 +216,9 @@ export function useTaskFilters() {
 | Link pickers `NotePickerDialog` / `TaskPickerDialog` (CommandDialog, debounced, cross-space) | `features/links/components/` | 07 Phase 2 |
 
 | `[[task]]` mentions: `TaskMention` node (always registered) + `MentionList`; `features.taskMentions` from `useTaskMentionsConfig(note)`; `collectTaskMentionIds` / `sameIds` (`features/links/utils.js`) + `useSyncNoteMentions` after content saves | `components/editor/`, `features/links/` | 07 Phase 3 (09 journal reuses) |
-| `useNow` | `hooks/` | 08 |
+| `useNow(intervalMs)` (minute-aligned clock) | `hooks/` | 08 Phase 2 |
+| `SegmentedControl` options take `disabled` / `hint`; `Kbd` renders `left` / `right` arrows | `components/shared/` | 08 Phase 1 |
+| `lib/dates.js` zone helpers (`todayISO`, `zonedInstant`, `zonedDayRange`, `zonedParts`, `formatTime(Range)`, `formatWeekdayDate`); `lib/tint.js` `eventBlockClasses` | `lib/` | 08 |
 | `StatTile` | `components/shared/` | 11 (moved from dashboard) |
 | `GlobalDialogs` (`?new=task\|todo\|note\|event\|capture`) + `useGlobalDialog` | `components/layout/` | 12 |
 | `ShortcutKeys` (kbd) + `lib/shortcuts.js` registry + `useShortcut` | `components/shared/`, `lib/`, `hooks/` | 12 |

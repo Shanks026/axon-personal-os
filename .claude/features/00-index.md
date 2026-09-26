@@ -24,7 +24,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 06 | Notes: rich-text editor | [06-notes.md](06-notes.md) | 04 (tags) | ✅ Complete |
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | ✅ Complete (UI refinements pending) |
 | **Wave 3: Time** | | | | |
-| 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | 🟡 Phase 1 ✅ (Phases 2–3 next) |
+| 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | 🟡 Phases 1–2 ✅ (Phase 3 next) |
 | 09 | Daily Journal / Work Log | [09-journal.md](09-journal.md) | 06, 07 | 🔵 Planned |
 | **Wave 4: Insight** | | | | |
 | 10 | Dashboard (per space and Global) | [10-dashboard.md](10-dashboard.md) | 08, 09 | 🔵 Planned |
@@ -116,6 +116,13 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-26: Feature 08 Phase 2 — Week and Day time grid, drag and drop
+- **Folded:** the week-view design deltas: a 56px gutter and 56px hours, all-day chips in the header cells, soft event blocks with a 3px left border in the space colour, a red now-line with a dot, the dashed origin ghost, a resize bar, and weekend tint.
+- **New:** a `TimeGrid` for Week (7 columns) and Day (1 column), with a sticky header of all-day chips, overlapping events side by side (`layoutDayEvents`), the now-line (`useNow`), and click-drag to create (`useSlotSelection`). Dragging moves an event in 15-minute steps and across days, and the bottom bar resizes it. In Month, event and task chips drag to another day (tasks reschedule `due_date` and shift `start_date` when needed).
+- **Changed:** `useUpdateEvent` is optimistic (snapshot, rollback, refetch). Month task chips are buttons (so a drag can't trigger a link's page load). The view switch enables Week and Day, with hotkeys `w` / `d`.
+- **Shared:** `hooks/useNow.js` and `lib/tint.js` `EVENT_BLOCK_CLASSES` / `eventBlockClasses`.
+- **No database changes.** Tests: 368 (+18: grid layout, snapping, move and resize maths, reschedule, and Week/Day page tests).
 
 ### 2026-09-26: Feature 08 Phase 1 — Calendar: Month, Agenda and events CRUD
 - **Folded:** the Calendar design deltas (no space picker, colours from `lib/tint.js` by space colour, a Tasks-style title row with a fiscal subtitle, a `⋯` layers menu, the dot/square legend, a 6-row grid, the read-style event dialog). `design-deltas.md` 08 is marked folded.

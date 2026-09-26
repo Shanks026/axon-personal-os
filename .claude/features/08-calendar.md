@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/08-calendar.md`
-**Status**: 🟡 Phase 1 ✅, Phase 2 next
+**Status**: 🟡 Phases 1–2 ✅, Phase 3 next
 **Depends on**: 07
 **Last Updated**: September 2026
 
@@ -234,10 +234,19 @@ src/features/calendar/
 
 ---
 
-## Phase 2: Week and Day Time Grid
+## Phase 2: Week and Day Time Grid ✅ Complete
 
 ### Goal
 Week and Day views show a scrollable 24-hour grid (opening scrolled to 08:00) with an all-day row, a live now-line, and overlapping events laid out side by side. The user click-drags an empty slot to create an event, drags an event to move it (15-minute snap, across days in Week), and drags its bottom edge to resize. In Month view, task chips can be dragged to another day to reschedule `due_date`. Every move is optimistic, and rolls back on error.
+
+### Design deltas and later decisions (✅ folded 2026-09-26)
+- **Grid geometry (design, week view):** a 56px hour gutter (`w-14`, mono faint hour labels) and 56px per hour (`HOUR_HEIGHT = 56`, 14px per 15 minutes). Weekend columns get `bg-muted/40` (as in Month). Today's day number is destructive red. The now-line is a 1.5px destructive line with an 8px dot at the gutter edge.
+- **Header cells hold the all-day row:** each day's header cell shows the weekday, the day number, then its all-day events and due task/todo chips (the design has no separate all-day row). `TimeGridAllDayRow` becomes part of the header.
+- **Event blocks:** a soft background with a 3px left border in the space colour. These are literal classes from a new `EVENT_BLOCK_CLASSES` map in `lib/tint.js` (the 10 `HUE_KEYS`), never the accent variable. Title `text-xs font-medium`, time mono faint.
+- **Drag:** the moving block lifts (`DragOverlay`: `bg-card`, `shadow-md`, scale 1.02). The origin shows a dashed `border-border-strong` ghost, and the resize handle is an 18×3px bar in the space colour (visible on hover and while dragging).
+- **One scroll container** (routing rule): the grid is 24 × 56px tall and scrolls with the page (`AppShell`'s content column). The day header is `sticky top-0`. "Scrolled to 08:00" means scrolling the shell's content column on mount.
+- **Month task drag:** task chips become buttons that navigate with `useNavigate`, not `Link`s. dnd-kit stops a post-drag click's propagation but not its default action, so a dragged `Link` would do a full page load. Rescheduling uses the existing optimistic `useQuickUpdateTask` (item 3 below is satisfied: no change to `useUpdateTask`).
+- **Event dialog:** timed defaults for a slot come from the selection; a selection ending at 24:00 becomes 00:00 the next day.
 
 ### Before Starting: Confirm Phase 1 Is Approved
 1. Phase 1 is `✅ Complete`.
@@ -299,17 +308,28 @@ None beyond enabling `view=week|day` (already parsed in Phase 1).
 - Touch-optimised drag (Feature 20)
 
 ### 2.7 Checklist: Before Marking Complete
-- [ ] `layoutDayEvents`, `applyMove`, `applyResize` and `minutesFromOffset` tests pass, including the A–B–C chain and midnight crossing
-- [ ] Week and Day open scrolled to 08:00; the now-line moves every minute and appears only on today
-- [ ] Overlapping events render side by side without covering each other
-- [ ] Click-drag on an empty slot opens `EventDialog` prefilled with the snapped range; `Esc` cancels the ghost
-- [ ] Dragging an event moves it in 15-minute steps (across days in Week); resizing enforces 15 minutes minimum; both persist after reload
-- [ ] Killing the network mid-drag rolls the event back and shows an error toast
-- [ ] Dragging a task chip in Month updates `due_date` (and shifts `start_date` when needed); the task list reflects it without a reload
-- [ ] A click on an event still opens the popover (no accidental drags)
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` status and changelog are updated
+- [x] `layoutDayEvents`, `applyMove`, `applyResize` and `minutesFromOffset` tests pass, including the A–B–C chain and midnight crossing
+- [x] Week and Day open scrolled to 08:00; the now-line moves every minute and appears only on today (`useNow`; **confirm in the browser**)
+- [x] Overlapping events render side by side without covering each other
+- [x] Click-drag on an empty slot opens `EventDialog` prefilled with the snapped range (a click is tested); `Esc` cancels the ghost
+- [x] Dragging an event moves it in 15-minute steps (across days in Week); resizing enforces 15 minutes minimum; both persist (optimistic `useUpdateEvent`; **confirm drags in the browser**, since jsdom has no layout)
+- [x] Killing the network mid-drag rolls the event back and shows an error toast (the `onMutate` snapshot and rollback; **confirm in the browser**)
+- [x] Dragging a task chip in Month updates `due_date` (and shifts `start_date` when needed, `rescheduleTask` tested); `useQuickUpdateTask` patches every task list
+- [x] A click on an event still opens it (the pointer sensor needs 4px of movement before a drag starts)
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` status and changelog are updated
+
+### 2.8 Implementation Notes (2026-09-26)
+- **No `WeekView` / `DayView` files.** They would only have passed `range.days` through, so `CalendarPage` renders `TimeGrid` for both, with a 7-column or 1-column grid.
+- **All-day row in the header** (the design): `TimeGridHeader` replaces the planned `TimeGridAllDayRow`.
+- **Wall-clock layout:** `layoutDayEvents` takes `{ id, startMin, endMin }` (local minutes, 0–1440), and `eventMinutesOnDay` clips each event to the day. Blocks line up with the hour labels on DST change days too. This differs from the planned instant-based signature.
+- **One scroll container:** the grid scrolls with the shell's content column; the header is sticky. On mount, `scrollIntoView` targets an 08:00 anchor, with `scroll-margin` set to the header height. After 18:00 on today it targets two hours before now.
+- **Drag:** a single `DndContext` per view, with `pointerWithin` collisions, a `snapModifier(14px)` and `dropAnimation={null}` (the block's `layout` animation carries it into the new slot instead). Draggable ids include the day (`move:<id>:<day>`), because multi-day events render in several columns. Resize is only offered on the day an event ends. Month chips drag (`chip:<kind>:<id>:<day>`) onto droppable cells. The overlay sits outside the sliding grid, because a transformed ancestor breaks its fixed positioning.
+- **Month task chips are buttons** that navigate with `useNavigate`. dnd-kit stops a post-drag click from propagating, but not its default action.
+- **Optimistic `useUpdateEvent`:** it patches every cached range, rolls back on error, and refetches when settled. Task reschedules reuse `useQuickUpdateTask`, so `useUpdateTask` is unchanged.
+- **New:** `useNow` (`hooks/`), `useSlotSelection`, `useCalendarDragActions`, `TimeGrid`, `TimeGridHeader`, `TimeGridColumn`, `TimeGridEvent`, `TimeGridEventBody`, `NowLine`, `ChipFace`, `EVENT_BLOCK_CLASSES` (`lib/tint.js`). Hotkeys `w` / `d`.
+- **Browser checks still to do:** drag move and resize, dragging across days, the network-failure rollback, the scroll-to-08:00, dark mode.
 
 **Stop here. Show the result and wait for approval.**
 

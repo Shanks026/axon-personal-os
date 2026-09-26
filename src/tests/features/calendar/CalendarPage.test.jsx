@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { render, screen, waitFor, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { createMemoryRouter, Outlet, RouterProvider } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
@@ -200,5 +200,27 @@ describe('CalendarPage', () => {
     db.events = []
     renderInShell(<CalendarPage />, '/s/thmp/calendar?view=agenda')
     expect(await screen.findByText('Nothing in the next 30 days')).toBeInTheDocument()
+  })
+})
+
+describe('Week view (Phase 2)', () => {
+  it('lays the event out in its day column with its time range', async () => {
+    renderInShell(<CalendarPage />, '/s/thmp/calendar?view=week&date=2026-09-24')
+    expect(await screen.findByRole('heading', { name: '21 – 27 Sep 2026' })).toBeInTheDocument()
+    const block = await screen.findByRole('button', { name: 'Sprint review, 15:00–16:00' })
+    expect(block.closest('[data-day]')).toHaveAttribute('data-day', '2026-09-24')
+    expect(screen.getByRole('slider', { name: 'Resize event' })).toBeInTheDocument()
+  })
+
+  it('clicking an empty slot opens a new event prefilled with that hour', async () => {
+    renderInShell(<CalendarPage />, '/s/thmp/calendar?view=day&date=2026-09-24')
+    await screen.findByRole('heading', { name: 'Thu 24 Sep 2026' })
+    const column = document.querySelector('[data-day="2026-09-24"]')
+    // jsdom's layout is all zeros, so clientY is the offset: 9 × 56px = 09:00.
+    fireEvent.pointerDown(column, { button: 0, clientY: 9 * 56 + 10 })
+    fireEvent.pointerUp(window)
+    const dialog = await screen.findByRole('dialog')
+    expect(within(dialog).getByLabelText('Start time')).toHaveValue('09:00')
+    expect(within(dialog).getByLabelText('End time')).toHaveValue('10:00')
   })
 })

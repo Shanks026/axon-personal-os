@@ -1,3 +1,4 @@
+import { useDroppable } from '@dnd-kit/core'
 import { formatWeekdayDate } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { CalendarChip } from '@/features/calendar/components/CalendarChip'
@@ -6,7 +7,8 @@ import { MAX_CHIPS_PER_DAY } from '@/features/calendar/constants'
 
 /**
  * One day in the month grid. The day number is a button that starts a new event on that day.
- * Up to `MAX_CHIPS_PER_DAY` chips show; beyond that the last slot becomes "+N more".
+ * Up to `MAX_CHIPS_PER_DAY` chips show; beyond that the last slot becomes "+N more". The cell is a
+ * drop target for event and task chips dragged from another day.
  */
 export function MonthDayCell({
   cell,
@@ -17,13 +19,19 @@ export function MonthDayCell({
   onToggleTodo,
   className,
 }) {
+  const { setNodeRef, isOver } = useDroppable({
+    id: `cell:${cell.isoDate}`,
+    data: { day: cell.isoDate },
+  })
   const overflow = entries.length > MAX_CHIPS_PER_DAY
   const shown = overflow ? entries.slice(0, MAX_CHIPS_PER_DAY - 1) : entries
   return (
     <div
+      ref={setNodeRef}
       className={cn(
         'flex min-h-30 min-w-0 flex-col gap-0.5 overflow-hidden border-border p-1.5',
         cell.isWeekend && 'bg-muted/40',
+        isOver && 'bg-accent/60',
         className,
       )}
     >
@@ -46,6 +54,8 @@ export function MonthDayCell({
         <CalendarChip
           key={entry.item.kind + entry.item.id}
           entry={entry}
+          day={cell.isoDate}
+          draggable
           timeZone={timeZone}
           onOpenEvent={onOpenEvent}
           onToggleTodo={onToggleTodo}
