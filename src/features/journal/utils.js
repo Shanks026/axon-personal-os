@@ -1,6 +1,14 @@
-import { addDays, format, isMatch, startOfWeek } from 'date-fns'
+import {
+  addDays,
+  endOfMonth,
+  endOfWeek,
+  format,
+  isMatch,
+  startOfMonth,
+  startOfWeek,
+} from 'date-fns'
 import { parseISODate, toISODate } from '@/lib/dates'
-import { JOURNAL_STRIP_DAYS } from '@/features/journal/constants'
+import { JOURNAL_STRIP_WEEKS } from '@/features/journal/constants'
 
 /** "Journal · Wed 23 Sep 2026": the entry's `notes.title` (linked-notes lists, search). */
 export function journalTitle(isoDate) {
@@ -8,17 +16,22 @@ export function journalTitle(isoDate) {
 }
 
 /**
- * The strip's days: `count` consecutive 'yyyy-MM-dd' dates starting at the week start one week
- * before `anchorISO`'s week, so the anchor sits in the second row-week (design: today in week 2).
+ * The strip's weeks: `before` weeks before `anchorISO`'s week, that week, then `after` weeks,
+ * each an array of 7 'yyyy-MM-dd' dates starting on `weekStartsOn`.
  */
-export function buildStripDays(anchorISO, { weekStartsOn = 1, count = JOURNAL_STRIP_DAYS } = {}) {
-  const start = addDays(startOfWeek(parseISODate(anchorISO), { weekStartsOn }), -7)
-  return Array.from({ length: count }, (_, i) => toISODate(addDays(start, i)))
+export function buildStripWeeks(
+  anchorISO,
+  { weekStartsOn = 1, before = JOURNAL_STRIP_WEEKS, after = JOURNAL_STRIP_WEEKS } = {},
+) {
+  const first = addDays(startOfWeek(parseISODate(anchorISO), { weekStartsOn }), -7 * before)
+  return Array.from({ length: before + 1 + after }, (_, w) =>
+    Array.from({ length: 7 }, (_, d) => toISODate(addDays(first, w * 7 + d))),
+  )
 }
 
-/** The strip anchor moved a page back (`-1`) or forward (`1`). */
-export function shiftStrip(anchorISO, direction, count = JOURNAL_STRIP_DAYS) {
-  return toISODate(addDays(parseISODate(anchorISO), direction * count))
+/** Index of the week containing `isoDate`, or -1 when it's outside the strip. */
+export function weekIndexOf(weeks, isoDate) {
+  return weeks.findIndex((week) => week[0] <= isoDate && isoDate <= week[6])
 }
 
 /** The `:date` route param as 'yyyy-MM-dd' when it's a real calendar date, else `null`. */
@@ -73,4 +86,99 @@ export function stripDayLabels(isoDate) {
 /** The day's title: "Wednesday, 23 September". */
 export function journalHeading(isoDate) {
   return format(parseISODate(isoDate), 'EEEE, d MMMM')
+}
+
+// ── Section editing (Phase 2): the template's sections are level-2 headings in a Tiptap doc.
+
+const CONTAINERS = new Set([
+  'paragraph',
+  'heading',
+  'bulletList',
+  'orderedList',
+  'taskList',
+  'listItem',
+  'taskItem',
+  'blockquote',
+])
+
+/** Whether a node holds anything: text, a mention, an image… (an empty bullet doesn't). */
+function hasContent(node) {
+  if (node.type === 'text') return !!node.text?.trim()
+  if (node.type === 'hardBreak') return false
+  if (!node.content?.length) return !CONTAINERS.has(node.type)
+  return node.content.some(hasContent)
+}
+
+const isSectionHeading = (node, title) =>
+  node.type === 'heading' &&
+  node.attrs?.level === 2 &&
+  (node.content ?? [])
+    .map((c) => c.text ?? '')
+    .join('')
+    .trim()
+    .toLowerCase() === title.toLowerCase()
+
+/** `[start, end)`: the heading's index and the index of the next level-2 heading (or the end). */
+function sectionBounds(blocks, title) {
+  const start = blocks.findIndex((n) => isSectionHeading(n, title))
+  if (start < 0) return null
+  const next = blocks.findIndex((n, i) => i > start && n.type === 'heading' && n.attrs?.level === 2)
+  return [start, next < 0 ? blocks.length : next]
+}
+
+/**
+ * A new doc with `nodes` at the end of a section (before the next level-2 heading). A blank
+ * trailing block there (the template's empty bullet) is replaced. A missing section is added
+ * at the end, heading first.
+ */
+export function appendToSection(doc, sectionTitle, nodes) {
+  const blocks = doc?.content ?? []
+  const bounds = sectionBounds(blocks, sectionTitle)
+  if (!bounds) {
+    const heading = {
+      type: 'heading',
+      attrs: { level: 2 },
+      content: [{ type: 'text', text: sectionTitle }],
+    }
+    return { ...doc, type: 'doc', content: [...blocks, heading, ...nodes] }
+  }
+  const [start, end] = bounds
+  const last = end - 1 > start ? blocks[end - 1] : null
+  const cut = last && !hasContent(last) ? end - 1 : end
+  return { ...doc, content: [...blocks.slice(0, cut), ...nodes, ...blocks.slice(end)] }
+}
+
+/**
+ * A bullet list of task mention chips for `tasks`, leaving out tasks already mentioned
+ * (`existingMentionIds`). `null` when nothing is left to insert.
+ */
+export function completedTasksToBulletList(tasks, existingMentionIds = []) {
+  const existing = new Set(existingMentionIds)
+  const fresh = tasks.filter((t) => !existing.has(t.id))
+  if (!fresh.length) return null
+  return {
+    type: 'bulletList',
+    content: fresh.map((t) => ({
+      type: 'listItem',
+      content: [
+        {
+          type: 'paragraph',
+          content: [{ type: 'taskMention', attrs: { id: t.id, label: t.title } }],
+        },
+      ],
+    })),
+  }
+}
+
+/** The mini month button's label: "Sep 2026". */
+export function monthLabel(isoDate) {
+  return format(parseISODate(isoDate), 'MMM yyyy')
+}
+
+/** The mini month's visible grid, as 'yyyy-MM-dd' bounds (outside days included). */
+export function monthGridRange(month, weekStartsOn = 1) {
+  return {
+    from: toISODate(startOfWeek(startOfMonth(month), { weekStartsOn })),
+    to: toISODate(endOfWeek(endOfMonth(month), { weekStartsOn })),
+  }
 }

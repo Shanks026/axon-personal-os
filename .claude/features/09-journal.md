@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/09-journal.md`
-**Status**: 🟡 In progress (Phase 1 ✅, Phase 2 next)
+**Status**: ✅ Complete (2026-09-26)
 **Depends on**: 06, 07
 **Last Updated**: September 2026
 
@@ -10,7 +10,7 @@
 
 ## Context
 
-The daily stand-up question ("what did I do yesterday, what am I doing today, what's blocking me") is currently answered from memory. The journal gives each space one entry per day, prefilled with a Yesterday / Today / Blockers / Notes template, and it is the main raw input for quarterly reports (11). A journal entry **is a note** (`notes.kind = 'journal'` plus `journal_date`), so it reuses the shared `RichTextEditor`, autosave, `[[task]]` mentions and `sync_note_mentions` without new infrastructure. Entries are created lazily on the first edit, never just by viewing a date.
+The daily stand-up question ("what did I do yesterday, what am I doing today, what's blocking me") is currently answered from memory. The journal gives each space one entry per day, prefilled with a Today / Blockers / Notes template, and it is the main raw input for quarterly reports (11). A journal entry **is a note** (`notes.kind = 'journal'` plus `journal_date`), so it reuses the shared `RichTextEditor`, autosave, `[[task]]` mentions and `sync_note_mentions` without new infrastructure. Entries are created lazily on the first edit, never just by viewing a date.
 
 ---
 
@@ -22,9 +22,9 @@ Phase 1: Daily entry
   DateStrip, lazy-created templated entry with autosave and mentions, Global stacked read view,
   "Done that day" side panel.
 
-Phase 2: Navigation, insert and carry-forward
-  Mini month popover with entry dots, "Insert into Today" in the rail, and a new day's Yesterday
-  prefilled from the previous entry's Today.
+Phase 2: Navigation and insert
+  Mini month popover with entry dots, "Insert into Today" in the rail, and the template trimmed to
+  Today / Blockers / Notes (each day's entry stands alone).
 ```
 
 **After each phase, stop and wait for approval.**
@@ -96,7 +96,7 @@ Verify (rolled-back transaction): existing rows are `kind = 'note'`; a journal r
 | `useClearJournalEntry()` | soft-deletes the entry with an Undo toast (calls `restoreJournalEntry`); invalidates `journalKeys.all` and `['links']` |
 | `restoreJournalEntry(id)` / `useRestoreJournalEntry()` | `restoreNote(id)`; a `23505` is rethrown as `'An entry for this day already exists — open it and copy what you need from Trash'`. Invalidates `journalKeys.all` and `['links']`. Used by Undo and later Trash (14). |
 
-**`src/features/journal/constants.js`:** `JOURNAL_SECTIONS = ['Yesterday','Today','Blockers','Notes']`; `JOURNAL_TEMPLATE`: a level-2 heading per section, each followed by an empty `bulletList` (one empty `listItem`), except "Notes", followed by an empty paragraph. `JOURNAL_AUTOSAVE_DELAY = 800`. `JOURNAL_STRIP_DAYS = 14`.
+**`src/features/journal/constants.js`:** `JOURNAL_SECTIONS = ['Today','Blockers','Notes']` (Yesterday removed in Phase 2); `JOURNAL_TEMPLATE`: a level-2 heading per section, each followed by an empty `bulletList` (one empty `listItem`), except "Notes", followed by an empty paragraph. `JOURNAL_AUTOSAVE_DELAY = 800`. `JOURNAL_STRIP_DAYS = 14`.
 
 **`src/features/journal/utils.js`** (tests in `src/tests/features/journal/utils.test.js`):
 - `journalTitle(isoDate)` gives "Journal · Wed 23 Sep 2026".
@@ -191,12 +191,12 @@ src/features/journal/
 
 ---
 
-## Phase 2: Navigation, Insert and Carry-forward
+## Phase 2: Navigation and Insert ✅ Complete
 
 ### Goal
-A "Sep 2026" button in the page header opens a mini month with dots on days that have entries, for jumping to any date. "Insert into Today" in the rail appends a bullet list of the day's completed tasks (as task mentions) to the Today section. A day with no entry opens with **Yesterday prefilled from the previous entry's Today** (carry-forward, the user's request 2026-09-26), so the plan written yesterday becomes the starting point for what actually happened.
+A "Sep 2026" button in the page header opens a mini month with dots on days that have entries, for jumping to any date. "Insert into Today" in the rail appends a bullet list of the day's completed tasks (as task mentions) to the Today section.
 
-> **Carry-forward rules (decided 2026-09-26):** Yesterday (the outcome) and Today (the plan) stay independent text: the copy happens **once**, when a day without an entry is opened, and is never kept in sync, so editing one day never rewrites another. The source is the **most recent earlier entry in the same space within 7 days** (Monday carries Friday's plan; a stale plan from weeks ago isn't carried). Like the plain template, nothing is saved until the first edit.
+> **Template decision (the user, 2026-09-26):** no Yesterday section and no carry-forward. **Each day's entry stands alone**; to see what happened on an earlier day, change the date. The template is **Today / Blockers / Notes** (`JOURNAL_SECTIONS`). Carry-forward was planned and briefly started, then dropped in the same session. Existing entries keep whatever headings they were written with.
 
 ### Before Starting: Confirm Phase 1 Is Approved
 1. Phase 1 is `✅ Complete`.
@@ -206,30 +206,33 @@ A "Sep 2026" button in the page header opens a mini month with dots on days that
 ### 2.1 Database
 No database changes.
 
-### 2.1b API
-- `journalKeys.previous(params)`; `fetchPreviousJournalEntry({ spaceId, date, since })` / `usePreviousJournalEntry(params)`: `select('id, journal_date, content')`, live journal rows in the space with `journal_date < date` and `>= since` (`date` − 7 days), `order('journal_date', { ascending: false }).limit(1).maybeSingle()`. `enabled` only when the day has no entry (the page knows after `useJournalEntry` settles).
 
 ### 2.2 Utils
 Additions to `journal/utils.js`, tested:
 - `appendToSection(doc, sectionTitle, nodes)` returns a new doc with `nodes` inserted at the end of the section, before the next level-2 heading. If the section's trailing block is an empty bullet list, it is replaced. If the heading is missing, a new heading and the nodes go at the end.
 - `completedTasksToBulletList(tasks, existingMentionIds)` builds a `bulletList` of `listItem > paragraph > taskMention { id, label }`, skipping tasks already mentioned; `null` when nothing is left.
-- `getSectionContent(doc, sectionTitle)` returns the blocks between that level-2 heading and the next one, with empty list items and empty paragraphs dropped (an empty list is dropped entirely); `[]` when the heading is missing or the section is blank.
-- `buildCarriedTemplate(previousDoc)` returns `JOURNAL_TEMPLATE` with the Yesterday section's empty bullet replaced by `getSectionContent(previousDoc, 'Today')` (mention chips kept, so they sync on the first save). With nothing to carry it returns the plain template.
+- `monthLabel(iso)` ("Sep 2026") and `monthGridRange(month, weekStartsOn)` (the mini month's visible grid, outside days included).
 
 ### 2.3 Components
 - **`JournalMonthPopover`** `({ selected, onSelect })`: a header button (`Calendar` icon + "Sep 2026") opens the shadcn `Calendar` with `weekStartsOn`; `modifiers={{ hasEntry }}` from `useJournalDates` for the visible month (follows `onMonthChange`), rendered as a dot. Selecting a day calls `goTo` and closes.
 - **"Insert into Today"** (bottom of the rail, space only, design: 34px outline button with `CornerDownLeft`): builds the list from the day's completions, `appendToSection(editor.getJSON(), 'Today', [list])`, then `editor.commands.setContent(newDoc, { emitUpdate: true })` so autosave and mention sync fire. Disabled when there are none; `toast('Nothing new to insert')` when all are already mentioned.
 
-- **Carry-forward** (`JournalEditor`): when `entry` is `null`, wait for `usePreviousJournalEntry` (skeleton meanwhile), then mount the editor with `buildCarriedTemplate(previous?.content)`. The "Standup template" line adds "· Yesterday from Fri 26 Sep" (`formatWeekdayDate`) when something was carried.
 
 ### 2.4 Checklist: Before Marking Complete
 - [ ] The mini month shows dots for days with entries, follows month navigation, respects week start, and jumping works
 - [ ] "Insert into Today" adds mention chips under Today, never duplicates, triggers autosave, and the mentions sync to `note_task_links`
-- [ ] A new day's Yesterday is prefilled from the most recent entry's Today (within 7 days, same space); Monday carries Friday; nothing carries from 8+ days back; nothing is saved until the first edit; editing either day never changes the other
-- [ ] `appendToSection`, `completedTasksToBulletList`, `getSectionContent` and `buildCarriedTemplate` tests pass
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` status and changelog are updated
+- [x] The template is Today / Blockers / Notes; no carry-forward
+- [x] `appendToSection`, `completedTasksToBulletList`, `monthLabel` and `monthGridRange` tests pass
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` status and changelog are updated
+
+### Implementation Notes (2026-09-26)
+- **Template:** Yesterday removed at the user's request (see the decision above); carry-forward was dropped before it shipped.
+- **Mini month:** `JournalMonthPopover` in the page header (outline "Sep 2026" button, `CalendarDays`), shadcn `Calendar` with `modifiers={{ hasEntry }}`; the dot is an `after:` pseudo-element on the day cell (`modifiersClassNames`). It fetches the visible grid (`monthGridRange`, outside days included) and reopens on the selected day's month.
+- **Insert into "Today":** at the bottom of the rail (space only), `useInsertIntoToday` holds the editor instance (`onEditorReady`) and calls `setContent(doc, { emitUpdate: true })` (Tiptap v3 signature, checked), so autosave creates or updates the entry and syncs the mentions. On a day with no entry, inserting creates it. Disabled, with a tooltip on a wrapper, when nothing was completed; "Nothing new to insert" when every completed task is already mentioned.
+- **Day strip as a carousel** (the user's request, after Phase 2): `DateStrip` now uses the shadcn **Carousel** (new `components/ui/carousel.jsx`, Embla) with **`embla-carousel-wheel-gestures`** for two-finger trackpad swipes. One slide per week (`buildStripWeeks`, `weekIndexOf`; `JOURNAL_STRIP_WEEKS = 26` either side, replacing the fixed 14-day window, `buildStripDays` and `shiftStrip`), two on screen from `sm`, snapping per week; ‹ › scroll two weeks; mouse drag and touch work out of the box. A selection outside the strip re-centres it; a selection scrolled out of view is scrolled back (instantly for far jumps). The test setup stubs `IntersectionObserver` for Embla.
+- **Still to confirm in the browser:** month dots and jumping, dragging and trackpad swiping the strip, week start in the mini month, Insert into Today (chips under Today, autosave, linked notes on the task), and the tooltip on the disabled button.
 
 **Stop here. Show the result and wait for approval.**
 

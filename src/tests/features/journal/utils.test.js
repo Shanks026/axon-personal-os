@@ -1,12 +1,16 @@
 import { describe, expect, it } from 'vitest'
 import { JOURNAL_SECTIONS, JOURNAL_TEMPLATE } from '@/features/journal/constants'
 import {
+  appendToSection,
   buildDoneItems,
-  buildStripDays,
+  completedTasksToBulletList,
+  monthGridRange,
+  monthLabel,
+  buildStripWeeks,
   journalTitle,
   parseJournalDateParam,
-  shiftStrip,
   toDateSet,
+  weekIndexOf,
 } from '@/features/journal/utils'
 
 describe('journalTitle', () => {
@@ -15,40 +19,50 @@ describe('journalTitle', () => {
   })
 })
 
-describe('buildStripDays', () => {
-  it('starts at the week start before the anchor’s week (Monday weeks)', () => {
-    const days = buildStripDays('2026-09-23', { weekStartsOn: 1 })
-    expect(days).toHaveLength(14)
-    expect(days[0]).toBe('2026-09-14') // Mon
-    expect(days[13]).toBe('2026-09-27') // Sun
-    expect(days.indexOf('2026-09-23')).toBeGreaterThanOrEqual(7) // anchor in week two
+describe('buildStripWeeks', () => {
+  it('spans the given weeks around the anchor’s week (Monday weeks)', () => {
+    const weeks = buildStripWeeks('2026-09-23', { weekStartsOn: 1, before: 2, after: 1 })
+    expect(weeks).toHaveLength(4)
+    expect(weeks.every((w) => w.length === 7)).toBe(true)
+    expect(weeks[2]).toEqual([
+      '2026-09-21',
+      '2026-09-22',
+      '2026-09-23',
+      '2026-09-24',
+      '2026-09-25',
+      '2026-09-26',
+      '2026-09-27',
+    ])
+    expect(weeks[0][0]).toBe('2026-09-07')
+    expect(weeks[3][6]).toBe('2026-10-04')
   })
 
   it('respects Sunday weeks', () => {
-    const days = buildStripDays('2026-09-23', { weekStartsOn: 0 })
-    expect(days[0]).toBe('2026-09-13') // Sun
-    expect(days[13]).toBe('2026-09-26')
+    const weeks = buildStripWeeks('2026-09-23', { weekStartsOn: 0, before: 0, after: 0 })
+    expect(weeks[0][0]).toBe('2026-09-20')
+    expect(weeks[0][6]).toBe('2026-09-26')
   })
 
-  it('keeps an anchor on the week start in week two', () => {
-    expect(buildStripDays('2026-09-21', { weekStartsOn: 1 })[7]).toBe('2026-09-21')
+  it('crosses year boundaries', () => {
+    const weeks = buildStripWeeks('2027-01-01', { weekStartsOn: 1, before: 0, after: 0 })
+    expect(weeks[0][0]).toBe('2026-12-28')
+    expect(weeks[0]).toContain('2027-01-01')
   })
 
-  it('crosses month and year boundaries', () => {
-    const days = buildStripDays('2027-01-01', { weekStartsOn: 1 })
-    expect(days[0]).toBe('2026-12-21')
-    expect(days).toContain('2027-01-01')
-  })
-
-  it('takes a custom count', () => {
-    expect(buildStripDays('2026-09-23', { weekStartsOn: 1, count: 7 })).toHaveLength(7)
+  it('defaults to 26 weeks either side', () => {
+    expect(buildStripWeeks('2026-09-23')).toHaveLength(53)
   })
 })
 
-describe('shiftStrip', () => {
-  it('moves the anchor by two weeks', () => {
-    expect(shiftStrip('2026-09-23', 1)).toBe('2026-10-07')
-    expect(shiftStrip('2026-09-23', -1)).toBe('2026-09-09')
+describe('weekIndexOf', () => {
+  const weeks = buildStripWeeks('2026-09-23', { weekStartsOn: 1, before: 1, after: 1 })
+
+  it('finds the week holding a date, or -1 outside the strip', () => {
+    expect(weekIndexOf(weeks, '2026-09-14')).toBe(0)
+    expect(weekIndexOf(weeks, '2026-09-27')).toBe(1)
+    expect(weekIndexOf(weeks, '2026-10-04')).toBe(2)
+    expect(weekIndexOf(weeks, '2026-10-05')).toBe(-1)
+    expect(weekIndexOf(weeks, '2026-09-13')).toBe(-1)
   })
 })
 
@@ -63,7 +77,7 @@ describe('parseJournalDateParam', () => {
     expect(parseJournalDateParam('2027-02-29')).toBeNull()
     expect(parseJournalDateParam('2026-13-01')).toBeNull()
     expect(parseJournalDateParam('2026-9-2')).toBeNull()
-    expect(parseJournalDateParam('yesterday')).toBeNull()
+    expect(parseJournalDateParam('last-week')).toBeNull()
     expect(parseJournalDateParam(undefined)).toBeNull()
   })
 })
@@ -107,5 +121,94 @@ describe('JOURNAL_TEMPLATE', () => {
       .map((n) => n.content[0].text)
     expect(headings).toEqual(JOURNAL_SECTIONS)
     expect(JOURNAL_TEMPLATE.content.at(-1)).toEqual({ type: 'paragraph' })
+  })
+})
+
+const h2 = (text) => ({ type: 'heading', attrs: { level: 2 }, content: [{ type: 'text', text }] })
+const p = (text) => ({ type: 'paragraph', content: text ? [{ type: 'text', text }] : undefined })
+const list = (...texts) => ({
+  type: 'bulletList',
+  content: texts.map((t) => ({ type: 'listItem', content: [p(t)] })),
+})
+const titles = (doc) => doc.content.map((n) => n.content?.[0]?.text ?? n.type)
+
+describe('appendToSection', () => {
+  const inserted = list('Shipped it')
+
+  it('replaces the template’s empty bullet', () => {
+    const doc = appendToSection(JOURNAL_TEMPLATE, 'Today', [inserted])
+    expect(doc.content[1]).toBe(inserted)
+    expect(doc.content).toHaveLength(JOURNAL_TEMPLATE.content.length)
+    expect(doc.content[2]).toEqual(h2('Blockers'))
+  })
+
+  it('appends after written content, before the next section', () => {
+    const doc = { type: 'doc', content: [h2('Today'), list('Wrote tests'), h2('Notes'), p('x')] }
+    const out = appendToSection(doc, 'Today', [inserted])
+    expect(out.content.map((n) => n.type)).toEqual([
+      'heading',
+      'bulletList',
+      'bulletList',
+      'heading',
+      'paragraph',
+    ])
+    expect(out.content[2]).toBe(inserted)
+    expect(doc.content).toHaveLength(4) // input untouched
+  })
+
+  it('works on the last section and matches headings case-insensitively', () => {
+    const doc = { type: 'doc', content: [h2('notes'), p('Some text')] }
+    const out = appendToSection(doc, 'Notes', [inserted])
+    expect(out.content.at(-1)).toBe(inserted)
+  })
+
+  it('adds a missing section at the end', () => {
+    const doc = { type: 'doc', content: [p('Free text')] }
+    const out = appendToSection(doc, 'Today', [inserted])
+    expect(titles(out)).toEqual(['Free text', 'Today', 'bulletList'])
+  })
+
+  it('keeps a heading with no content after it', () => {
+    const doc = { type: 'doc', content: [h2('Today'), h2('Blockers')] }
+    expect(appendToSection(doc, 'Today', [inserted]).content[1]).toBe(inserted)
+  })
+})
+
+describe('completedTasksToBulletList', () => {
+  const tasks = [
+    { id: 't1', title: 'Rebase MR' },
+    { id: 't2', title: 'RFQ pagination' },
+  ]
+
+  it('builds mention chips for each task', () => {
+    const out = completedTasksToBulletList(tasks)
+    expect(out.type).toBe('bulletList')
+    expect(out.content[1].content[0].content[0]).toEqual({
+      type: 'taskMention',
+      attrs: { id: 't2', label: 'RFQ pagination' },
+    })
+  })
+
+  it('skips tasks already mentioned, and returns null when none are left', () => {
+    expect(completedTasksToBulletList(tasks, ['t1']).content).toHaveLength(1)
+    expect(completedTasksToBulletList(tasks, ['t1', 't2'])).toBeNull()
+    expect(completedTasksToBulletList([])).toBeNull()
+  })
+})
+
+describe('mini month helpers', () => {
+  it('labels the month', () => {
+    expect(monthLabel('2026-09-23')).toBe('Sep 2026')
+  })
+
+  it('covers the whole visible grid, outside days included', () => {
+    expect(monthGridRange(new Date(2026, 8, 15), 1)).toEqual({
+      from: '2026-08-31',
+      to: '2026-10-04',
+    })
+    expect(monthGridRange(new Date(2026, 8, 15), 0)).toEqual({
+      from: '2026-08-30',
+      to: '2026-10-03',
+    })
   })
 })

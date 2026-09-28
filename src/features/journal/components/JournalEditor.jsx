@@ -11,7 +11,7 @@ import { JOURNAL_HEADING_TONES, JOURNAL_TEMPLATE } from '@/features/journal/cons
 import { useJournalAutosave } from '@/features/journal/hooks/useJournalAutosave'
 
 /** The editor for one loaded day. Mounted per space, date and reset (it reads `entry` once). */
-function EntryEditor({ entry, spaceId, date, onSaveState }) {
+function EntryEditor({ entry, spaceId, date, onSaveState, onEditorReady }) {
   const { onChange, flush, status } = useJournalAutosave({ entry, spaceId, date })
   const taskMentions = useTaskMentionsConfig({ space_id: spaceId })
   // Paste, drop or "/ Image" upload into the entry's space (Feature 15).
@@ -35,6 +35,7 @@ function EntryEditor({ entry, spaceId, date, onSaveState }) {
     <RichTextEditor
       value={entry?.content ?? JOURNAL_TEMPLATE}
       onChange={onChange}
+      onEditorReady={onEditorReady}
       features={features}
       placeholder="Type '/' for commands, or @ to link a task"
       label="Journal entry"
@@ -45,10 +46,18 @@ function EntryEditor({ entry, spaceId, date, onSaveState }) {
 
 /**
  * One space's entry for a day: the saved entry, or the standup template when nothing is written
- * (nothing is stored until the first edit). `resetKey` remounts the editor after Clear or Undo.
- * `onSaveState({ status, flush })` feeds the page header's save indicator.
+ * (nothing is stored until the first edit). `resetKey` remounts the editor after Clear or Undo. `onSaveState({ status,
+ * flush })` feeds the page header's save indicator; `onEditorReady(editor)` hands the instance
+ * to the page ("Insert into Today").
  */
-export function JournalEditor({ spaceId, date, resetKey = 0, onSaveState, className }) {
+export function JournalEditor({
+  spaceId,
+  date,
+  resetKey = 0,
+  onSaveState,
+  onEditorReady,
+  className,
+}) {
   const { data: entry, isLoading, error, refetch } = useJournalEntry({ spaceId, date })
 
   if (isLoading) return <JournalSkeleton className={className} />
@@ -78,6 +87,7 @@ export function JournalEditor({ spaceId, date, resetKey = 0, onSaveState, classN
         spaceId={spaceId}
         date={date}
         onSaveState={onSaveState}
+        onEditorReady={onEditorReady}
       />
     </motion.div>
   )

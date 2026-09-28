@@ -6,7 +6,7 @@ import { journalHeading } from '@/features/journal/utils'
 
 /**
  * The day's title (design Journal.dc): "Tuesday, 23 September" with the fiscal "Q2 · W13" beside
- * it, then a muted "Standup template" line (`children` adds to it, e.g. the Global note).
+ * it, then a muted "Standup template" line (`children` replaces it: Global's note).
  */
 export function JournalDateHeading({ date, children }) {
   const { fyStartMonth, weekStartsOn } = usePreferences()

@@ -27,6 +27,17 @@ if (!window.ResizeObserver) {
     disconnect() {}
   }
 }
+// Embla (the carousel) tracks slides in view
+if (!window.IntersectionObserver) {
+  window.IntersectionObserver = class {
+    observe() {}
+    unobserve() {}
+    disconnect() {}
+    takeRecords() {
+      return []
+    }
+  }
+}
 // Radix Select / Popover pointer APIs
 if (!Element.prototype.hasPointerCapture) {
   Element.prototype.hasPointerCapture = () => false

@@ -1,9 +1,13 @@
-export const JOURNAL_SECTIONS = ['Yesterday', 'Today', 'Blockers', 'Notes']
+// Each day's entry stands alone: to look back, change the date (the user's decision, 2026-09-26).
+export const JOURNAL_SECTIONS = ['Today', 'Blockers', 'Notes']
 
 export const JOURNAL_AUTOSAVE_DELAY = 800
 
-/** Days shown in the date strip (design: a fixed two-week grid). */
-export const JOURNAL_STRIP_DAYS = 14
+/**
+ * Weeks the date strip spans on each side of the selected day's week (a carousel, two weeks on
+ * screen). Further away, the mini month jumps and the strip re-centres.
+ */
+export const JOURNAL_STRIP_WEEKS = 26
 
 /** Section headings styled by text in the editor (`features.headingTones`). */
 export const JOURNAL_HEADING_TONES = { Blockers: 'destructive' }

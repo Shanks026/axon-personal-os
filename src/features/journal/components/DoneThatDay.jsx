@@ -1,11 +1,13 @@
-import { CircleCheck } from 'lucide-react'
+import { CircleCheck, CornerDownLeft } from 'lucide-react'
 import { formatTime, formatWeekdayDate, zonedDayRange } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { AnimatedList } from '@/components/motion/AnimatedList'
 import { EntityLink } from '@/components/shared/EntityLink'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
+import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { usePreferences } from '@/features/settings/api'
 import { useStatusChanges } from '@/features/tasks/api'
 import { TASK_STATUS_MAP } from '@/features/tasks/constants'
@@ -58,8 +60,10 @@ function DoneRow({ item, space, showSpace, timezone }) {
  * The journal rail (design Journal.dc): what got done on the day, for reference while writing.
  * Tasks show once, at their latest status change that day (completions, and moves such as
  * "→ In review"); todos ticked off show struck through. Local day in the profile time zone.
+ * With `onInsert(tasks)` (inside a space), "Insert into Today" hands over the day's completed
+ * tasks; it's disabled when there are none.
  */
-export function DoneThatDay({ spaceIds, date, isToday, className }) {
+export function DoneThatDay({ spaceIds, date, isToday, onInsert, className }) {
   const { timezone } = usePreferences()
   const { isGlobal, spaceById } = useSpace()
   const { from, to } = zonedDayRange(date, timezone)
@@ -67,6 +71,18 @@ export function DoneThatDay({ spaceIds, date, isToday, className }) {
   const todos = useTodos({ spaceIds, doneFrom: from, doneTo: to })
   const loading = changes.isLoading || todos.isLoading
   const items = buildDoneItems(changes.data, todos.data)
+  const completed = items.filter((i) => i.kind === 'task' && i.status === 'done').map((i) => i.task)
+  const insertButton = (
+    <Button
+      variant="outline"
+      className="w-full text-muted-foreground"
+      disabled={loading || completed.length === 0}
+      onClick={() => onInsert(completed)}
+    >
+      <CornerDownLeft />
+      Insert into “Today”
+    </Button>
+  )
 
   return (
     <div className={cn('flex flex-col', className)}>
@@ -102,6 +118,26 @@ export function DoneThatDay({ spaceIds, date, isToday, className }) {
           />
         )}
       </div>
+      {onInsert && (
+        <div className="mt-4">
+          {!loading && completed.length === 0 ? (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                {/* A disabled button fires no pointer events: the wrapper carries the tooltip. */}
+                <span
+                  tabIndex={0}
+                  className="block rounded-md outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                >
+                  {insertButton}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent>No completed tasks on this day</TooltipContent>
+            </Tooltip>
+          ) : (
+            insertButton
+          )}
+        </div>
+      )}
     </div>
   )
 }

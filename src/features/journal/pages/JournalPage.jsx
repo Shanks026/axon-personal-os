@@ -26,6 +26,8 @@ import { JournalDateHeading } from '@/features/journal/components/JournalDateHea
 import { JournalEditor } from '@/features/journal/components/JournalEditor'
 import { JournalEntryMenu } from '@/features/journal/components/JournalEntryMenu'
 import { JournalGlobalDay } from '@/features/journal/components/JournalGlobalDay'
+import { JournalMonthPopover } from '@/features/journal/components/JournalMonthPopover'
+import { useInsertIntoToday } from '@/features/journal/hooks/useInsertIntoToday'
 import { useJournalDate } from '@/features/journal/hooks/useJournalDate'
 
 const IDLE = { status: 'idle', flush: () => Promise.resolve() }
@@ -40,6 +42,7 @@ export default function JournalPage() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [save, setSave] = useState(IDLE)
   const [resetKey, setResetKey] = useState(0)
+  const { onEditorReady, insert } = useInsertIntoToday()
 
   const { data: entry } = useJournalEntry({ spaceId: isGlobal ? null : space?.id, date })
   const clear = useClearJournalEntry({ onReset: () => setResetKey((k) => k + 1) })
@@ -66,6 +69,12 @@ export default function JournalPage() {
             Today
           </Button>
         )}
+        <JournalMonthPopover
+          selected={date}
+          spaceIds={scopeSpaceIds}
+          weekStartsOn={weekStartsOn}
+          onSelect={goTo}
+        />
         <Tooltip>
           <TooltipTrigger asChild>
             <Button
@@ -84,13 +93,33 @@ export default function JournalPage() {
         {!isGlobal && entry && <JournalEntryMenu onClear={clearEntry} />}
       </>
     ),
-    [isGlobal, save, isToday, goToday, railOpen, toggleRail, entry, clearEntry],
+    [
+      isGlobal,
+      save,
+      isToday,
+      goToday,
+      date,
+      scopeSpaceIds,
+      weekStartsOn,
+      goTo,
+      railOpen,
+      toggleRail,
+      entry,
+      clearEntry,
+    ],
   )
   usePageHeader({ title: 'Journal', actions: headerActions })
 
   if (invalid) return <Navigate to={p.journal()} replace />
 
-  const rail = <DoneThatDay spaceIds={scopeSpaceIds} date={date} isToday={isToday} />
+  const rail = (
+    <DoneThatDay
+      spaceIds={scopeSpaceIds}
+      date={date}
+      isToday={isToday}
+      onInsert={isGlobal ? undefined : insert}
+    />
+  )
 
   return (
     <div className="flex min-h-full flex-1 flex-col">
@@ -117,6 +146,7 @@ export default function JournalPage() {
                 date={date}
                 resetKey={resetKey}
                 onSaveState={setSave}
+                onEditorReady={onEditorReady}
                 className="mt-8"
               />
             )}

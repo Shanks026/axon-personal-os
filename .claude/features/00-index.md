@@ -25,7 +25,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 07 | Task Detail and Note ↔ Task Linking | [07-task-detail-and-linking.md](07-task-detail-and-linking.md) | 05, 06 | ✅ Complete (UI refinements pending) |
 | **Wave 3: Time** | | | | |
 | 08 | Calendar and Events | [08-calendar.md](08-calendar.md) | 07 | ✅ Complete |
-| 09 | Daily Journal / Work Log | [09-journal.md](09-journal.md) | 06, 07 | 🟡 In progress (Phase 1 ✅) |
+| 09 | Daily Journal / Work Log | [09-journal.md](09-journal.md) | 06, 07 | ✅ Complete |
 | **Wave 4: Insight** | | | | |
 | 10 | Dashboard (per space and Global) | [10-dashboard.md](10-dashboard.md) | 08, 09 | 🔵 Planned |
 | 11 | Quarterly Reports (fiscal year) | [11-reports.md](11-reports.md) | 10 | 🔵 Planned |
@@ -117,8 +117,15 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 
 Newest first. One entry per landed phase or planning change.
 
-### 2026-09-26: Feature 09 plan — carry-forward added to Phase 2
-- The user asked why each entry has both Yesterday and Today. They stay separate (plan vs outcome), and Phase 2 now adds **carry-forward**: a day with no entry opens with Yesterday prefilled from the most recent entry's Today (same space, within 7 days), copied once and never synced. New helpers planned: `getSectionContent`, `buildCarriedTemplate`, `fetchPreviousJournalEntry`.
+### 2026-09-26: Journal day strip is a swipeable carousel
+- The user's request: the date strip slides horizontally with the mouse and two-finger trackpad swipes. `DateStrip` is now a **shadcn Carousel** of week slides (two on screen, one on phones), snapping week by week, spanning 26 weeks either side of the selected day; ‹ › move two weeks.
+- **New:** shadcn `carousel` (`components/ui/carousel.jsx`, unmodified) with `embla-carousel-react`, plus **`embla-carousel-wheel-gestures`** (trackpad). Utils `buildStripWeeks` / `weekIndexOf` replace `buildStripDays` / `shiftStrip`. `tests/setup.js` stubs `IntersectionObserver`. Spec recorded in `rules/design-system.md`. Tests: 397.
+
+### 2026-09-26: Feature 09 Phase 2 — Mini month, Insert into Today; template without Yesterday (Feature 09 complete)
+- **Template decision (the user):** each day's entry stands alone. The Yesterday section is gone (template: Today / Blockers / Notes) and carry-forward, briefly planned, was dropped; look back by changing the date. The one existing entry keeps its headings.
+- **Mini month:** "Sep 2026" header button opening the shadcn Calendar with entry dots (follows month navigation and week start).
+- **Insert into "Today"** in the rail: appends the day's completed tasks as mention chips under Today, never duplicating, through autosave (so the entry is created if needed and mentions sync).
+- **New:** `JournalMonthPopover`, `useInsertIntoToday`, utils `appendToSection`, `completedTasksToBulletList`, `monthLabel`, `monthGridRange`. No schema changes (the one existing entry had its empty Yesterday heading removed, at the user's request). Tests: 398 (+9).
 
 ### 2026-09-26: Feature 09 Phase 1 — Daily journal entry
 - **Plan updated first:** the Journal design deltas are folded into `09-journal.md` (14-day strip with ‹ ›, date title with "Q2 · W13", uppercase headings with Blockers in red, "Done today" rail with status changes; streak and entry count dropped to the backlog; the mini month and "Insert into Today" in Phase 2). **Global is stacked, read-only cards** (the user's decision).
