@@ -36,7 +36,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | **Wave 6: Later** (backlog; each gets a full doc through the skill when started) | | | | |
 | 15 | Attachments and Media | [15-attachments-and-media.md](15-attachments-and-media.md) | 06 | 🟡 In progress (Phase 1 ✅ images in the editor; Phases 2–3 later) |
 | 16 | Recurring Tasks and Reminders | none | 14 | ⚪ Backlog |
-| 17 | **AI Assistant and Jira** (taken next, before 10–14) | [17-ai-and-jira.md](17-ai-and-jira.md) | 04, 05, 07 | 🟡 In progress (Phase 1 ✅, Phase 2 🟡) |
+| 17 | **AI Assistant and Jira** (taken next, before 10–14) | [17-ai-and-jira.md](17-ai-and-jira.md) | 04, 05, 07 | 🟡 In progress (Phases 1–2 ✅, Phase 3 🟡) |
 | 18 | Automation and Email Triggers | none | 13, 16 | ⚪ Backlog |
 | 19 | Data Export and Backup | none | 14 | ⚪ Backlog |
 | 20 | PWA and Mobile Polish | none | 14 | ⚪ Backlog |
@@ -93,7 +93,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `sync_note_mentions()` | 07 | ✅ | RPC, security invoker; migration `20260925184644` |
 | `events` | 08 | ✅ | Optional `task_id` / `note_id`. Migration `20260925201716` |
 | `profiles.ai_settings`, `ai_usage` | 17 | ✅ | AI model defaults per job; one usage row per model call (tokens, cost). Migration `20260928061804` |
-| `tasks.jira_key`, `tasks.jira_imported_at`; `profiles.jira_settings` | 17 | ⬜ | Jira import. Phase 2 |
+| `tasks.jira_key`, `tasks.jira_imported_at`; `profiles.jira_settings` | 17 | ✅ | Jira import; unique live `jira_key` per user. Migration `20260928081802` |
 | `notes.kind`, `notes.journal_date` (+ `notes_journal_unique` partial index) | 09 | ✅ | One live journal entry per space per day; existing rows became `kind = 'note'`. Migration `20260926071151` |
 | `week_start_of()`, `dashboard_summary()` | 10 | ⬜ | RPCs; they read the profile's time zone and week start |
 | `reports` + `report_stats()` | 11 | ⬜ | `space_id` NULL means a Global report; "at end" statuses are rebuilt from `task_activity` |
@@ -118,6 +118,18 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-28: Feature 17 Phase 2 follow-up — tags on Jira import
+- **Keyword matching:** imported tickets get tags from keywords matched in the title, issue type, components and labels (Settings → Jira → Tag keywords; empty = the tag's name plus synonyms such as "suggestion" for Improvement). `jira` v2 returns components.
+- **Suggest tags (AI, on click):** a button above the imported form; new `suggest_tags` action in `ai` v5. Migration `20260928084531_ai_usage_suggest_tags_job` adds the job to `ai_usage`.
+- **New:** `JiraTagKeywords`, `SuggestTagsButton`, `inferTags` / `tagKeywords` / `mentions` (jira utils). Tests: 426.
+
+### 2026-09-28: Feature 17 Phase 2 — Jira import
+- **New task → From Jira:** paste a Jira link or key; Axon fetches the issue and opens the form prefilled (title, rich description from Jira's rendered HTML, status and priority through the maps, labels as tags, fix version, start and due dates, the Jira link). An issue already imported offers **Open it**. Labels without a tag, and single AI drafts' new tags, are now created on save (dashed "new" pills in the form).
+- **Settings → AI & integrations → Jira:** site, account secrets status, Test connection, start-date field, status and priority maps.
+- **Migration `20260928081802_add_jira_to_tasks`**: `tasks.jira_key` (unique per user among live tasks), `tasks.jira_imported_at`, `profiles.jira_settings`. **Edge Function `jira`** (read-only, owner-only; `status`, `meta`, `fetch_issue`).
+- **New:** `features/jira/`, `components/editor/html.js` (`htmlToDoc`), `JiraKeyBadge` on cards, table rows and the task page, `ensureTagIds` (tags api), `NewTagList` (task dialog). Tests: 422.
+- **Manual step for the user:** in Settings → AI & integrations, set the Jira site (`https://thbs.atlassian.net`), click Test connection, and pick the start-date field.
 
 ### 2026-09-28: Feature 17 — Gemini free tier as the default AI provider
 - The user's card payments failed for both Anthropic and Google, so AI runs on **Google Gemini's free tier** (no card). The `ai` Edge Function is now multi-provider: `models.js` (registry: model → provider, price), `claude.js` (the Claude call, kept), `gemini.js` (new, `generateContent` with a JSON schema). Deployed as version 2.

@@ -18,7 +18,7 @@ const SECTIONS = {
   },
   ai: {
     title: 'AI & integrations',
-    description: 'Claude for drafting tasks, and later Jira.',
+    description: 'AI for drafting tasks, and importing from Jira.',
     Component: AiSection,
   },
 }

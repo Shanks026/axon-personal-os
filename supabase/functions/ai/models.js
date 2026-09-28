@@ -52,6 +52,7 @@ export const MODELS = {
 /** Gemini Flash for everything while Claude is unavailable (the user's decision, 2026-09-28). */
 export const DEFAULT_MODELS = {
   draft_tasks: 'gemini-3.8-flash',
+  suggest_tags: 'gemini-3.8-flash',
   checklist: 'gemini-3.8-flash',
   report_weekly: 'gemini-3.8-flash',
   report_quarterly: 'gemini-3.8-flash',

@@ -27,6 +27,13 @@ export const taskSchema = z
     start_date: isoDate,
     due_date: isoDate,
     versions: z.array(taskVersionSchema).max(MAX_VERSIONS, `Up to ${MAX_VERSIONS} versions`),
+    // Set by "From Jira" (Feature 17); absent otherwise, so edits never send them.
+    jira_key: z
+      .string()
+      .regex(/^[A-Z][A-Z0-9_]*-[0-9]+$/)
+      .nullable()
+      .optional(),
+    jira_imported_at: z.string().nullable().optional(),
   })
   .refine((v) => !v.start_date || !v.due_date || v.start_date <= v.due_date, {
     path: ['due_date'],

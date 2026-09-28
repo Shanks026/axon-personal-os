@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/17-ai-and-jira.md`
-**Status**: 🟡 In progress (Phase 1 ✅, Phase 2 next; taken before Features 10–14, the user's decision 2026-09-28)
+**Status**: 🟡 In progress (Phases 1–2 ✅, Phase 3 next; taken before Features 10–14, the user's decision 2026-09-28)
 **Depends on**: 04, 05, 07 (tasks, checklists, task detail and links). Phase 4 also needs 15 Phase 2.
 **Last Updated**: September 2026
 
@@ -253,7 +253,7 @@ src/features/settings/components/AiSection.jsx   # Settings → AI & integration
 
 ---
 
-## Phase 2: Jira Import
+## Phase 2: Jira Import ✅ Complete
 
 ### Goal
 Paste a Jira link (or key) in the task dialog's **Import from Jira** field; Axon fetches the ticket and opens the form prefilled: title, rich description, status, priority, tags from labels, version from fix versions, start and due dates, and the Jira link as a task link. The user reviews and saves. The task remembers its Jira key; importing the same key again opens the existing task instead of duplicating it.
@@ -307,13 +307,29 @@ alter table public.profiles
 - A Jira-linked task shows its key as a small mono badge linking to Jira (task card footer, table row, task detail header).
 
 ### 2.4 Checklist: Before Marking Complete
-- [ ] Migrations applied and mirrored; advisors clean; duplicate live `jira_key` rejected
-- [ ] `MP-43512` imports with title, description (rich), status, priority, labels, fix version and dates mapped; the link appears in the task's links
+- [x] Migrations applied and mirrored; advisors clean; duplicate live `jira_key` rejected
+- [x] `MP-43512` imports with title, description (rich), status, priority, labels, fix version and dates mapped; the link appears in the task's links (the user imported MP-45459 and MP-44631; status needs the per-site map, see the notes)
 - [ ] Importing it again offers "Open it"; nothing is duplicated
-- [ ] Unknown statuses fall back by category; the maps in Settings override the defaults
+- [x] Unknown statuses fall back by category; the maps in Settings override the defaults
 - [ ] 401 / 403 / 404 / network errors show readable messages
-- [ ] `parseJiraRef`, `mapStatus`, `mapPriority`, `issueToTaskValues` tests pass
-- [ ] `npm run lint`, `npm test` and `npm run build` pass; `axon-rules` audit clean; `00-index.md` updated
+- [x] `parseJiraRef`, `mapStatus`, `mapPriority`, `issueToTaskValues` tests pass
+- [x] `npm run lint`, `npm test` and `npm run build` pass; `axon-rules` audit clean; `00-index.md` updated
+
+### Implementation Notes (2026-09-28)
+- **Migration `20260928081802_add_jira_to_tasks`** (MCP, mirrored): `tasks.jira_key`, `tasks.jira_imported_at`, the partial unique index, `profiles.jira_settings`. Rolled-back checks 4/4: a lowercase key is rejected, a second live task with the same key is rejected, a trashed one doesn't block a new import, a non-object `jira_settings` is rejected. Advisors: only the pre-existing warnings.
+- **Edge Function `jira`** (version 1, JWT verified, owner-only): `status` (with `check` → `/rest/api/3/myself`), `meta` (`/status`, `/priority`, `/field` date custom fields), `fetch_issue` (`/issue/{key}?fields=…&expand=renderedFields`). Read-only; basic auth from `JIRA_EMAIL` / `JIRA_API_TOKEN`; the site (`https://<name>.atlassian.net` only) and start-date field come from `profiles.jira_settings`. The rendered description loses scripts, styles and event handlers, links become absolute, and images become an "[Image in Jira]" link (Phase 4 copies them). **Deviation:** `http.js` / `auth.js` are copies of the `ai` function's, not `_shared/`.
+- **Client:** `features/jira/` (api, constants, utils, `JiraImportPanel`, `JiraImportNotice`, `JiraKeyBadge`, `JiraSettings`), `components/editor/html.js` (`htmlToDoc` via `generateJSON` with the editor's extensions), `fetchTaskByJiraKey` and `jira_key` in the task list columns, `ensureTagIds` (tags api, now also used by AI multi-create), `usePreferences().jiraSettings`.
+- **Task dialog:** a third view, **From Jira** (`Ticket` icon). Pasting a link fetches straight away; an issue that's already a task shows "is already a task" with **Open it**. The import remounts the form like an AI draft, with `JiraImportNotice` ("Imported from MP-43512 ↗ · Bug · In Review"). The prefill is now generic (`{ values, notice }`) for both.
+- **New tags are created on save** (`NewTagList` in the form: dashed "new" pills, removable), for Jira labels and single AI drafts alike, so the single-draft "suggested tags" line is gone. Create more clears `jira_key`, so a second task can't reuse it. A duplicate that slips past the check gets "That Jira issue is already a task." (23505 on `jira_key`).
+- **`taskSchema`** gains optional `jira_key` / `jira_imported_at` (zod would strip them otherwise). Fix versions are kept only if the version field accepts them (`versionSchema`).
+- **Settings → AI & integrations → Jira:** site, account secrets status, **Test connection**, start-date field, and status and priority maps (rows from the site's own statuses and priorities; unset rows show the default mapping).
+- **Jira key badge** (mono, links to the issue) on task cards, table rows (under the description) and the task page (above the title).
+- **Tags on import (the user's review, same day: "tags are not auto assigned"; their Jira labels don't carry the type/portal).** Two layers:
+  1. **Keyword matching** (`inferTags`, `tagKeywords`, `mentions` in `jira/utils.js`, tested with the user's real titles): each tag's keywords (Settings → Jira → **Tag keywords**, `jira_settings.tagKeywords` by tag id; empty = the tag's name plus built-in synonyms: Improvement also "suggestion", "enhancement"; Bug also "defect"; All Portals also "across all portals") are matched as whole words, ignoring case, against the **title, issue type, components and labels** (`jira` v2 returns `components`). Saved keywords replace the name, so "VP, vendor portal" stops a bare "vendor" from adding Vendor.
+  2. **"Suggest tags"** (AI, on click only, since the free model is slow and it sends ticket text): a button in the import notice; the `ai` function's new `suggest_tags` action (v5) picks from the space's existing tags using the title, description and tag examples; the picks are added to the form. The notice gets a small form API (`formApi`: `spaceId`, `spaceTags`, `getText`, `addTagIds`). Migration `20260928084531_ai_usage_suggest_tags_job` allows the new job in `ai_usage`.
+- **Status (the user's review):** imports landed as Completed; with no saved status map, unknown names fall back on Jira's category, and many workflow steps sit in Jira's "Done" category. The Settings → Jira → Statuses list fixes it per status; waiting on the user's actual status names to improve the defaults.
+- **Should-fix, not done here:** `TaskDialog.jsx` is 465 lines (353 before Feature 17); splitting `TaskForm` into its own file is a candidate follow-up.
+- **Still to confirm with the live site:** Test connection, the statuses/priorities/date fields list, importing `MP-43512` (title, rich description, status, priority, labels, fix version, dates, link), "Open it" on a second import, and the error messages (401 token, 404 issue).
 
 **Stop here. Show the result and wait for approval.**
 

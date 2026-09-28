@@ -1,6 +1,14 @@
 import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowUpRight, CalendarArrowUp, CalendarDays, PenLine, Sparkles, X } from 'lucide-react'
+import {
+  ArrowUpRight,
+  CalendarArrowUp,
+  CalendarDays,
+  PenLine,
+  Sparkles,
+  Ticket,
+  X,
+} from 'lucide-react'
 import { Link } from 'react-router'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -26,9 +34,11 @@ import { textClasses } from '@/lib/tint'
 import { AiTaskPanel } from '@/features/ai/components/AiTaskPanel'
 import { AiDraftNotice } from '@/features/ai/components/AiDraftNotice'
 import { useImageHandlers } from '@/features/attachments/api'
+import { JiraImportNotice } from '@/features/jira/components/JiraImportNotice'
+import { JiraImportPanel } from '@/features/jira/components/JiraImportPanel'
 import { usePreferences } from '@/features/settings/api'
 import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
-import { useSetTaskTags, useTags } from '@/features/tags/api'
+import { ensureTagIds, useSetTaskTags, useTags } from '@/features/tags/api'
 import {
   useCreateTask,
   useCreateTaskLink,
@@ -40,6 +50,7 @@ import {
 import {
   DateChip,
   LinksField,
+  NewTagList,
   TagList,
   TagsChip,
 } from '@/features/tasks/components/TaskDialogChips'
@@ -59,8 +70,9 @@ import { ChecklistSection } from '@/features/todos/components/ChecklistSection'
  * (Save / Mod+Enter), not on its own. In edit mode an "Open task" link goes to the detail page
  * (`showOpenLink={false}` when the dialog is opened from that page).
  *
- * Create mode has a Form / Describe with AI switch (Feature 17): one AI draft comes back to this
- * form prefilled for review; several are reviewed and created in the AI view.
+ * Create mode has a Form / Describe with AI / From Jira switch (Feature 17): one AI draft or an
+ * imported Jira issue comes back to this form prefilled for review; several AI drafts are reviewed
+ * and created in the AI view.
  */
 export function TaskDialog({
   open,
@@ -91,15 +103,16 @@ export function TaskDialog({
 const VIEWS = [
   { value: 'form', label: 'Form', icon: PenLine },
   { value: 'ai', label: 'Describe with AI', icon: Sparkles },
+  { value: 'jira', label: 'From Jira', icon: Ticket },
 ]
 
 /**
- * Lives inside DialogContent, so its state resets each time the dialog opens. An AI draft remounts
- * the form (`formKey`) with the draft as its initial values.
+ * Lives inside DialogContent, so its state resets each time the dialog opens. A prefill (one AI
+ * draft, or a Jira issue) remounts the form (`formKey`) with its values and a notice above it.
  */
 function TaskDialogBody({ task, initialValues, onClose, onSuccess, showOpenLink }) {
   const [view, setView] = useState('form')
-  const [draft, setDraft] = useState(null) // { values, info } from a single AI draft
+  const [prefill, setPrefill] = useState(null) // { values, notice }
   const [formKey, setFormKey] = useState(0)
   const spaceId = useDefaultSpaceId(initialValues?.space_id)
 
@@ -107,6 +120,12 @@ function TaskDialogBody({ task, initialValues, onClose, onSuccess, showOpenLink 
     return (
       <TaskForm task={task} onClose={onClose} onSuccess={onSuccess} showOpenLink={showOpenLink} />
     )
+  }
+
+  const fill = (values, notice) => {
+    setPrefill({ values, notice })
+    setFormKey((k) => k + 1)
+    setView('form')
   }
 
   const viewSwitch = (
@@ -119,19 +138,27 @@ function TaskDialogBody({ task, initialValues, onClose, onSuccess, showOpenLink 
         headerExtra={viewSwitch}
         onClose={onClose}
         onCreated={(rows) => rows.forEach((row) => onSuccess?.(row))}
-        onSingleDraft={(values, info) => {
-          setDraft({ values, info })
-          setFormKey((k) => k + 1)
-          setView('form')
-        }}
+        onSingleDraft={(values, info) => fill(values, <AiDraftNotice info={info} />)}
+      />
+    )
+  }
+  if (view === 'jira') {
+    return (
+      <JiraImportPanel
+        spaceId={spaceId}
+        headerExtra={viewSwitch}
+        onClose={onClose}
+        onImported={(values, issue) =>
+          fill(values, (formApi) => <JiraImportNotice issue={issue} formApi={formApi} />)
+        }
       />
     )
   }
   return (
     <TaskForm
       key={formKey}
-      initialValues={draft ? { ...initialValues, ...draft.values } : initialValues}
-      notice={draft && <AiDraftNotice {...draft} />}
+      initialValues={prefill ? { ...initialValues, ...prefill.values } : initialValues}
+      notice={prefill?.notice}
       headerExtra={viewSwitch}
       onClose={onClose}
       onSuccess={onSuccess}
@@ -155,6 +182,8 @@ function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess
   const [tagIds, setTagIds] = useState(task?.tag_ids ?? initialValues?.tag_ids ?? [])
   const [links, setLinks] = useState(task?.links ?? initialValues?.links ?? [])
   const [checklist, setChecklist] = useState(initialValues?.checklist ?? [])
+  // Tag names from an AI draft or Jira labels that the space doesn't have yet: created on save.
+  const [newTags, setNewTags] = useState(initialValues?.newTags ?? [])
   // Bumped by Create more, so the (uncontrolled) description editor starts empty again.
   const [editorKey, setEditorKey] = useState(0)
   // The rich description isn't in the list columns: an edit loads it first.
@@ -203,11 +232,39 @@ function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess
   const { data: spaceTags = [] } = useTags({ spaceIds: defaultSpace ? [defaultSpace] : [] })
   const selectedTags = spaceTags.filter((t) => tagIds.includes(t.id))
 
+  // What a prefill notice may do with the form (the Jira import's "Suggest tags").
+  const formApi = {
+    spaceId: defaultSpace,
+    spaceTags,
+    getText: () => ({
+      title: form.getValues('title') ?? '',
+      description: form.getValues('description_text') ?? '',
+    }),
+    addTagIds: (ids) => {
+      const fresh = ids.filter((id) => !tagIds.includes(id))
+      if (fresh.length) setTagIds([...tagIds, ...fresh])
+      return fresh.length
+    },
+  }
+
   const onSubmit = form.handleSubmit((values) => {
     // An untouched description in edit mode stays out of the patch (undefined isn't sent).
     const payload = isEdit ? values : { ...values, description: values.description ?? null }
-    const done = (row) => {
-      setTaskTags.mutate({ taskId: row.id, tagIds })
+    const done = async (row) => {
+      let allTagIds = tagIds
+      if (!isEdit && newTags.length) {
+        try {
+          const created = await ensureTagIds({
+            spaceId: row.space_id,
+            names: newTags,
+            tags: spaceTags,
+          })
+          allTagIds = [...new Set([...tagIds, ...created])]
+        } catch (err) {
+          toast.error(err.message ?? 'Could not create the new tags')
+        }
+      }
+      setTaskTags.mutate({ taskId: row.id, tagIds: allTagIds })
       if (!isEdit && links.length) createLinks.mutate({ taskId: row.id, links })
       if (!isEdit && checklist.length) {
         createChecklist.mutate({ taskId: row.id, spaceId: row.space_id, titles: checklist })
@@ -215,10 +272,18 @@ function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess
       onSuccess?.(row)
       if (!isEdit && createMore) {
         toast.success('Task created', { description: row.title })
-        form.reset({ ...values, title: '', description: null, description_text: '' })
+        form.reset({
+          ...values,
+          title: '',
+          description: null,
+          description_text: '',
+          jira_key: null,
+          jira_imported_at: null,
+        })
         setEditorKey((k) => k + 1)
         form.setFocus('title')
         setTagIds([])
+        setNewTags([])
         setLinks([])
         setChecklist([])
         return
@@ -273,7 +338,7 @@ function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess
       {/* Only this middle part scrolls; the header and footer stay pinned. */}
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-3 px-5 pt-4">
-          {notice}
+          {typeof notice === 'function' ? notice(formApi) : notice}
           <div>
             {/* Versions sit at the far right of the title row, as on the card. */}
             <div className="flex items-start gap-3">
@@ -336,6 +401,10 @@ function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess
           <TagList
             tags={selectedTags}
             onRemove={(tag) => setTagIds(tagIds.filter((id) => id !== tag.id))}
+          />
+          <NewTagList
+            names={newTags}
+            onRemove={(name) => setNewTags(newTags.filter((n) => n !== name))}
           />
           <LinksField
             taskId={task?.id}

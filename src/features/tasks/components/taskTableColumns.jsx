@@ -5,6 +5,7 @@ import { SpaceBadge } from '@/components/shared/SpaceBadge'
 import { TagPillGroup } from '@/components/shared/TagPill'
 import { EmptyCell } from '@/components/shared/EmptyCell'
 import { VersionBadgeGroup } from '@/components/shared/VersionBadge'
+import { JiraKeyBadge } from '@/features/jira/components/JiraKeyBadge'
 import { TaskLinksButton } from '@/features/tasks/components/TaskLinksButton'
 import { PriorityMenu, StatusMenu, TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
 import { TaskPriorityPill, TaskStatusPill } from '@/features/tasks/components/TaskPills'
@@ -54,6 +55,7 @@ export function buildTaskColumns({
                 {task.description_text}
               </p>
             )}
+            {task.jira_key && <JiraKeyBadge jiraKey={task.jira_key} className="mt-0.5 -ml-1" />}
           </div>
         )
       },

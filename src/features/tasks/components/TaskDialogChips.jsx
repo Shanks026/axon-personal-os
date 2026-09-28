@@ -76,6 +76,36 @@ export function TagList({ tags, onRemove }) {
 }
 
 /**
+ * Tag names waiting to be created with the task (from an AI draft or Jira labels): dashed pills
+ * marked "new", each removable. Nothing is created until the task is saved.
+ */
+export function NewTagList({ names, onRemove }) {
+  if (!names.length) return null
+  return (
+    <div className="flex flex-wrap gap-1.5">
+      {names.map((name) => (
+        <span
+          key={name}
+          title="Created when you save"
+          className="inline-flex h-6.5 items-center gap-1 rounded-sm border border-dashed border-border-strong px-2 text-sm text-muted-foreground"
+        >
+          {name}
+          <span className="text-xs text-faint">new</span>
+          <button
+            type="button"
+            onClick={() => onRemove(name)}
+            aria-label={`Don’t create tag ${name}`}
+            className="-mr-0.5 rounded-full outline-none hover:opacity-70 focus-visible:ring-2 focus-visible:ring-ring"
+          >
+            <X className="size-3.25" />
+          </button>
+        </span>
+      ))}
+    </div>
+  )
+}
+
+/**
  * A task's links, inline in the dialog body like the description: the saved links, then a
  * borderless "Add a link" input with a + button (Enter works too). `taskId` set means changes
  * save immediately; unset (a task being created) means they stage in `links`/`onLinksChange`,

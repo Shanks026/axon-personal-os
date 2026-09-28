@@ -67,6 +67,18 @@ export function useAiMonthUsage({ since }) {
 }
 
 /**
+ * `suggest_tags`: `{ title, description, model, context: { tags, examples } }` → `{ tags }` (existing
+ * tag names only). Errors are shown by the caller.
+ */
+export function useSuggestTags() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (payload) => invokeAi('suggest_tags', payload),
+    onSettled: () => qc.invalidateQueries({ queryKey: [...aiKeys.all, 'usage'] }),
+  })
+}
+
+/**
  * `draft_tasks`: `{ text, model, context }` → `{ tasks, model, usage, costUsd }`. Errors are shown
  * inline by the composer, so there's no toast here.
  */

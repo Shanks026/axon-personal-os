@@ -23,6 +23,7 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { JiraKeyBadge } from '@/features/jira/components/JiraKeyBadge'
 import { LinkedNotesPanel } from '@/features/links/components/LinkedNotesPanel'
 import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
 import { ActivityTimeline } from '@/features/tasks/components/ActivityTimeline'
@@ -158,6 +159,7 @@ export function TaskDetail({ task }) {
       <div className="min-w-0 flex-1 px-4 pt-10 pb-24 md:px-14">
         <div className="mx-auto flex max-w-180 flex-col gap-8">
           <div className="flex flex-col gap-4">
+            {task.jira_key && <JiraKeyBadge jiraKey={task.jira_key} className="-mb-2 self-start" />}
             <TaskTitleInput task={task} />
             <TaskDescription task={task} onStatusChange={onStatusChange} />
           </div>

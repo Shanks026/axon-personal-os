@@ -3,6 +3,7 @@ import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase'
 import { noteKeys } from '@/features/notes/api'
 import { taskKeys } from '@/features/tasks/api'
+import { nextTagColor } from '@/features/tags/utils'
 
 export const tagKeys = {
   all: ['tags'],
@@ -55,6 +56,24 @@ export async function updateTag(id, patch) {
 export async function deleteTag(id) {
   const { error } = await supabase.from('tags').delete().eq('id', id)
   if (error) throw error
+}
+
+/**
+ * Tag ids for `names` in a space: existing tags (`tags`, matched case-insensitively) are reused,
+ * missing ones are created with the next colour. For AI drafts and Jira labels (Feature 17).
+ */
+export async function ensureTagIds({ spaceId, names, tags }) {
+  const known = [...tags]
+  const ids = []
+  for (const name of names) {
+    let tag = known.find((t) => t.name.toLowerCase() === name.toLowerCase())
+    if (!tag) {
+      tag = await createTag({ name, color: nextTagColor(known), space_id: spaceId })
+      known.push(tag)
+    }
+    if (!ids.includes(tag.id)) ids.push(tag.id)
+  }
+  return ids
 }
 
 /**

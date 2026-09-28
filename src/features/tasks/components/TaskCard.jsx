@@ -5,6 +5,7 @@ import { DueLabel } from '@/components/shared/DueLabel'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import { TagPillGroup } from '@/components/shared/TagPill'
 import { VersionBadgeGroup } from '@/components/shared/VersionBadge'
+import { JiraKeyBadge } from '@/features/jira/components/JiraKeyBadge'
 import { PriorityMenu, StatusMenu, TaskActionsMenu } from '@/features/tasks/components/TaskMenus'
 import { TaskLinksButton } from '@/features/tasks/components/TaskLinksButton'
 import { TaskPriorityPill, TaskStatusPill } from '@/features/tasks/components/TaskPills'
@@ -33,7 +34,7 @@ export function TaskCard({
   return (
     <article
       className={cn(
-        'group relative flex h-full min-h-44 flex-col rounded-xl border bg-card dark:bg-card/50 px-5 py-4.5 transition duration-(--dur-fast) ease-(--ease-standard) hover:-translate-y-px hover:border-border-strong hover:shadow-xs',
+        'group relative flex h-full min-h-44 flex-col rounded-xl border bg-card px-5 py-4.5 transition duration-(--dur-fast) ease-(--ease-standard) hover:-translate-y-px hover:border-border-strong hover:shadow-xs dark:bg-card/50',
         task.status === 'cancelled' && 'opacity-70',
       )}
     >
@@ -123,6 +124,7 @@ export function TaskCard({
         <span className="text-xs whitespace-nowrap text-muted-foreground">
           Updated {formatRelative(task.updated_at)}
         </span>
+        <JiraKeyBadge jiraKey={task.jira_key} />
         <div className="flex-1" />
         <DueLabel
           date={task.due_date}

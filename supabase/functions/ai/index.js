@@ -1,11 +1,13 @@
 // Axon's AI endpoint (Feature 17). POST { action, ... } with the user's JWT.
 //   status       → { configured, providers: { gemini, anthropic }, models: [{ id, label, provider, available }] }
 //   draft_tasks  → { tasks, model, usage, costUsd }
+//   suggest_tags → { tags, model, usage, costUsd }   ({ title, description, context: { tags, examples } })
 // Owner-only (AXON_OWNER_ID). Every model call is logged to public.ai_usage with the caller's JWT.
 import { HttpError, corsHeaders, json } from './http.js'
 import { requireOwner } from './auth.js'
 import { MODELS, costOf, providerStatus, resolveModel } from './models.js'
 import { draftTasks } from './draftTasks.js'
+import { suggestTags } from './suggestTags.js'
 
 async function loadAiSettings(supabase, userId) {
   const { data } = await supabase.from('profiles').select('ai_settings').eq('id', userId).single()
@@ -55,6 +57,20 @@ Deno.serve(async (req) => {
         const costUsd = costOf(model, usage)
         await logUsage(supabase, { job: 'draft_tasks', model, usage, costUsd })
         return json(req, 200, { tasks, model, usage, costUsd })
+      }
+
+      case 'suggest_tags': {
+        const settings = await loadAiSettings(supabase, user.id)
+        const model = resolveModel('suggest_tags', body.model, settings)
+        const { tags, usage } = await suggestTags({
+          title: body.title,
+          description: body.description,
+          model,
+          context: body.context,
+        })
+        const costUsd = usage ? costOf(model, usage) : 0
+        if (usage) await logUsage(supabase, { job: 'suggest_tags', model, usage, costUsd })
+        return json(req, 200, { tags, model, usage, costUsd })
       }
 
       default:

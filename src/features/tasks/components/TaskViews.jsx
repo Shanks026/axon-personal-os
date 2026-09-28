@@ -7,7 +7,7 @@ import { TaskCard } from '@/features/tasks/components/TaskCard'
 export function TaskGrid({ tasks, actions, tagsById, progressByTask, onEdit, onOpen }) {
   const { isGlobal, spaceById } = useSpace()
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
+    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-2">
       <AnimatePresence initial={false}>
         {tasks.map((task) => (
           <motion.div

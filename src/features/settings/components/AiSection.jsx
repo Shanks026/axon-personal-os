@@ -6,6 +6,7 @@ import { AiNotConfigured } from '@/features/ai/components/AiNotConfigured'
 import { ModelPicker } from '@/features/ai/components/ModelPicker'
 import { AI_JOBS, AI_PROVIDERS } from '@/features/ai/constants'
 import { availableModels, formatCost, modelFor } from '@/features/ai/utils'
+import { JiraSettings } from '@/features/jira/components/JiraSettings'
 import { usePreferences, useUpdateMyProfile } from '@/features/settings/api'
 import { SettingsCard, SettingsRow } from '@/features/settings/components/SettingsCard'
 
@@ -32,8 +33,8 @@ function ProviderStatus({ connected }) {
 /**
  * Settings → AI & integrations (Feature 17): each provider's key status (Gemini on the free tier
  * now; Claude until its key is added), the default model per job (saved in `profiles.ai_settings`;
- * models without a key are disabled), and this month's usage from `ai_usage`. Jira joins this page
- * in Phase 2.
+ * models without a key are disabled), this month's usage from `ai_usage`, and the Jira settings
+ * (Phase 2).
  */
 export function AiSection() {
   const { timezone, aiSettings } = usePreferences()
@@ -99,6 +100,8 @@ export function AiSection() {
           provider. You can still pick another model on each request.
         </p>
       </section>
+
+      <JiraSettings />
     </div>
   )
 }

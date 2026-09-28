@@ -105,3 +105,18 @@ describe('markdownToDoc', () => {
     expect(markdownToDoc(undefined)).toBeNull()
   })
 })
+
+describe('htmlToDoc', () => {
+  it('parses Jira-style HTML into the editor schema and drops scripts', async () => {
+    const { htmlToDoc } = await import('@/components/editor/html')
+    const doc = htmlToDoc(
+      '<h3>Steps</h3><ul><li>Check <b>filters</b></li></ul><script>alert(1)</script><div class="panel"><p>Note</p></div>',
+    )
+    expect(doc.type).toBe('doc')
+    expect(doc.content[0]).toMatchObject({ type: 'heading', attrs: { level: 3 } })
+    expect(doc.content[1].type).toBe('bulletList')
+    expect(JSON.stringify(doc)).not.toContain('alert')
+    expect(JSON.stringify(doc)).toContain('Note')
+    expect(htmlToDoc('  ')).toBeNull()
+  })
+})

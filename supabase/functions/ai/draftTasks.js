@@ -79,7 +79,7 @@ function contextBlock(context = {}) {
 const MAX_EXAMPLES = 25
 
 /** "TAG EXAMPLES" lines ("- title → tag, tag"), capped and trimmed: the client's data is untrusted. */
-function tagExamples(examples) {
+export function tagExamples(examples) {
   const lines = (Array.isArray(examples) ? examples : [])
     .slice(0, MAX_EXAMPLES)
     .map((e) => {

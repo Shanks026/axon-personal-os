@@ -19,11 +19,12 @@ export const taskKeys = {
   statusChanges: (params) => [...taskKeys.activities(), 'status', params], // { spaceIds, from, to }
   search: (params) => [...taskKeys.all, 'search', params], // { spaceIds, q }
   taggedExamples: (spaceId) => [...taskKeys.all, 'tagged-examples', spaceId], // AI drafting
+  byJiraKey: (key) => [...taskKeys.all, 'by-jira-key', key],
   summary: (id) => [...taskKeys.all, 'summary', id], // hover previews
 }
 
 const LIST_COLUMNS =
-  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, versions, position, pinned_at, created_at, updated_at, tag_ids:task_tags(tag_id), links:task_links(id, url, label, position), note_count:note_task_links(count)'
+  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, versions, position, pinned_at, jira_key, created_at, updated_at, tag_ids:task_tags(tag_id), links:task_links(id, url, label, position), note_count:note_task_links(count)'
 
 const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
 
@@ -193,7 +194,12 @@ export function useCreateTask() {
       qc.invalidateQueries({ queryKey: taskKeys.lists() })
       qc.invalidateQueries({ queryKey: [...taskKeys.all, 'versions'] })
     },
-    onError: (err) => toast.error(err.message ?? 'Could not create task'),
+    onError: (err) =>
+      toast.error(
+        err.code === '23505' && /jira_key/.test(err.message ?? '')
+          ? 'That Jira issue is already a task.'
+          : (err.message ?? 'Could not create task'),
+      ),
   })
 }
 
@@ -545,6 +551,21 @@ export async function searchTasks({ spaceIds, q }) {
   if (error) throw error
   const closed = (t) => (t.status === 'done' || t.status === 'cancelled' ? 1 : 0)
   return [...data].sort((a, b) => closed(a) - closed(b)).slice(0, SEARCH_LIMIT)
+}
+
+/**
+ * The live task imported from a Jira issue (`jira_key` is unique per user among live tasks), as
+ * `{ id, space_id, title }`, or `null`. Not scope-filtered: an import in any space finds it.
+ */
+export async function fetchTaskByJiraKey(key) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('id, space_id, title')
+    .eq('jira_key', key)
+    .is('deleted_at', null)
+    .maybeSingle()
+  if (error) throw error
+  return data
 }
 
 /**

@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
-import { createTag, setTaskTags, tagKeys } from '@/features/tags/api'
-import { nextTagColor } from '@/features/tags/utils'
+import { ensureTagIds, setTaskTags, tagKeys } from '@/features/tags/api'
 import { createTask, taskKeys } from '@/features/tasks/api'
 import { createChecklistItems, todoKeys } from '@/features/todos/api'
 
@@ -15,14 +14,11 @@ export function useCreateDraftTasks() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async ({ spaceId, drafts, tags }) => {
-      const known = [...tags]
-      const idByName = new Map(tags.map((t) => [t.name.toLowerCase(), t.id]))
-      for (const name of drafts.flatMap((d) => d.newTags)) {
-        if (idByName.has(name.toLowerCase())) continue
-        const tag = await createTag({ name, color: nextTagColor(known), space_id: spaceId })
-        known.push(tag)
-        idByName.set(name.toLowerCase(), tag.id)
-      }
+      // Every new name once, up front, so two drafts asking for the same tag share it.
+      const byLower = new Map(drafts.flatMap((d) => d.newTags).map((n) => [n.toLowerCase(), n]))
+      const names = [...byLower.values()]
+      const newIds = await ensureTagIds({ spaceId, names, tags })
+      const idByName = new Map(names.map((n, i) => [n.toLowerCase(), newIds[i]]))
 
       const created = []
       try {
