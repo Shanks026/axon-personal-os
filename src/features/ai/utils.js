@@ -6,7 +6,9 @@ import { AI_MODEL_MAP, DEFAULT_MODELS } from '@/features/ai/constants'
 
 /**
  * The `context` sent with `draft_tasks`: today in the profile time zone (so "Friday" resolves
- * correctly), the week start, the current fiscal quarter, the space and its tag and version names.
+ * correctly), the week start, the current fiscal quarter, the space and its tag and version names,
+ * and `examples`: recent tagged tasks as `{ title, tags }` (tag names), so the model learns how
+ * this space's tags are used instead of matching words ("vendor listing" isn't the Vendor portal).
  */
 export function buildDraftContext({
   timezone,
@@ -15,6 +17,7 @@ export function buildDraftContext({
   spaceName,
   tags,
   versions,
+  taggedTasks,
   now = new Date(),
 }) {
   const today = todayISO(timezone, now)
@@ -33,13 +36,35 @@ export function buildDraftContext({
     spaceName,
     tags: (tags ?? []).map((t) => t.name),
     versions: versions ?? [],
+    examples: tagExamples(taggedTasks, tags),
   }
 }
 
-/** The saved model for a job while it's still allowed, else the default. */
-export function modelFor(job, aiSettings) {
+/** Recent tagged tasks as `{ title, tags: names }`, skipping tags that no longer exist. */
+export function tagExamples(taggedTasks, tags) {
+  const nameById = new Map((tags ?? []).map((t) => [t.id, t.name]))
+  return (taggedTasks ?? [])
+    .map((t) => ({ title: t.title, tags: t.tag_ids.map((id) => nameById.get(id)).filter(Boolean) }))
+    .filter((t) => t.tags.length > 0)
+}
+
+/**
+ * The model for a job: the saved one while it's allowed and usable, else the default, else the
+ * first usable model. `available` is the set of usable ids (providers with a key, from the
+ * function's `status`); without it, any allowed model counts as usable.
+ */
+export function modelFor(job, aiSettings, available) {
+  const usable = (id) => !!AI_MODEL_MAP[id] && (!available || available.has(id))
   const saved = aiSettings?.models?.[job]
-  return AI_MODEL_MAP[saved] ? saved : DEFAULT_MODELS[job]
+  if (usable(saved)) return saved
+  if (usable(DEFAULT_MODELS[job])) return DEFAULT_MODELS[job]
+  return (available && [...available].find(usable)) ?? DEFAULT_MODELS[job]
+}
+
+/** Usable model ids from the function's `status` (`null` while it loads). */
+export function availableModels(status) {
+  if (!status?.models) return null
+  return new Set(status.models.filter((m) => m.available).map((m) => m.id))
 }
 
 /** "$0.004" · "<$0.001" · "$1.20" */

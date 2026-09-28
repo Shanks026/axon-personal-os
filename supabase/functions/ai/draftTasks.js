@@ -1,5 +1,5 @@
 import { HttpError } from './http.js'
-import { structuredCall } from './claude.js'
+import { structuredCall } from './models.js'
 
 const STATUSES = ['todo', 'in_progress', 'in_review', 'blocked', 'on_hold', 'done', 'cancelled']
 const PRIORITIES = ['none', 'low', 'medium', 'high', 'urgent']
@@ -55,7 +55,7 @@ Fields:
 - description_markdown: the useful detail from the text as Markdown (context, acceptance notes, links). Empty string if there is nothing beyond the title. Don't pad it or restate the title.
 - status: "todo" unless the text says the work has started (in_progress), is waiting for review (in_review), is blocked, on hold, done or cancelled.
 - priority: only what the text implies ("urgent", "asap" → urgent; "important", "high" → high; "low priority", "whenever" → low). Otherwise "medium".
-- tags: only names from AVAILABLE TAGS, matched case-insensitively and spelled exactly as listed. new_tags: short names for tags the text clearly asks for that aren't available (usually empty).
+- tags: names from AVAILABLE TAGS, spelled exactly as listed. Tags classify the work (what kind of work it is, and which product area or portal it happens in); learn how this user applies them from TAG EXAMPLES and follow that pattern. A tag's name merely appearing in the text is not a reason to use it: "refactor the vendor listing page in the store management portal" is Store Management work about vendors, not the Vendor portal. When the examples show tags used as categories (for example one kind-of-work tag plus one area tag), pick at most one per category. If unsure, leave a tag out. new_tags: only when the text explicitly asks for a new tag; otherwise an empty list.
 - version: a release version only if the text names one (e.g. "v3.9", "3.9.0"). Prefer the exact spelling from KNOWN VERSIONS when one matches. Otherwise null.
 - start_date / due_date: yyyy-MM-dd, only when the text gives or implies a date. Resolve relative dates ("Friday", "tomorrow", "end of the month", "next week" = the next week's first day) from TODAY in the given time zone and week start. Never invent dates. start_date must not be after due_date.
 - checklist: concrete sub-steps only when the text lists steps or checks; otherwise an empty list.
@@ -71,8 +71,32 @@ function contextBlock(context = {}) {
     `SPACE: ${context.spaceName ?? 'unknown'}`,
     `AVAILABLE TAGS: ${(context.tags ?? []).join(', ') || '(none)'}`,
     `KNOWN VERSIONS: ${(context.versions ?? []).join(', ') || '(none)'}`,
+    tagExamples(context.examples),
   ]
   return lines.filter(Boolean).join('\n')
+}
+
+const MAX_EXAMPLES = 25
+
+/** "TAG EXAMPLES" lines ("- title → tag, tag"), capped and trimmed: the client's data is untrusted. */
+function tagExamples(examples) {
+  const lines = (Array.isArray(examples) ? examples : [])
+    .slice(0, MAX_EXAMPLES)
+    .map((e) => {
+      const title = String(e?.title ?? '')
+        .replace(/\s+/g, ' ')
+        .trim()
+        .slice(0, 150)
+      const tags = (Array.isArray(e?.tags) ? e.tags : [])
+        .map((t) => String(t).trim().slice(0, 40))
+        .filter(Boolean)
+        .slice(0, 6)
+      return title && tags.length ? `- ${title} → ${tags.join(', ')}` : null
+    })
+    .filter(Boolean)
+  return lines.length
+    ? `TAG EXAMPLES (the user's recent tasks in this space, with the tags they chose):\n${lines.join('\n')}`
+    : ''
 }
 
 const isoDate = /^\d{4}-\d{2}-\d{2}$/

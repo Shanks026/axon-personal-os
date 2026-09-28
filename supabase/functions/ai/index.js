@@ -1,10 +1,10 @@
 // Axon's AI endpoint (Feature 17). POST { action, ... } with the user's JWT.
-//   status       → { configured, models }
+//   status       → { configured, providers: { gemini, anthropic }, models: [{ id, label, provider, available }] }
 //   draft_tasks  → { tasks, model, usage, costUsd }
 // Owner-only (AXON_OWNER_ID). Every model call is logged to public.ai_usage with the caller's JWT.
 import { HttpError, corsHeaders, json } from './http.js'
 import { requireOwner } from './auth.js'
-import { MODELS, aiConfigured, costOf, resolveModel } from './claude.js'
+import { MODELS, costOf, providerStatus, resolveModel } from './models.js'
 import { draftTasks } from './draftTasks.js'
 
 async function loadAiSettings(supabase, userId) {
@@ -34,11 +34,19 @@ Deno.serve(async (req) => {
     const body = await req.json().catch(() => ({}))
 
     switch (body.action) {
-      case 'status':
+      case 'status': {
+        const providers = providerStatus()
         return json(req, 200, {
-          configured: aiConfigured(),
-          models: Object.entries(MODELS).map(([id, m]) => ({ id, label: m.label })),
+          configured: Object.values(providers).some(Boolean),
+          providers,
+          models: Object.entries(MODELS).map(([id, m]) => ({
+            id,
+            label: m.label,
+            provider: m.provider,
+            available: providers[m.provider],
+          })),
         })
+      }
 
       case 'draft_tasks': {
         const settings = await loadAiSettings(supabase, user.id)

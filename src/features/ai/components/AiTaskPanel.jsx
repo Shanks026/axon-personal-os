@@ -11,7 +11,7 @@ import { Button } from '@/components/ui/button'
 import { DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { usePreferences } from '@/features/settings/api'
 import { useTags } from '@/features/tags/api'
-import { useTaskVersions } from '@/features/tasks/api'
+import { useRecentTaggedTasks, useTaskVersions } from '@/features/tasks/api'
 import { useAiStatus, useDraftTasks } from '@/features/ai/api'
 import { AiDraftCard } from '@/features/ai/components/AiDraftCard'
 import { AiNotConfigured } from '@/features/ai/components/AiNotConfigured'
@@ -19,7 +19,13 @@ import { AiTaskComposer } from '@/features/ai/components/AiTaskComposer'
 import { ModelPicker } from '@/features/ai/components/ModelPicker'
 import { AI_MAX_INPUT, AI_MODEL_MAP } from '@/features/ai/constants'
 import { useCreateDraftTasks } from '@/features/ai/hooks/useCreateDraftTasks'
-import { buildDraftContext, draftToTaskValues, formatCost, modelFor } from '@/features/ai/utils'
+import {
+  availableModels,
+  buildDraftContext,
+  draftToTaskValues,
+  formatCost,
+  modelFor,
+} from '@/features/ai/utils'
 
 const item = staggerItem()
 
@@ -37,12 +43,15 @@ export function AiTaskPanel({ spaceId, headerExtra, onClose, onSingleDraft, onCr
   const createDrafts = useCreateDraftTasks()
   const { data: tags = [] } = useTags({ spaceIds: spaceId ? [spaceId] : [] })
   const { data: versions = [] } = useTaskVersions({ spaceIds: spaceId ? [spaceId] : [] })
+  const { data: taggedTasks = [] } = useRecentTaggedTasks(spaceId)
   const [text, setText] = useState('')
-  const [model, setModel] = useState(() => modelFor('draft_tasks', aiSettings))
+  // The user's pick, else the job's default among the usable models (known once status loads).
+  const [picked, setPicked] = useState(null)
   const [drafts, setDrafts] = useState(null) // [{ key, included, value }] once there are several
   const [meta, setMeta] = useState(null)
   const [empty, setEmpty] = useState(false)
 
+  const model = picked ?? modelFor('draft_tasks', aiSettings, availableModels(status.data))
   const notConfigured =
     status.data?.configured === false || draft.error?.code === 'ai_not_configured'
   const canGenerate = !!text.trim() && text.length <= AI_MAX_INPUT && !draft.isPending
@@ -60,6 +69,7 @@ export function AiTaskPanel({ spaceId, headerExtra, onClose, onSingleDraft, onCr
           spaceName: spaceById.get(spaceId)?.name,
           tags,
           versions,
+          taggedTasks,
         }),
       },
       {
@@ -180,7 +190,7 @@ export function AiTaskPanel({ spaceId, headerExtra, onClose, onSingleDraft, onCr
           </>
         ) : (
           <>
-            <ModelPicker value={model} onChange={setModel} disabled={notConfigured} />
+            <ModelPicker value={model} onChange={setPicked} disabled={notConfigured} />
             <div className="flex-1" />
             <Button
               type="button"

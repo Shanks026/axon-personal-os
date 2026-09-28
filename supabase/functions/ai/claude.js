@@ -1,79 +1,32 @@
 import Anthropic from 'npm:@anthropic-ai/sdk@0.128.0'
 import { HttpError } from './http.js'
 
-/** The models Axon may call, with prices in USD per million tokens (input, output, cache read). */
-export const MODELS = {
-  'claude-sonnet-5': { label: 'Sonnet 5', input: 2, output: 10, cacheRead: 0.2, effort: true },
-  'claude-opus-5-5': { label: 'Opus 5.5', input: 4, output: 20, cacheRead: 0.2, effort: true },
-  // Haiku 4.5 has no effort setting (the API rejects it there).
-  'claude-haiku-4-5': { label: 'Haiku 4.5', input: 1, output: 5, cacheRead: 0.1, effort: false },
-}
-
-export const DEFAULT_MODELS = {
-  draft_tasks: 'claude-sonnet-5',
-  checklist: 'claude-sonnet-5',
-  report_weekly: 'claude-sonnet-5',
-  report_quarterly: 'claude-opus-5-5',
-  chat: 'claude-sonnet-5',
-}
-
-const PLACEHOLDER = /^sk-ant-REPLACE/i
-
-/** False while the key is missing or still the placeholder (`sk-ant-REPLACE_ME`). */
-export function aiConfigured() {
-  const key = Deno.env.get('ANTHROPIC_API_KEY') ?? ''
-  return key.length > 20 && !PLACEHOLDER.test(key)
-}
-
-let client = null
-function getClient() {
-  if (!aiConfigured()) {
-    throw new HttpError(409, 'ai_not_configured', "AI isn't set up yet: add ANTHROPIC_API_KEY.")
-  }
-  client ??= new Anthropic({ apiKey: Deno.env.get('ANTHROPIC_API_KEY'), maxRetries: 2 })
-  return client
-}
-
-/** The request's model if allowed, else the saved default for the job, else the built-in one. */
-export function resolveModel(job, requested, aiSettings) {
-  if (requested) {
-    if (!MODELS[requested]) throw new HttpError(400, 'bad_model', `Model not allowed: ${requested}`)
-    return requested
-  }
-  const saved = aiSettings?.models?.[job]
-  return MODELS[saved] ? saved : DEFAULT_MODELS[job]
-}
-
-export function costOf(model, usage) {
-  const p = MODELS[model]
-  const input = usage?.input_tokens ?? 0
-  const output = usage?.output_tokens ?? 0
-  const cacheRead = usage?.cache_read_input_tokens ?? 0
-  const cacheWrite = usage?.cache_creation_input_tokens ?? 0
-  const usd =
-    (input * p.input + cacheWrite * p.input * 1.25 + cacheRead * p.cacheRead + output * p.output) /
-    1_000_000
-  return Math.round(usd * 1_000_000) / 1_000_000
+const clients = new Map()
+const clientFor = (key) => {
+  if (!clients.has(key)) clients.set(key, new Anthropic({ apiKey: key, maxRetries: 2 }))
+  return clients.get(key)
 }
 
 /**
- * One structured-output call: returns `{ data, usage }`, where `data` is the parsed JSON that
- * matches `schema`. Refusals, truncation and API errors become HttpErrors with readable messages.
+ * Claude structured output (`output_config.format` JSON schema). `effort` says whether the model
+ * takes an effort level (Haiku 4.5 doesn't). Returns `{ data, usage }` with Anthropic's usage.
  */
-export async function structuredCall({
+export async function anthropicCall({
+  key,
   model,
+  effort,
   system,
   user,
   schema,
-  effort = 'low',
+  effortLevel = 'low',
   maxTokens = 16000,
 }) {
   const output_config = { format: { type: 'json_schema', schema } }
-  if (MODELS[model].effort) output_config.effort = effort
+  if (effort) output_config.effort = effortLevel
 
   let response
   try {
-    response = await getClient().messages.create({
+    response = await clientFor(key).messages.create({
       model,
       max_tokens: maxTokens,
       system,
@@ -91,13 +44,11 @@ export async function structuredCall({
     throw new HttpError(422, 'too_long', 'The answer was cut off. Try a shorter description.')
   }
   const text = response.content.find((b) => b.type === 'text')?.text
-  let data
   try {
-    data = JSON.parse(text)
+    return { data: JSON.parse(text), usage: response.usage }
   } catch {
     throw new HttpError(502, 'bad_output', 'The model returned something unreadable. Try again.')
   }
-  return { data, usage: response.usage }
 }
 
 function toHttpError(err) {

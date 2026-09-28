@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/17-ai-and-jira.md`
-**Status**: 🟡 In progress (Phase 1 built; taken before Features 10–14, the user's decision 2026-09-28)
+**Status**: 🟡 In progress (Phase 1 ✅, Phase 2 next; taken before Features 10–14, the user's decision 2026-09-28)
 **Depends on**: 04, 05, 07 (tasks, checklists, task detail and links). Phase 4 also needs 15 Phase 2.
 **Last Updated**: September 2026
 
@@ -20,6 +20,7 @@ Jira import itself is **deterministic mapping, not AI**: the Jira API returns st
 It is a single-user app, but signup is open and Edge Function secrets are project-wide, so **every function serves only the owner** (`AXON_OWNER_ID`).
 
 ### Decisions (2026-09-28)
+- **Update, same day: Gemini free tier is the default provider** (the user: both the Anthropic and Google card payments failed). The `ai` function is **multi-provider**: a model registry (`models.js`) with a provider per model, a Claude adapter (`claude.js`, kept as is) and a Gemini adapter (`gemini.js`, raw `generateContent` with `responseJsonSchema`). Models: `gemini-3.8-flash` (default for every job) and `gemini-3.5-flash-lite` on Google's free tier (no card; per-minute and daily limits; Google may use free-tier prompts to improve its products), plus the three Claude models, **listed but disabled** until an `ANTHROPIC_API_KEY` exists. Secret: `GEMINI_API_KEY`.
 - **Provider:** Anthropic direct (Claude API), not OpenRouter: one data path for work content, official SDK, no top-up fee. All model calls sit behind one Edge Function, so switching provider later is a local change.
 - **Models:** chosen per job in Settings → AI & integrations, and per request where there's a picker. Allowed: `claude-sonnet-5` ($2 / $10 per MTok), `claude-opus-5-5` ($4 / $20), `claude-haiku-4-5` ($1 / $5). Suggested defaults: Sonnet 5 for task drafting, checklists, weekly reports and chat; Opus 5.5 for quarterly reports.
 - **API key:** pay-as-you-go prepaid credits from platform.claude.com. The build ships with a **placeholder**: until a real key is set, the AI surfaces show "AI isn't set up yet" with the steps, and nothing else breaks.
@@ -84,7 +85,7 @@ Phases 1–3 are specified in full below. Phases 4–6 are outlines, detailed th
 
 ---
 
-## Phase 1: AI Foundation and "Describe with AI" ✅ Built (awaiting browser review with a real key)
+## Phase 1: AI Foundation and "Describe with AI" ✅ Complete
 
 ### Goal
 In the new-task dialog, a **Describe with AI** tab takes a plain-language description ("Fix RFQ pagination for v3.9, high, due Friday, check filters and add a regression test"). One task fills the normal form for review; several ("rebase MR 1428, review the vendor form PR, start the admin role menus") appear as editable draft cards and are created together. Dates like "Friday" or "end of month" resolve in the profile time zone; tags and versions come from the space's real lists. Settings → AI & integrations shows whether the key is set, the default model per job, and this month's spend.
@@ -243,7 +244,10 @@ src/features/settings/components/AiSection.jsx   # Settings → AI & integration
 - **Dialog:** `TaskDialog` → `TaskDialogBody` (inside `DialogContent`, so it resets per open) with a `SegmentedControl` (Form | Describe with AI) in create mode. **One draft remounts the form** (`formKey`) with the draft as `initialValues` (now including `checklist`), with `AiDraftNotice` above it. That's simpler than `form.reset`, because tags, links and the checklist live in the form's own state. **Deviation:** a single draft's *new* tags aren't created automatically; the notice lists them ("suggested tags not in this space"), since nothing should be created before the user saves. Several drafts create their new tags on "Create N tasks".
 - **Deviation:** no separate `AiDraftList`; the list lives in `AiTaskPanel` (about 200 lines). `AiDraftNotice` was added.
 - **Shared helpers:** `markdownToDoc` (`components/editor/markdown.js`, the same `MarkdownManager`), and `docToText` (`lib/richText.js`) for `description_text`, so card previews show plain text, not Markdown.
-- **Still to confirm in the browser:** the placeholder state in the dialog and in Settings; then, with a real key: one draft into the form, several into cards, Create N tasks (tags, versions, dates, checklists), relative dates, the `ai_usage` row and the month's spend.
+- **Gemini (same day):** the function's registry is `models.js` (every model with its provider and price; Gemini at $0 on the free tier, tokens still logged); `claude.js` holds only the Claude call now; `gemini.js` is new. `status` returns `providers` and per-model `available`; `resolveModel` skips models whose provider has no key (409 `provider_not_configured` when one is requested explicitly). Client: `AI_MODELS` carry a provider, `DEFAULT_MODELS` are Gemini 3.8 Flash, `modelFor(job, settings, available)` falls back to a usable model, `ModelPicker` groups by provider and disables models without a key ("Needs an API key"), and Settings shows a row per provider. Deployed as `ai` version 2 (MCP). Gemini's thinking uses `thinkingConfig.thinkingLevel: 'low'`; confirm on the first real call.
+- **Tag picking (the user's browser review, same day):** "vendor listing refactor in the store management portal" got Vendor added wrongly. The model only saw bare tag names, and Vendor is a *portal* tag here. Fix: the draft context now carries **tag examples**, the space's 25 most recent tagged tasks as "title → tags" (`fetchRecentTaggedTasks` / `useRecentTaggedTasks` in `tasks/api.js`, `tagExamples` in `ai/utils.js`), and the prompt says tags classify the work (what kind, and which area or portal), follow the examples' pattern, a name appearing in the text isn't enough, at most one per category, and `new_tags` only when explicitly asked. The function trims the examples (25 × 150 characters, 6 tags). Deployed as `ai` version 4. This sends those task titles to the provider with each draft.
+- **Model picker trigger** shows only the model name (the list items keep their hint line), so it sits on one line in Settings and the dialog.
+- **Still to confirm in the browser:** the placeholder state in the dialog and in Settings; then, with `GEMINI_API_KEY` set: one draft into the form, several into cards, Create N tasks (tags, versions, dates, checklists), relative dates, the `ai_usage` row and the month's spend.
 
 **Stop here. Show the result and wait for approval.**
 

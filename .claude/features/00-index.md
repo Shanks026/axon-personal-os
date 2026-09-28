@@ -36,7 +36,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | **Wave 6: Later** (backlog; each gets a full doc through the skill when started) | | | | |
 | 15 | Attachments and Media | [15-attachments-and-media.md](15-attachments-and-media.md) | 06 | 🟡 In progress (Phase 1 ✅ images in the editor; Phases 2–3 later) |
 | 16 | Recurring Tasks and Reminders | none | 14 | ⚪ Backlog |
-| 17 | **AI Assistant and Jira** (taken next, before 10–14) | [17-ai-and-jira.md](17-ai-and-jira.md) | 04, 05, 07 | 🟡 In progress (Phase 1 built) |
+| 17 | **AI Assistant and Jira** (taken next, before 10–14) | [17-ai-and-jira.md](17-ai-and-jira.md) | 04, 05, 07 | 🟡 In progress (Phase 1 ✅, Phase 2 🟡) |
 | 18 | Automation and Email Triggers | none | 13, 16 | ⚪ Backlog |
 | 19 | Data Export and Backup | none | 14 | ⚪ Backlog |
 | 20 | PWA and Mobile Polish | none | 14 | ⚪ Backlog |
@@ -118,6 +118,11 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-28: Feature 17 — Gemini free tier as the default AI provider
+- The user's card payments failed for both Anthropic and Google, so AI runs on **Google Gemini's free tier** (no card). The `ai` Edge Function is now multi-provider: `models.js` (registry: model → provider, price), `claude.js` (the Claude call, kept), `gemini.js` (new, `generateContent` with a JSON schema). Deployed as version 2.
+- Models: **Gemini 3.8 Flash** (default for every job) and Gemini 3.5 Flash-Lite, free; the Claude models stay listed but **disabled** ("Needs an API key") until `ANTHROPIC_API_KEY` is set. Settings → AI & integrations shows each provider's status and the free-tier privacy note.
+- **Manual step for the user:** create a key at aistudio.google.com (Get API key) and add `GEMINI_API_KEY` in Supabase → Edge Functions → Secrets. Tests: 413.
 
 ### 2026-09-28: Feature 17 Phase 1 — AI foundation and "Describe with AI"
 - **New task → Describe with AI** (a Form / Describe with AI switch in create mode): describe one task or several in plain words. One draft fills the normal form for review ("Drafted by Sonnet 5 · $0.004"); several become editable draft cards (include, title, status, priority, due, tags with dashed "new" ones, version, checklist count) created together with **Create N tasks**. A model picker sits in the footer; ⌘↵ generates.

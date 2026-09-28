@@ -18,6 +18,7 @@ export const taskKeys = {
   activity: (taskId) => [...taskKeys.activities(), taskId],
   statusChanges: (params) => [...taskKeys.activities(), 'status', params], // { spaceIds, from, to }
   search: (params) => [...taskKeys.all, 'search', params], // { spaceIds, q }
+  taggedExamples: (spaceId) => [...taskKeys.all, 'tagged-examples', spaceId], // AI drafting
   summary: (id) => [...taskKeys.all, 'summary', id], // hover previews
 }
 
@@ -544,6 +545,30 @@ export async function searchTasks({ spaceIds, q }) {
   if (error) throw error
   const closed = (t) => (t.status === 'done' || t.status === 'cancelled' ? 1 : 0)
   return [...data].sort((a, b) => closed(a) - closed(b)).slice(0, SEARCH_LIMIT)
+}
+
+/**
+ * The space's most recent tasks that have tags, as `{ title, tag_ids }` (at most `limit`): how
+ * the user actually tags work, sent as examples with AI task drafting (Feature 17).
+ */
+export async function fetchRecentTaggedTasks({ spaceId, limit = 25 }) {
+  const { data, error } = await supabase
+    .from('tasks')
+    .select('title, tag_ids:task_tags!inner(tag_id)')
+    .eq('space_id', spaceId)
+    .is('deleted_at', null)
+    .order('created_at', { ascending: false })
+    .limit(limit)
+  if (error) throw error
+  return data.map((t) => ({ title: t.title, tag_ids: t.tag_ids.map((x) => x.tag_id) }))
+}
+
+export function useRecentTaggedTasks(spaceId, { enabled = true } = {}) {
+  return useQuery({
+    queryKey: taskKeys.taggedExamples(spaceId),
+    queryFn: () => fetchRecentTaggedTasks({ spaceId }),
+    enabled: enabled && !!spaceId,
+  })
 }
 
 export function useTaskSearch(params, { enabled = true } = {}) {

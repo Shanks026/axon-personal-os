@@ -4,7 +4,7 @@ import { paths } from '@/lib/paths'
 import { cn } from '@/lib/utils'
 
 /**
- * Shown while the Anthropic key is missing or still the placeholder: what to do, in three steps.
+ * Shown while no AI provider has a key: how to add the Gemini one (free tier, no card needed).
  * `showSettingsLink` adds a link to Settings → AI & integrations (not needed on that page).
  */
 export function AiNotConfigured({ showSettingsLink = true, className }) {
@@ -16,13 +16,16 @@ export function AiNotConfigured({ showSettingsLink = true, className }) {
       </p>
       <ol className="mt-2 list-decimal space-y-1 pl-5 text-muted-foreground">
         <li>
-          At <span className="font-mono text-xs">platform.claude.com</span>, add credits under
-          Billing ($5–10 is plenty to start).
+          Sign in at <span className="font-mono text-xs">aistudio.google.com</span> with a Google
+          account (the free tier needs no card).
         </li>
-        <li>Create an API key under API keys.</li>
         <li>
-          In Supabase, open Edge Functions → Secrets and set{' '}
-          <span className="font-mono text-xs">ANTHROPIC_API_KEY</span> to that key.
+          Open <span className="font-medium">Get API key</span> →{' '}
+          <span className="font-medium">Create API key</span>.
+        </li>
+        <li>
+          In Supabase, open Edge Functions → Secrets and add{' '}
+          <span className="font-mono text-xs">GEMINI_API_KEY</span>.
         </li>
       </ol>
       {showSettingsLink && (

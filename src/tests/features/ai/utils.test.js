@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest'
 import {
+  availableModels,
   buildDraftContext,
   draftToTaskValues,
   formatCost,
   modelFor,
   summariseUsage,
+  tagExamples,
 } from '@/features/ai/utils'
 
 const tags = [
@@ -93,13 +95,40 @@ describe('draftToTaskValues', () => {
 })
 
 describe('modelFor', () => {
-  it('uses a saved allowed model, else the default', () => {
+  const geminiOnly = new Set(['gemini-3.8-flash', 'gemini-3.5-flash-lite'])
+
+  it('uses a saved allowed model, else the Gemini default', () => {
     expect(modelFor('draft_tasks', { models: { draft_tasks: 'claude-opus-5-5' } })).toBe(
       'claude-opus-5-5',
     )
-    expect(modelFor('draft_tasks', { models: { draft_tasks: 'gpt-4' } })).toBe('claude-sonnet-5')
-    expect(modelFor('draft_tasks', {})).toBe('claude-sonnet-5')
-    expect(modelFor('report_quarterly', undefined)).toBe('claude-opus-5-5')
+    expect(modelFor('draft_tasks', { models: { draft_tasks: 'gpt-4' } })).toBe('gemini-3.8-flash')
+    expect(modelFor('draft_tasks', {})).toBe('gemini-3.8-flash')
+    expect(modelFor('report_quarterly', undefined)).toBe('gemini-3.8-flash')
+  })
+
+  it('skips a saved model whose provider has no key', () => {
+    const saved = { models: { draft_tasks: 'claude-sonnet-5' } }
+    expect(modelFor('draft_tasks', saved, geminiOnly)).toBe('gemini-3.8-flash')
+    expect(
+      modelFor('draft_tasks', { models: { draft_tasks: 'gemini-3.5-flash-lite' } }, geminiOnly),
+    ).toBe('gemini-3.5-flash-lite')
+  })
+
+  it('falls back to any usable model when the default has no key', () => {
+    expect(modelFor('draft_tasks', {}, new Set(['claude-haiku-4-5']))).toBe('claude-haiku-4-5')
+  })
+})
+
+describe('availableModels', () => {
+  it('collects the usable ids, or null while status loads', () => {
+    expect(availableModels(undefined)).toBeNull()
+    const set = availableModels({
+      models: [
+        { id: 'gemini-3.8-flash', available: true },
+        { id: 'claude-sonnet-5', available: false },
+      ],
+    })
+    expect([...set]).toEqual(['gemini-3.8-flash'])
   })
 })
 
@@ -121,5 +150,24 @@ describe('summariseUsage', () => {
       requests: 2,
     })
     expect(summariseUsage(undefined)).toEqual({ costUsd: 0, requests: 0 })
+  })
+})
+
+describe('tagExamples', () => {
+  it('turns recent tagged tasks into title → tag names, dropping unknown tags', () => {
+    const tagsList = [
+      { id: 'a', name: 'Improvement' },
+      { id: 'b', name: 'Store Management' },
+    ]
+    expect(
+      tagExamples(
+        [
+          { title: 'Refactor listing', tag_ids: ['a', 'b'] },
+          { title: 'Old tag only', tag_ids: ['gone'] },
+        ],
+        tagsList,
+      ),
+    ).toEqual([{ title: 'Refactor listing', tags: ['Improvement', 'Store Management'] }])
+    expect(tagExamples(undefined, tagsList)).toEqual([])
   })
 })
