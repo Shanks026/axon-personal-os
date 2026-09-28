@@ -7,6 +7,8 @@ import { fetchMyProfile, profileKeys } from '@/features/auth/api'
 
 export const PROFILE_UPDATE_KEY = ['profile', 'update']
 
+const EMPTY_AI_SETTINGS = {}
+
 const DEFAULTS = {
   fyStartMonth: DEFAULT_FY_START_MONTH,
   weekStartsOn: 1,
@@ -50,7 +52,8 @@ export function useUpdateMyProfile() {
 
 /**
  * App-wide preferences with defaults applied, so callers never wait on the profile to render.
- * `{ fyStartMonth, weekStartsOn, timezone, theme, isLoaded }`
+ * `{ fyStartMonth, weekStartsOn, timezone, theme, aiSettings, isLoaded }` (`aiSettings`: Feature 17's
+ * per-job model choices, `{ models: { draft_tasks, … } }`)
  */
 export function usePreferences() {
   const { user } = useAuth()
@@ -64,6 +67,7 @@ export function usePreferences() {
     weekStartsOn: data?.week_starts_on ?? DEFAULTS.weekStartsOn,
     timezone: data?.timezone ?? DEFAULTS.timezone,
     theme: data?.theme ?? DEFAULTS.theme,
+    aiSettings: data?.ai_settings ?? EMPTY_AI_SETTINGS,
     isLoaded: !!data,
   }
 }

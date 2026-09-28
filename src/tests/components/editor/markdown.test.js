@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { docToMarkdown, noteToMarkdown } from '@/components/editor/markdown'
+import { docToMarkdown, markdownToDoc, noteToMarkdown } from '@/components/editor/markdown'
 
 const text = (t, marks) => ({ type: 'text', text: t, ...(marks && { marks }) })
 const p = (...content) => ({ type: 'paragraph', content })
@@ -81,5 +81,27 @@ describe('noteToMarkdown', () => {
     expect(noteToMarkdown({ title: '', content: { type: 'doc', content: [p(text('Hi'))] } })).toBe(
       'Hi',
     )
+  })
+})
+
+describe('markdownToDoc', () => {
+  it('parses headings, lists and marks into the editor schema', () => {
+    const doc = markdownToDoc('## Steps\n\n- Check **filters**\n- Add a test')
+    expect(doc.type).toBe('doc')
+    expect(doc.content[0]).toMatchObject({ type: 'heading', attrs: { level: 2 } })
+    expect(doc.content[1].type).toBe('bulletList')
+    expect(doc.content[1].content).toHaveLength(2)
+    expect(JSON.stringify(doc)).toContain('"bold"')
+  })
+
+  it('round-trips with docToMarkdown', () => {
+    expect(docToMarkdown(markdownToDoc('Fix **pagination** on page 2'))).toBe(
+      'Fix **pagination** on page 2',
+    )
+  })
+
+  it('returns null for blank input', () => {
+    expect(markdownToDoc('  ')).toBeNull()
+    expect(markdownToDoc(undefined)).toBeNull()
   })
 })

@@ -552,3 +552,9 @@ values ('attachments', 'attachments', false, 10485760,
 
 - **Paths:** `{user_id}/{space_id}/{uuid}.{ext}`. Files are only ever read through signed URLs (1 hour).
 - **Docs reference images by path:** the Tiptap `image` node stores `{ path, alt, width, height }` in `notes.content` / `tasks.description`. There's no table in Phase 1; Phase 2 adds `attachments` for task files.
+
+## Feature 17: AI Assistant and Jira (Phase 1 applied; full SQL in `.claude/features/17-ai-and-jira.md`)
+
+- Phase 1 `add_ai_settings_and_usage` (✅ applied, migration `20260928061804`): `profiles.ai_settings jsonb not null default '{}'` (object check; models per job) and `public.ai_usage` (`id, user_id default auth.uid(), job` in draft_tasks | checklist | report_weekly | report_quarterly | chat, `model, input_tokens, output_tokens, cache_read_tokens, cost_usd numeric(10,6), created_at`; owner RLS; index `(user_id, created_at desc)`). Rows are written by the `ai` Edge Function with the caller's JWT.
+- Phase 2 `add_jira_to_tasks` (planned): `tasks.jira_key` (`^[A-Z][A-Z0-9_]*-[0-9]+$`), `jira_imported_at`; unique `(user_id, jira_key)` where `jira_key is not null and deleted_at is null`; `profiles.jira_settings jsonb not null default '{}'` (site, startDateField, statusMap, priorityMap). The Jira URL is derived (`{site}/browse/{key}`) and also saved as a `task_links` row. Sync columns are left to the (deferred) sync plan.
+- Edge Function secrets: `ANTHROPIC_API_KEY` (placeholder until set), `AXON_OWNER_ID`, `JIRA_EMAIL`, `JIRA_API_TOKEN`.

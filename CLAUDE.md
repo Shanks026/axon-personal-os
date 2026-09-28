@@ -25,12 +25,15 @@ See `.claude/features/00-index.md` for the roadmap, the build status and the cha
 | 07 Task detail and linking | ✅ Complete (task detail page, activity and work log, note ↔ task links, `@` / `[[` mentions, Make task, and the user's UI refinements) |
 | 08 Calendar and Events | ✅ Complete (Month, Week, Day, Agenda; events CRUD; drag to move/resize; meeting notes) |
 | 09 Journal | ✅ Complete (daily entry, strip, Done today rail, Global cards, mini month, Insert into Today; template Today / Blockers / Notes) |
-| 10–14 | Planned (docs in `.claude/features/`) |
+| 17 AI Assistant and Jira | 🟡 Phase 1 built (Describe with AI, Settings → AI & integrations, the `ai` Edge Function); awaiting a real API key and browser review. Doc `17-ai-and-jira.md` |
+| 10–14 | Planned (docs in `.claude/features/`); the dashboard is on hold |
 | 15 Attachments and Media | 🟡 Phase 1 ✅ (images in notes and task descriptions, private bucket, signed URLs); Phases 2–3 later |
 
 ### Resume here (session handoff)
 
-1. **Next step: Feature 10 (Dashboard) Phase 1.** Feature 09 (Journal) is complete (2026-09-26); its browser checks are listed in `09-journal.md`. Each journal entry stands alone (no Yesterday section, no carry-forward: the user's decision). Feature 08's browser checks are still open too: drag move and resize, Back/Forward through months, the todo-chip toggle, the meeting-note template, and dark mode.
+1. **Next step: Feature 17 Phase 2 (Jira import)** once Phase 1 is reviewed in the browser (it needs a real `ANTHROPIC_API_KEY` to exercise drafting; until then the UI shows "AI isn't set up yet"). Deploy Edge Functions with the Supabase MCP `deploy_edge_function` (`.js` entrypoints work; a direct Management API multipart upload returned 500). Jira sync is on hold (needs its own plan). The dashboard (10) is on hold (the user's decision, 2026-09-28). Feature 09 (Journal) is complete; its browser checks are listed in `09-journal.md`. Feature 08's browser checks are still open too: drag move and resize, Back/Forward through months, the todo-chip toggle, the meeting-note template, and dark mode.
+   - AI: Anthropic direct via a Supabase Edge Function (`ai`), owner-only (`AXON_OWNER_ID`), model allowlist (Sonnet 5 / Opus 5.5 / Haiku 4.5), placeholder `ANTHROPIC_API_KEY` until the user adds credits. Read the `claude-api` skill before writing the function.
+   - Jira Cloud `https://thbs.atlassian.net`; the user is creating an Atlassian API token (steps in the doc's Setup section).
    - Run the `axon-feature` skill, Step 4, on `.claude/features/09-journal.md`. First fold the Journal items from `.claude/design/design-deltas.md` and the Journal screen (`Journal.dc.html`) into the doc.
    - **Check the plan against later decisions** and put anything unclear to the user:
      - Spaces are fixed at creation, with no space pickers in dialogs (use `useDefaultSpaceId`, as `TaskDialog` and `EventDialog` do).

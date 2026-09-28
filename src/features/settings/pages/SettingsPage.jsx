@@ -1,6 +1,7 @@
 import { Navigate, useParams } from 'react-router'
 import { paths } from '@/lib/paths'
 import { AccountSection } from '@/features/settings/components/AccountSection'
+import { AiSection } from '@/features/settings/components/AiSection'
 import { PreferencesSection } from '@/features/settings/components/PreferencesSection'
 import { SettingsLayout } from '@/features/settings/components/SettingsLayout'
 
@@ -14,6 +15,11 @@ const SECTIONS = {
     title: 'Profile & account',
     description: 'Who you are and how you sign in.',
     Component: AccountSection,
+  },
+  ai: {
+    title: 'AI & integrations',
+    description: 'Claude for drafting tasks, and later Jira.',
+    Component: AiSection,
   },
 }
 

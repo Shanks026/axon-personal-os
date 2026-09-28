@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowUpRight, CalendarArrowUp, CalendarDays, X } from 'lucide-react'
+import { ArrowUpRight, CalendarArrowUp, CalendarDays, PenLine, Sparkles, X } from 'lucide-react'
 import { Link } from 'react-router'
 import { Controller, useForm, useWatch } from 'react-hook-form'
 import { toast } from 'sonner'
@@ -10,6 +10,7 @@ import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { Kbd } from '@/components/shared/Kbd'
 import { TitleTextarea } from '@/components/shared/TitleTextarea'
 import { PropertyChip } from '@/components/shared/PropertyChip'
+import { SegmentedControl } from '@/components/shared/SegmentedControl'
 import { VersionBadge } from '@/components/shared/VersionBadge'
 import { Button } from '@/components/ui/button'
 import {
@@ -22,6 +23,8 @@ import {
 import { Skeleton } from '@/components/ui/skeleton'
 import { Switch } from '@/components/ui/switch'
 import { textClasses } from '@/lib/tint'
+import { AiTaskPanel } from '@/features/ai/components/AiTaskPanel'
+import { AiDraftNotice } from '@/features/ai/components/AiDraftNotice'
 import { useImageHandlers } from '@/features/attachments/api'
 import { usePreferences } from '@/features/settings/api'
 import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
@@ -55,6 +58,9 @@ import { ChecklistSection } from '@/features/todos/components/ChecklistSection'
  * The description is the compact rich editor (Feature 06 Phase 3); it still saves with the form
  * (Save / Mod+Enter), not on its own. In edit mode an "Open task" link goes to the detail page
  * (`showOpenLink={false}` when the dialog is opened from that page).
+ *
+ * Create mode has a Form / Describe with AI switch (Feature 17): one AI draft comes back to this
+ * form prefilled for review; several are reviewed and created in the AI view.
  */
 export function TaskDialog({
   open,
@@ -70,7 +76,7 @@ export function TaskDialog({
         showCloseButton={false}
         className="flex max-h-dialog flex-col gap-0 overflow-hidden p-0 sm:max-w-160"
       >
-        <TaskForm
+        <TaskDialogBody
           task={task}
           initialValues={initialValues}
           onClose={() => onOpenChange(false)}
@@ -82,7 +88,59 @@ export function TaskDialog({
   )
 }
 
-function TaskForm({ task, initialValues, onClose, onSuccess, showOpenLink }) {
+const VIEWS = [
+  { value: 'form', label: 'Form', icon: PenLine },
+  { value: 'ai', label: 'Describe with AI', icon: Sparkles },
+]
+
+/**
+ * Lives inside DialogContent, so its state resets each time the dialog opens. An AI draft remounts
+ * the form (`formKey`) with the draft as its initial values.
+ */
+function TaskDialogBody({ task, initialValues, onClose, onSuccess, showOpenLink }) {
+  const [view, setView] = useState('form')
+  const [draft, setDraft] = useState(null) // { values, info } from a single AI draft
+  const [formKey, setFormKey] = useState(0)
+  const spaceId = useDefaultSpaceId(initialValues?.space_id)
+
+  if (task) {
+    return (
+      <TaskForm task={task} onClose={onClose} onSuccess={onSuccess} showOpenLink={showOpenLink} />
+    )
+  }
+
+  const viewSwitch = (
+    <SegmentedControl value={view} onChange={setView} options={VIEWS} label="How to create" />
+  )
+  if (view === 'ai') {
+    return (
+      <AiTaskPanel
+        spaceId={spaceId}
+        headerExtra={viewSwitch}
+        onClose={onClose}
+        onCreated={(rows) => rows.forEach((row) => onSuccess?.(row))}
+        onSingleDraft={(values, info) => {
+          setDraft({ values, info })
+          setFormKey((k) => k + 1)
+          setView('form')
+        }}
+      />
+    )
+  }
+  return (
+    <TaskForm
+      key={formKey}
+      initialValues={draft ? { ...initialValues, ...draft.values } : initialValues}
+      notice={draft && <AiDraftNotice {...draft} />}
+      headerExtra={viewSwitch}
+      onClose={onClose}
+      onSuccess={onSuccess}
+      showOpenLink={showOpenLink}
+    />
+  )
+}
+
+function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess, showOpenLink }) {
   const isEdit = !!task
   const p = useSpacePaths()
   const create = useCreateTask()
@@ -96,7 +154,7 @@ function TaskForm({ task, initialValues, onClose, onSuccess, showOpenLink }) {
   const [createMore, setCreateMore] = useState(false)
   const [tagIds, setTagIds] = useState(task?.tag_ids ?? initialValues?.tag_ids ?? [])
   const [links, setLinks] = useState(task?.links ?? initialValues?.links ?? [])
-  const [checklist, setChecklist] = useState([])
+  const [checklist, setChecklist] = useState(initialValues?.checklist ?? [])
   // Bumped by Create more, so the (uncontrolled) description editor starts empty again.
   const [editorKey, setEditorKey] = useState(0)
   // The rich description isn't in the list columns: an edit loads it first.
@@ -210,10 +268,12 @@ function TaskForm({ task, initialValues, onClose, onSuccess, showOpenLink }) {
           <X />
         </Button>
       </div>
+      {headerExtra && <div className="shrink-0 px-5 pt-3">{headerExtra}</div>}
 
       {/* Only this middle part scrolls; the header and footer stay pinned. */}
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="flex flex-col gap-3 px-5 pt-4">
+          {notice}
           <div>
             {/* Versions sit at the far right of the title row, as on the card. */}
             <div className="flex items-start gap-3">
