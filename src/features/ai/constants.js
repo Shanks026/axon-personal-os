@@ -44,7 +44,12 @@ export const AI_JOBS = [
   {
     id: 'draft_tasks',
     label: 'Task drafting',
-    description: 'Describe with AI in the new-task dialog.',
+    description: 'Describe with AI in the new-task dialog, and Suggest tags.',
+  },
+  {
+    id: 'checklist',
+    label: 'Checklists',
+    description: 'Generate a checklist from a task (and its Jira ticket and comments).',
   },
 ]
 

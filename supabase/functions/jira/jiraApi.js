@@ -106,3 +106,49 @@ export function normaliseIssue(raw, site, startDateField) {
     updated: f.updated ?? null,
   }
 }
+
+const BLOCKS = new Set([
+  'paragraph',
+  'heading',
+  'listItem',
+  'codeBlock',
+  'blockquote',
+  'tableRow',
+  'rule',
+])
+
+/** Plain text of an Atlassian Document Format node (comment bodies), one line per block. */
+export function adfToText(node) {
+  const lines = []
+  let line = ''
+  const flush = () => {
+    if (line.trim()) lines.push(line.trim())
+    line = ''
+  }
+  const walk = (n) => {
+    if (!n || typeof n !== 'object') return
+    if (n.type === 'text') line += n.text ?? ''
+    else if (n.type === 'hardBreak') line += ' '
+    else if (n.type === 'mention') line += n.attrs?.text ?? ''
+    else if (n.type === 'inlineCard') line += n.attrs?.url ?? ''
+    else if (n.type === 'emoji') line += n.attrs?.text ?? ''
+    const block = BLOCKS.has(n.type)
+    if (block) flush()
+    ;(n.content ?? []).forEach(walk)
+    if (block) flush()
+  }
+  walk(node)
+  flush()
+  return lines.join('\n')
+}
+
+/** The latest comments, newest first: `{ author, created, text }` (empty ones dropped). */
+export function normaliseComments(raw) {
+  return (raw?.comments ?? [])
+    .map((c) => ({
+      author: c.author?.displayName ?? null,
+      created: c.created ?? null,
+      text: adfToText(c.body).slice(0, 4000),
+    }))
+    .filter((c) => c.text)
+}

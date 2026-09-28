@@ -56,6 +56,12 @@ export function useJiraMeta({ site, enabled = true }) {
   })
 }
 
+/** An issue's latest comments, newest first: `{ comments: [{ author, created, text }] }`. */
+export const fetchJiraComments = (key) => invokeJira('fetch_comments', { key })
+
+/** One issue, normalised: `{ issue }`. */
+export const fetchJiraIssue = (key) => invokeJira('fetch_issue', { key })
+
 /** Fetches one issue, normalised (`{ issue }`). Errors show inline in the import panel. */
 export function useFetchJiraIssue() {
   return useMutation({ mutationFn: (key) => invokeJira('fetch_issue', { key }) })

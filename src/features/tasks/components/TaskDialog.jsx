@@ -458,7 +458,7 @@ function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess
         )}
 
         {isEdit ? (
-          <ChecklistSection taskId={task.id} spaceId={task.space_id} />
+          <ChecklistSection taskId={task.id} spaceId={task.space_id} task={task} />
         ) : (
           <ChecklistSection staged={{ items: checklist, onChange: setChecklist }} />
         )}

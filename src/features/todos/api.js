@@ -154,14 +154,17 @@ export function useCreateTodo() {
   })
 }
 
-/** A just-created task's staged checklist (TaskDialog create mode), in order. */
-export async function createChecklistItems(taskId, spaceId, titles) {
+/**
+ * Checklist items for a task, in order: a just-created task's staged checklist (TaskDialog create
+ * mode), or items appended after the current last one (`afterPosition`, e.g. AI "Generate").
+ */
+export async function createChecklistItems(taskId, spaceId, titles, afterPosition = 0) {
   const { error } = await supabase.from('todos').insert(
     titles.map((title, i) => ({
       task_id: taskId,
       space_id: spaceId,
       title,
-      position: (i + 1) * 1000,
+      position: afterPosition + (i + 1) * 1000,
     })),
   )
   if (error) throw error
@@ -170,7 +173,8 @@ export async function createChecklistItems(taskId, spaceId, titles) {
 export function useCreateChecklistItems() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: ({ taskId, spaceId, titles }) => createChecklistItems(taskId, spaceId, titles),
+    mutationFn: ({ taskId, spaceId, titles, afterPosition }) =>
+      createChecklistItems(taskId, spaceId, titles, afterPosition),
     onSuccess: () => qc.invalidateQueries({ queryKey: todoKeys.all }),
     onError: (err) => toast.error(err.message ?? 'Could not save the checklist'),
   })

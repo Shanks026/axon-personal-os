@@ -36,7 +36,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | **Wave 6: Later** (backlog; each gets a full doc through the skill when started) | | | | |
 | 15 | Attachments and Media | [15-attachments-and-media.md](15-attachments-and-media.md) | 06 | 🟡 In progress (Phase 1 ✅ images in the editor; Phases 2–3 later) |
 | 16 | Recurring Tasks and Reminders | none | 14 | ⚪ Backlog |
-| 17 | **AI Assistant and Jira** (taken next, before 10–14) | [17-ai-and-jira.md](17-ai-and-jira.md) | 04, 05, 07 | 🟡 In progress (Phases 1–2 ✅, Phase 3 🟡) |
+| 17 | **AI Assistant and Jira** (taken next, before 10–14) | [17-ai-and-jira.md](17-ai-and-jira.md) | 04, 05, 07 | 🟡 In progress (Phases 1–3 ✅) |
 | 18 | Automation and Email Triggers | none | 13, 16 | ⚪ Backlog |
 | 19 | Data Export and Backup | none | 14 | ⚪ Backlog |
 | 20 | PWA and Mobile Polish | none | 14 | ⚪ Backlog |
@@ -118,6 +118,11 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-28: Feature 17 Phase 3 — AI checklists
+- **✦ Generate** in a task's checklist header (task page, and the dialog in edit mode): the AI proposes checklist items from the task, using the Jira ticket's current description and latest comments for Jira tasks, or the task's own description otherwise. Review in a popover (untick, edit, Regenerate), then **Add N items**; they're appended after the existing ones and never duplicate them. Only on click.
+- **`jira` v3** `fetch_comments` (ADF → text); **`ai` v6** `checklist`. `createChecklistItems` gained `afterPosition`. Settings gains the Checklists model row. No schema changes.
+- **New:** `GenerateChecklistButton`, `useGenerateChecklist`, `adfToText` / `normaliseComments` (jira function), `src/tests/functions/`. Tests: 429.
 
 ### 2026-09-28: Feature 17 Phase 2 follow-up — tags on Jira import
 - **Keyword matching:** imported tickets get tags from keywords matched in the title, issue type, components and labels (Settings → Jira → Tag keywords; empty = the tag's name plus synonyms such as "suggestion" for Improvement). `jira` v2 returns components.

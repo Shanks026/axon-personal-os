@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/17-ai-and-jira.md`
-**Status**: 🟡 In progress (Phases 1–2 ✅, Phase 3 next; taken before Features 10–14, the user's decision 2026-09-28)
+**Status**: 🟡 In progress (Phases 1–3 ✅; taken before Features 10–14, the user's decision 2026-09-28)
 **Depends on**: 04, 05, 07 (tasks, checklists, task detail and links). Phase 4 also needs 15 Phase 2.
 **Last Updated**: September 2026
 
@@ -229,7 +229,7 @@ src/features/settings/components/AiSection.jsx   # Settings → AI & integration
 - [ ] With the placeholder key, the composer and Settings show "AI isn't set up yet" and nothing else breaks
 - [ ] With a real key: one described task fills the form; several give draft cards; "Create N tasks" creates them with tags, versions, dates and checklists; new tags are created once
 - [ ] "Friday" and "end of month" resolve in the profile time zone
-- [ ] Each call writes an `ai_usage` row; Settings shows the month's spend
+- [x] Each call writes an `ai_usage` row; Settings shows the month's spend
 - [x] `utils.js` tests pass (context, draft → form values, bad dates dropped, model fallback, cost formatting)
 - [x] `npm run lint`, `npm test` and `npm run build` pass
 - [x] `axon-rules` audit is clean for the changed files
@@ -335,7 +335,7 @@ alter table public.profiles
 
 ---
 
-## Phase 3: AI Checklists
+## Phase 3: AI Checklists ✅ Complete
 
 ### Goal
 On a task, **Generate checklist** (manual only) reads the ticket's description and comments (or, for a task without a Jira key, its own description) and proposes checklist items; the user ticks the ones to keep and adds them.
@@ -356,10 +356,18 @@ No schema changes.
 - Settings → AI & integrations gains the **Checklist** job row.
 
 ### 3.4 Checklist: Before Marking Complete
-- [ ] Generate checklist runs only on click, uses the Jira description and comments for Jira tasks and the task's own description otherwise
+- [x] Generate checklist runs only on click, uses the Jira description and comments for Jira tasks and the task's own description otherwise
 - [ ] Items are reviewed before adding; existing items are never duplicated
 - [ ] Each call writes an `ai_usage` row
-- [ ] `npm run lint`, `npm test` and `npm run build` pass; `axon-rules` audit clean; `00-index.md` updated
+- [x] `npm run lint`, `npm test` and `npm run build` pass; `axon-rules` audit clean; `00-index.md` updated
+
+### Implementation Notes (2026-09-28)
+- **`jira` v3:** `fetch_comments` (`/issue/{key}/comment?orderBy=-created&maxResults=50`); comment bodies (Atlassian Document Format) are flattened by `adfToText` to one line per block, with mentions, links and emoji as text. Tested from `src/tests/functions/jiraApi.test.js` (it stubs `Deno` and imports the function file).
+- **`ai` v6:** `checklist` (`checklist.js`): title, description (8,000 characters), comments newest first (6,000 characters in all), existing items; returns up to 20 new items; the function drops anything that duplicates an existing item (case-insensitive). Logged as job `checklist`.
+- **Client:** `useGenerateChecklist` (`ai/hooks`) fetches the Jira description (fresh, through `fetch_issue` → `htmlToDoc` → `docToText`) and comments for Jira tasks, or uses the saved `description_text`; if Jira fails it falls back on the saved description. `GenerateChecklistButton` (✦ Generate, in the checklist header) opens a popover that starts at once: a skeleton while it reads, then the items with checkboxes (all ticked) and editable text, **Regenerate** and **Add N items**. Items are appended after the last one: `createChecklistItems` gained `afterPosition` (it used to start at 1000, which would collide with existing items).
+- **Where:** `ChecklistSection` shows the button when given `task` (a saved task): the task page and the dialog in edit mode. Not in create mode (no saved task yet).
+- **Settings:** the Checklists job row (default Gemini 3.8 Flash); Task drafting's row now also covers Suggest tags.
+- **Still to confirm in the browser:** a Jira task (description and comments used, "From MP-… description and comments"), a non-Jira task, untick/edit/Add, Regenerate, no duplicates of existing items, appended order.
 
 **Stop here. Show the result and wait for approval.**
 

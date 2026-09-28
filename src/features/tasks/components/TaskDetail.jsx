@@ -163,7 +163,12 @@ export function TaskDetail({ task }) {
             <TaskTitleInput task={task} />
             <TaskDescription task={task} onStatusChange={onStatusChange} />
           </div>
-          <ChecklistSection taskId={task.id} spaceId={task.space_id} className="border-none p-0" />
+          <ChecklistSection
+            taskId={task.id}
+            spaceId={task.space_id}
+            task={task}
+            className="border-none p-0"
+          />
           <LinkedNotesPanel task={task} />
           <ActivityTimeline taskId={task.id} />
         </div>

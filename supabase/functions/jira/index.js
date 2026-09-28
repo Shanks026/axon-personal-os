@@ -2,10 +2,18 @@
 //   status       → { configured, site, account? }    ({ check: true } calls /myself: "Test connection")
 //   meta         → { statuses: [{ name, category }], priorities: [name], dateFields: [{ id, name }] }
 //   fetch_issue  → { issue }                         ({ key: 'MP-43512' })
+//   fetch_comments → { comments: [{ author, created, text }] }   ({ key }; latest 50, newest first)
 // Owner-only (AXON_OWNER_ID). The site and start-date field come from profiles.jira_settings.
 import { HttpError, corsHeaders, json } from './http.js'
 import { requireOwner } from './auth.js'
-import { cleanSite, isIssueKey, jiraCredentials, jiraGet, normaliseIssue } from './jiraApi.js'
+import {
+  cleanSite,
+  isIssueKey,
+  jiraCredentials,
+  jiraGet,
+  normaliseComments,
+  normaliseIssue,
+} from './jiraApi.js'
 
 const ISSUE_FIELDS = [
   'summary',
@@ -98,6 +106,20 @@ Deno.serve(async (req) => {
           `/rest/api/3/issue/${encodeURIComponent(key)}?fields=${fields}&expand=renderedFields`,
         )
         return json(req, 200, { issue: normaliseIssue(raw, site, startField) })
+      }
+
+      case 'fetch_comments': {
+        const site = requireSite(settings)
+        const key = String(body.key ?? '')
+          .trim()
+          .toUpperCase()
+        if (!isIssueKey(key))
+          throw new HttpError(400, 'bad_key', `Not a Jira issue key: ${body.key}`)
+        const raw = await jiraGet(
+          site,
+          `/rest/api/3/issue/${encodeURIComponent(key)}/comment?orderBy=-created&maxResults=50`,
+        )
+        return json(req, 200, { comments: normaliseComments(raw) })
       }
 
       default:
