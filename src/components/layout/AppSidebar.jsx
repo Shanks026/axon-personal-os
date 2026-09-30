@@ -38,9 +38,9 @@ const comingSoon = (what, feature) => () =>
 
 /**
  * App shell sidebar (design Sidebar.dc): switcher, search, capture, nav, pinned, footer.
- * `onOpenSearch` opens the command palette (the shell owns it).
+ * `onOpenSearch` opens the command palette and `onOpenHelp` the shortcuts (the shell owns both).
  */
-export function AppSidebar({ onOpenSearch }) {
+export function AppSidebar({ onOpenSearch, onOpenHelp }) {
   const p = useSpacePaths()
   const { pathname } = useLocation()
   const current = sectionFromPath(pathname)
@@ -126,7 +126,7 @@ export function AppSidebar({ onOpenSearch }) {
             </SidebarMenuButton>
           </SidebarMenuItem>
           <SidebarMenuItem>
-            <UserRow />
+            <UserRow onOpenHelp={onOpenHelp} />
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarFooter>
@@ -136,14 +136,14 @@ export function AppSidebar({ onOpenSearch }) {
 }
 
 /** Footer user row: initials, name, current theme icon; opens the shared UserMenu. */
-function UserRow() {
+function UserRow({ onOpenHelp }) {
   const { user } = useAuth()
   const { data: profile } = useMyProfile()
   const { theme } = useTheme()
   const ThemeIcon = THEME_ICON[theme] ?? Monitor
 
   return (
-    <UserMenu align="start">
+    <UserMenu align="start" onOpenHelp={onOpenHelp}>
       <DropdownMenuTrigger asChild>
         <SidebarMenuButton size="lg" className="h-10" tooltip="Account">
           <Avatar className="size-6 border">

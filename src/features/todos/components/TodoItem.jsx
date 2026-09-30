@@ -21,9 +21,10 @@ import { TodoDueChip } from '@/features/todos/components/TodoDueChip'
 
 /**
  * A todo row (design: Todos.dc.html). The root carries `id="todo-<id>"` so `useHighlightTodo`
- * can scroll to and flash it. `dragHandleProps` come from `useSortable` in `SortableTodoList`.
+ * can scroll to and flash it. `dragHandleProps` come from `useSortable` in `SortableTodoList`;
+ * `rowProps` from `useListNavigation` (keyboard selection, Feature 12).
  */
-export function TodoItem({ todo, showSpace, onEdit, flash, dragHandleProps }) {
+export function TodoItem({ todo, showSpace, onEdit, flash, dragHandleProps, rowProps }) {
   const { spaceById } = useSpace()
   const toggle = useToggleTodo()
   const update = useUpdateTodo()
@@ -51,7 +52,11 @@ export function TodoItem({ todo, showSpace, onEdit, flash, dragHandleProps }) {
     })
 
   return (
-    <div id={`todo-${todo.id}`} className="group relative flex min-h-10 items-center gap-3 px-1">
+    <div
+      id={`todo-${todo.id}`}
+      {...rowProps}
+      className="group relative flex min-h-10 items-center gap-3 rounded-md px-1 data-selected:bg-accent"
+    >
       {flash && (
         <motion.div
           variants={flashPulse}

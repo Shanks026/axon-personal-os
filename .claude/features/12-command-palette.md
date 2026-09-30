@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/12-command-palette.md`
-**Status**: 🟡 In progress (Phase 1 ✅)
+**Status**: ✅ Complete (2026-09-30)
 **Depends on**: 11
 **Last Updated**: September 2026
 
@@ -302,7 +302,21 @@ src/components/layout/
 
 ---
 
-## Phase 2: Keyboard Shortcuts
+## Phase 2: Keyboard Shortcuts ✅ Complete (2026-09-30)
+
+> **Folded in before building (2026-09-30):**
+> - **The design delta's remap:**
+>   - **Create:** New todo is **⇧C** (not `t`); New task `c`, New note `n`, New event `e`.
+>   - **General:** toggle sidebar **⌘\\** (shadcn's own ⌘B still works); toggle theme **⌘⇧L**.
+>   - **Spaces:** switch space by position with **Alt+0** (Global) and **Alt+1–9**. Chrome keeps Ctrl/⌘+1–9 for its tabs, so the delta's fallback is used.
+>   - **Lists:** **S** and **P** open the focused row's status and priority menus.
+>   - **Navigate:** `g o` stays (Todos has its own page again since 2026-09-24).
+> - **The help dialog is 760px, two columns, with no filter input** (the delta; it overrides this plan's filter).
+> - **Library:** `react-hotkeys-hook` 5.3.3 has scopes, `HotkeysProvider` and native sequences (`g>d`, 1000ms), so there's **no `useKeySequence`**. Keys match physical codes (`backslash`, `slash`, digits).
+> - **One override rule, generalising the plan's list rule:** a `global` shortcut is off while an active page scope binds the same key. The list's `e` edits instead of creating an event, and the calendar's `n` creates an event instead of a note. Page scopes are switched on by `useShortcutScope(scope)` while mounted, and `list` only while a row is selected.
+> - **Existing hotkeys move into the registry,** so the help lists them and the grep checklist item holds: the calendar (`t`, ←/→, `m w d a`, `n`), the journal (Alt+←/→), the task page (`j`/`k`), the editors' ⌘S and Settings' Esc.
+> - **Where the lists are:** the Tasks page's **table view** (the old list view became the table on 2026-09-25) and the Todos page. Selection is keyboard-only: rows get `data-selected`, and there's no row `onClick` (the "no onClick on non-interactive elements" rule).
+> - **The shell** (`AppShell`, there's no `AppLayout`) renders `GlobalShortcuts` inside `SidebarProvider`, so `toggleSidebar` is reachable. The Phase 1 `mod+k` binding moves there.
 
 ### Goal
 The app is fully drivable from the keyboard. Every shortcut is defined once in `lib/shortcuts.js`, so the help dialog, tooltips and palette hints can never drift from the real bindings. Global keys create items, jump between sections (`g` then a letter), toggle the sidebar and open the space switcher. The task and todo lists support `j`/`k` selection, `x` to complete, `e` to edit and `Backspace` to delete. `?` shows every shortcut, grouped. Single-letter shortcuts never fire while the user is typing.
@@ -417,19 +431,44 @@ src/components/layout/
 - Quick capture behaviour behind `mod+j` (Feature 13)
 
 ### 2.7 Checklist: Before Marking Complete
-- [ ] Every binding in the app comes from `SHORTCUTS`; a grep finds no `useHotkeys` call outside `useShortcut` and `useKeySequence`
-- [ ] `c`, `n`, `t`, `e` open the right create flow; typing those letters in any input, textarea or the Tiptap editor never triggers them
-- [ ] `mod+k` and `mod+shift+s` work from inside an input and the editor; `mod+shift+s` opens the palette on the Switch space page
-- [ ] `g` then `d/i/t/o/n/j/c/r` navigates to each section in the current scope; a stray `g` followed by nothing does nothing after 1s
-- [ ] `[` toggles the sidebar, and the built-in `mod+b` still works without double toggling
-- [ ] On the tasks list: `j`/`k` move a visible selection that scrolls into view, `x` completes with an optimistic update, `e` opens `TaskDialog`, `Backspace` moves to Trash with Undo, `Esc` clears
-- [ ] With a row selected, `e` edits rather than creating an event; after `Esc`, `e` creates an event again
-- [ ] The same list keys work on the todos list
-- [ ] `?` opens the help dialog, grouped and filterable, showing `⌘` on macOS and `Ctrl` on Windows
-- [ ] Tests pass for `platform.formatKeys`, the `shortcuts` registry invariants and `useListNavigation` (renderHook with user-event: move, wrap-less bounds, selection after removal)
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` status and changelog (new shared: `ShortcutKeys`, `ShortcutTooltip`, `ShortcutsHelpDialog`, `useShortcut`, `useListNavigation`, `lib/shortcuts.js`, `lib/platform.js`) are updated; `axon-data-patterns.md` §10 too
+- [x] Every binding in the app comes from `SHORTCUTS`; a grep finds no `useHotkeys` call outside `useShortcut`
+- [x] `c`, `⇧C`, `n`, `e` open the right create flow; typing those letters in any input, textarea or the Tiptap editor never triggers them (the library's form/contenteditable rule, plus dialogs and menus ignored)
+- [x] `mod+k` and `mod+shift+s` work from inside an input and the editor; `mod+shift+s` opens the palette on the Switch space page
+- [x] `g` then `d/i/t/o/n/j/c/r` navigates to each section in the current scope, without also firing the second letter's own shortcut; a stray `g` does nothing after 1s
+- [x] `⌘\` toggles the sidebar (shadcn's `mod+b` still works: two keys, one action)
+- [x] On the tasks table: `j`/`k` move a visible selection that scrolls into view, `x` completes (optimistic `setField`), `e` opens `TaskDialog`, `s`/`p` open the row's status/priority menu, `Backspace` moves to Trash with Undo, `Esc` clears *(confirm in the browser)*
+- [x] With a row selected, `e` edits rather than creating an event; after `Esc`, `e` creates an event again (tested: the override rule)
+- [x] The same list keys work on the todos page (no `s`/`p`: todos have no status or priority)
+- [x] `?` opens the help dialog, grouped, two columns (no filter, the delta), showing `⌘` on macOS and `⌃` on Windows (`Kbd` / `lib/platform.js`)
+- [x] Tests pass for the `shortcuts` registry invariants, `useShortcut` (sequence suppression, scope override) and `useListNavigation` (move, no wrap, actions only with a selection, selection after removal, typing ignored)
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` status and changelog are updated; `axon-data-patterns.md` §10 too
+
+### Implementation Notes (2026-09-30)
+- **Registry** (`lib/shortcuts.js`): every entry has an id, keys, a label, a group and a scope, with optional `display` and `allowInInputs`. It also exports `shortcutById` (throws on typos), `shortcutKeyList`, `isOverridden` and `shortcutsByGroup`.
+  - **Scopes:** `global`, `listNav` (`j`/`k`/arrows, while a list is mounted), `list` (row actions, only while a row is selected), `calendar`, `journal`, `task`, `editor` and `settings`.
+  - **`HotkeysProvider`** wraps the router in `App.jsx`, starting with `['global']` active.
+- **`useShortcut(id, handler)`:** the latest handler is read through a ref, since the library memoises on deps.
+  - **Scopes:** without a provider (component tests), scopes are dropped, since the library would treat none as active.
+  - **Esc** isn't `preventDefault`-ed: Radix checks `defaultPrevented` before closing.
+  - **Dialogs and menus:** shortcuts that don't allow inputs ignore key presses inside `[role=dialog|alertdialog|menu|listbox]`, so the list's Enter doesn't swallow a dialog button's click.
+  - **Deviation, sequences:** the library fires both `g>c` and `c`. So a capture-phase `keydown` listener remembers the previous key, and single-key shortcuts step aside for 1s after a sequence's first key.
+- **`useShortcutScope(scope, active)`:** turns a page scope on while mounted.
+  - **Wired on:** the calendar toolbar, the journal page, the task page, the note and report editors, and Settings.
+  - **Migrated:** all the old `useHotkeys` calls, keeping their keys. Calendar's `n` now wins over New note there.
+- **`useListNavigation({ items, actions, enabled })`:** the selection is `{ id, index }` in state, and a vanished row hands over to its neighbour by adjusting during render (no effect). Rows get `data-selected` (`data-selected:bg-accent`) and a ref for `scrollIntoView`. There's no `aria-selected` (invalid on plain rows) and no row click.
+  - **Tasks table:** open, edit, toggle (`done` ↔ `todo` via `actions.setField`), status and priority (the menus are now controllable: `StatusMenu`/`PriorityMenu` take `open`/`onOpenChange`, driven by `menuFor` in `TaskTable`), and delete (`actions.remove`, with Undo).
+  - **Todos page:** over the visible rows (Done only when expanded); open and edit go to `TodoDialog`. It's disabled while the dialog is open.
+- **`GlobalShortcuts`** (rendered in `AppShell` inside `SidebarProvider`) binds General, Create and Navigate:
+  - **Palette:** `mod+k` (it steps aside for the editor's link field when text is selected) and `mod+shift+s`, which toggle it through `{ open, page }` in `AppShell`.
+  - **Keys:** Alt+0–9 goes to a space by position; `⌘\` toggles the sidebar; `⌘⇧L` switches the theme.
+  - **Stub:** `⌘J` shows a toast until Feature 13.
+- **Help:** `ShortcutsHelpDialog` (760px, CSS two-column) opens from `?`, the user menu ("Keyboard shortcuts", only inside a space) and a palette action. `ShortcutKeys` renders an entry's keys with "then" between sequence steps.
+- **Hints:** palette items show their shortcut (New task `C`, sections `G then T`, …). The space switcher shows Alt+0 and Alt+1–9.
+- **Deviation:** the plan's `ShortcutTooltip` wasn't added. `ShortcutKeys` covers the palette, menu and switcher, and the header buttons already show `Kbd`.
+- **Tests:** `lib/shortcuts.test.js` (6), `hooks/useShortcut.test.jsx` (3) and `hooks/useListNavigation.test.jsx` (4). Full suite: 514/514.
+- **Still to confirm in the browser:** Alt+digit on Windows Chrome; `⌘\` and `⌘⇧L`; the tasks table keys, S and P included; the todos keys; `?`; that no letter fires while typing in the task dialog or the editor.
 
 **Stop here. Show the result and wait for approval.**
 

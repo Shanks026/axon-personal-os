@@ -17,6 +17,7 @@ export function TodoGroup({
   showSpace,
   onEdit,
   flashId,
+  getRowProps,
   collapsed,
   onToggleCollapsed,
 }) {
@@ -66,6 +67,7 @@ export function TodoGroup({
                     showSpace={showSpace}
                     onEdit={onEdit}
                     flash={flashId === t.id}
+                    rowProps={getRowProps?.(t.id)}
                   />
                 )}
               />
@@ -78,6 +80,7 @@ export function TodoGroup({
                     showSpace={showSpace}
                     onEdit={onEdit}
                     flash={flashId === t.id}
+                    rowProps={getRowProps?.(t.id)}
                     dragHandleProps={dragHandleProps}
                   />
                 )}

@@ -28,12 +28,12 @@ import { usePreferences } from '@/features/settings/api'
  * search everything in scope (grouped results first). Tab / Shift+Tab cycle the type filter,
  * the chip switches between this space and all spaces, and `page="spaces"` shows just the spaces.
  */
-function PaletteBody({ initialPage, onClose }) {
+function PaletteBody({ initialPage, onClose, onOpenHelp }) {
   const navigate = useNavigate()
   const { isGlobal, space, scopeSpaceIds, activeSpaces, spaceById } = useSpace()
   const { timezone } = usePreferences()
   const { open: openDialog } = useGlobalDialog()
-  const items = usePaletteActions()
+  const items = usePaletteActions({ onOpenHelp })
   const [q, setQ] = useState('')
   const [page, setPage] = useState(initialPage)
   const [allSpaces, setAllSpaces] = useState(isGlobal)
@@ -177,7 +177,7 @@ function PaletteBody({ initialPage, onClose }) {
  * blur (the overlay rule). `initialPage` "spaces" opens straight on the space list.
  * @param {{ open: boolean, onOpenChange: (open: boolean) => void, initialPage?: 'root' | 'spaces' }} props
  */
-export function CommandPalette({ open, onOpenChange, initialPage = 'root' }) {
+export function CommandPalette({ open, onOpenChange, initialPage = 'root', onOpenHelp }) {
   return (
     <CommandDialog
       open={open}
@@ -186,7 +186,11 @@ export function CommandPalette({ open, onOpenChange, initialPage = 'root' }) {
       description="Search tasks, notes, journal, todos, events and reports, or run a command."
       className="will-change-transform sm:max-w-160"
     >
-      <PaletteBody initialPage={initialPage} onClose={() => onOpenChange(false)} />
+      <PaletteBody
+        initialPage={initialPage}
+        onClose={() => onOpenChange(false)}
+        onOpenHelp={onOpenHelp}
+      />
     </CommandDialog>
   )
 }

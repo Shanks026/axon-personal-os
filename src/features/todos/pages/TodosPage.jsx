@@ -1,13 +1,16 @@
 import { useCallback, useMemo, useState } from 'react'
 import { CheckSquare, Plus } from 'lucide-react'
+import { toast } from 'sonner'
 import { toISODate } from '@/lib/dates'
 import { useSpace } from '@/context/SpaceContext'
+import { useListNavigation } from '@/hooks/useListNavigation'
+import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
-import { useTodos } from '@/features/todos/api'
+import { useDeleteTodo, useRestoreTodo, useTodos, useToggleTodo } from '@/features/todos/api'
 import { AddTodoInput } from '@/features/todos/components/AddTodoInput'
 import { TodoDialog } from '@/features/todos/components/TodoDialog'
 import { TodoGroup } from '@/features/todos/components/TodoGroup'
@@ -15,7 +18,6 @@ import { TodoListSkeleton } from '@/features/todos/components/TodoListSkeleton'
 import { TODO_GROUPS } from '@/features/todos/constants'
 import { useHighlightTodo } from '@/features/todos/hooks/useHighlightTodo'
 import { useTodoFilters } from '@/features/todos/hooks/useTodoFilters'
-import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { groupTodos } from '@/features/todos/utils'
 
 const OPEN_GROUPS = TODO_GROUPS.filter((g) => g.key !== 'done')
@@ -48,6 +50,32 @@ export default function TodosPage() {
 
   const openCreate = () => setDialog({ open: true, todo: null })
   const openEdit = (todo) => setDialog({ open: true, todo })
+
+  // Keyboard selection (Feature 12) over the visible rows, in display order.
+  const toggle = useToggleTodo()
+  const del = useDeleteTodo()
+  const restore = useRestoreTodo()
+  const visible = useMemo(
+    () => [...OPEN_GROUPS.flatMap((g) => groups[g.key]), ...(doneCollapsed ? [] : groups.done)],
+    [groups, doneCollapsed],
+  )
+  const { getRowProps } = useListNavigation({
+    items: visible,
+    enabled: !dialog.open,
+    actions: {
+      'list.open': openEdit,
+      'list.edit': openEdit,
+      'list.toggle': (t) => toggle.mutate({ id: t.id, is_done: !t.is_done }),
+      'list.delete': (t) =>
+        del.mutate(t.id, {
+          onSuccess: () =>
+            toast('Todo deleted', {
+              description: t.title,
+              action: { label: 'Undo', onClick: () => restore.mutate(t.id) },
+            }),
+        }),
+    },
+  })
 
   usePageHeader({ title: 'Todos' })
 
@@ -106,6 +134,7 @@ export default function TodosPage() {
                   showSpace={isGlobal}
                   onEdit={openEdit}
                   flashId={flashId}
+                  getRowProps={getRowProps}
                 />
               ))}
               <TodoGroup
@@ -114,6 +143,7 @@ export default function TodosPage() {
                 showSpace={isGlobal}
                 onEdit={openEdit}
                 flashId={flashId}
+                getRowProps={getRowProps}
                 collapsed={doneCollapsed}
                 onToggleCollapsed={() => setDoneCollapsed((c) => !c)}
               />

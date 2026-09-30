@@ -1,7 +1,8 @@
 import { ArrowLeft } from 'lucide-react'
-import { useHotkeys } from 'react-hotkeys-hook'
 import { Link, NavLink, useNavigate } from 'react-router'
 import { paths } from '@/lib/paths'
+import { useShortcut } from '@/hooks/useShortcut'
+import { useShortcutScope } from '@/hooks/useShortcutScope'
 import { PageTransition } from '@/components/motion/PageTransition'
 import { SaveIndicator } from '@/components/shared/SaveIndicator'
 import { cn } from '@/lib/utils'
@@ -23,7 +24,8 @@ export function SettingsLayout({ section, title, description, children }) {
         label: last.space ? `Back to ${last.space.name}` : 'Back to Global',
       }
     : { to: paths.spaces(), label: 'Back to spaces' }
-  useHotkeys('esc', () => navigate(back.to), { enableOnFormTags: false })
+  useShortcutScope('settings')
+  useShortcut('settings.back', () => navigate(back.to))
 
   return (
     <div className="flex min-h-svh bg-background">

@@ -225,8 +225,8 @@ export function useTaskFilters() {
 | Jira attachments: `useCopyJiraAttachments().copyAll({ task, attachments, issueUrl, rewriteDescription })`, `CopyFromJiraButton`, `replaceJiraImages`; editor `jira:{id}` image placeholders; `TaskAttachments` `actions` slot; `useTaskDialogFiles` | `features/jira/`, `features/tasks/hooks/` | 17 Phase 4 |
 | `StatTile` | `components/shared/` | 11 (moved from dashboard) |
 | `GlobalDialogs` (`?new=task\|todo\|note\|event`, `&title=`; `capture` in 13) + `useGlobalDialog` (`hooks/`); `CommandPalette`, `useSearch`, `lib/entityPaths.js` `entityPath(row, { slugFor, timezone })`, `lib/recent.js` + `useRecordRecent`, `EntityIcon` | `components/layout/`, `features/search/`, `lib/`, `hooks/`, `components/shared/` | 12 Phase 1 ✅ |
-| `ShortcutKeys` (kbd) + `lib/shortcuts.js` registry + `useShortcut` | `components/shared/`, `lib/`, `hooks/` | 12 |
-| `useListNavigation` | `hooks/` | 12 |
+| `ShortcutKeys({ id \| keys })` + `lib/shortcuts.js` registry (scopes, `isOverridden`) + `useShortcut(id, handler, { enabled })` + `useShortcutScope(scope, active)`; `ShortcutsHelpDialog`, `GlobalShortcuts` | `components/shared/`, `components/layout/`, `lib/`, `hooks/` | 12 Phase 2 ✅ |
+| `useListNavigation({ items, actions, enabled })` → `{ selectedId, select, getRowProps }` (rows: `data-selected:bg-accent`) | `hooks/` | 12 Phase 2 ✅ |
 | `PinToggle` | `components/shared/` | 14 |
 
 Every create dialog (`TaskDialog`, `TodoDialog`, `EventDialog`) takes `({ open, onOpenChange, <entity>, initialValues, onSuccess })` and must be mountable on its own, because `GlobalDialogs` opens it from anywhere. Every soft-deletable feature exports `restoreX` / `useRestoreX`, which the Undo toast and Trash (14) use.

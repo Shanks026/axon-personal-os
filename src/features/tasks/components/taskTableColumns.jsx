@@ -28,7 +28,18 @@ export function buildTaskColumns({
   onEdit,
   onOpen,
   actions,
+  menuFor,
+  setMenuFor,
 }) {
+  // The status and priority menus are controlled, so a selected row can open them from the
+  // keyboard (S, P); clicking a pill goes through the same state.
+  const menuProps = (task, kind) =>
+    setMenuFor
+      ? {
+          open: menuFor?.id === task.id && menuFor.kind === kind,
+          onOpenChange: (open) => setMenuFor(open ? { id: task.id, kind } : null),
+        }
+      : {}
   const columns = [
     {
       id: 'title',
@@ -69,6 +80,7 @@ export function buildTaskColumns({
         <StatusMenu
           value={row.original.status}
           onChange={(v) => actions.setField(row.original, 'status', v)}
+          {...menuProps(row.original, 'status')}
         >
           <TaskStatusPill status={row.original.status} asButton aria-label="Change status" />
         </StatusMenu>
@@ -84,6 +96,7 @@ export function buildTaskColumns({
         <PriorityMenu
           value={row.original.priority}
           onChange={(v) => actions.setField(row.original, 'priority', v)}
+          {...menuProps(row.original, 'priority')}
         >
           <TaskPriorityPill
             priority={row.original.priority}

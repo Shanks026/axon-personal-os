@@ -1,8 +1,9 @@
-import { LogOut, Monitor, Moon, Settings, Sun } from 'lucide-react'
+import { Keyboard, LogOut, Monitor, Moon, Settings, Sun } from 'lucide-react'
 import { Link } from 'react-router'
 import { toast } from 'sonner'
 import { paths } from '@/lib/paths'
 import { useAuth } from '@/context/AuthContext'
+import { ShortcutKeys } from '@/components/shared/ShortcutKeys'
 import { useTheme } from '@/components/theme/useTheme'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
@@ -21,8 +22,11 @@ import {
 import { useMyProfile } from '@/features/auth/api'
 import { initials } from '@/features/settings/utils'
 
-/** Avatar menu: name/email, theme, Settings, Sign out. Used by the gallery header and the sidebar. */
-export function UserMenu({ align = 'end', children }) {
+/**
+ * Avatar menu: name/email, theme, Settings, Sign out. Used by the gallery header and the sidebar.
+ * `onOpenHelp` adds "Keyboard shortcuts" (inside a space, where the shortcuts work).
+ */
+export function UserMenu({ align = 'end', children, onOpenHelp }) {
   const { user, signOut } = useAuth()
   const { data: profile } = useMyProfile()
   const { theme, setTheme } = useTheme()
@@ -60,6 +64,13 @@ export function UserMenu({ align = 'end', children }) {
             Settings
           </Link>
         </DropdownMenuItem>
+        {onOpenHelp && (
+          <DropdownMenuItem onSelect={onOpenHelp}>
+            <Keyboard />
+            Keyboard shortcuts
+            <ShortcutKeys id="help.open" className="ml-auto" />
+          </DropdownMenuItem>
+        )}
         <DropdownMenuSeparator />
         <DropdownMenuItem
           variant="destructive"

@@ -3,6 +3,7 @@ import { Check, ChevronsUpDown, LayoutGrid, Plus } from 'lucide-react'
 import { Link } from 'react-router'
 import { GLOBAL_SLUG, paths } from '@/lib/paths'
 import { useSpace } from '@/context/SpaceContext'
+import { Kbd } from '@/components/shared/Kbd'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import {
   DropdownMenu,
@@ -50,12 +51,15 @@ export function SpaceSwitcher() {
               <SpaceIcon global size="sm" />
               <span className="flex-1">Global</span>
               {isGlobal && <Check className="size-3.5" aria-label="Current" />}
+              <Kbd shortcut="alt+0" />
             </DropdownMenuItem>
-            {activeSpaces.map((s) => (
+            {activeSpaces.map((s, i) => (
               <DropdownMenuItem key={s.id} onSelect={() => switchTo(s.slug)} className="h-8">
                 <SpaceIcon icon={s.icon} size="sm" />
                 <span className="flex-1 truncate">{s.name}</span>
                 {s.id === space?.id && <Check className="size-3.5" aria-label="Current" />}
+                {/* Alt+1–9 by position (lib/shortcuts.js space.byNumber). */}
+                {i < 9 && <Kbd shortcut={`alt+${i + 1}`} />}
               </DropdownMenuItem>
             ))}
             <DropdownMenuSeparator />

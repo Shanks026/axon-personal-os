@@ -1,6 +1,5 @@
 import { useCallback, useMemo, useRef, useState } from 'react'
 import { Copy, Download, Ellipsis, RotateCw, Trash2 } from 'lucide-react'
-import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { downloadTextFile } from '@/lib/download'
@@ -8,6 +7,8 @@ import { formatRelative } from '@/lib/dates'
 import { useSpace } from '@/context/SpaceContext'
 import { useAutosave } from '@/hooks/useAutosave'
 import { useRecordRecent } from '@/hooks/useRecordRecent'
+import { useShortcut } from '@/hooks/useShortcut'
+import { useShortcutScope } from '@/hooks/useShortcutScope'
 import { markdownToDoc, noteToMarkdown } from '@/components/editor/markdown'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
@@ -61,7 +62,8 @@ export function ReportEditor({ report }) {
     save: (patch) => update.mutateAsync({ id: report.id, patch }),
     delay: AUTOSAVE_DELAY,
   })
-  useHotkeys('mod+s', () => flush(), { enableOnFormTags: true, preventDefault: true }, [flush])
+  useShortcutScope('editor')
+  useShortcut('editor.save', () => flush())
 
   const changeTitle = (value) => {
     setTitle(value)

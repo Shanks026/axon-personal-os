@@ -1,9 +1,10 @@
 import { useCallback, useMemo, useState } from 'react'
 import { ChevronDown, ChevronUp, Ellipsis, PanelRight, Pencil, Trash2 } from 'lucide-react'
-import { useHotkeys } from 'react-hotkeys-hook'
 import { useLocation, useNavigate } from 'react-router'
 import { cn } from '@/lib/utils'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
+import { useShortcut } from '@/hooks/useShortcut'
+import { useShortcutScope } from '@/hooks/useShortcutScope'
 import { DetailRail } from '@/components/layout/DetailRail'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
 import { SaveIndicator } from '@/components/shared/SaveIndicator'
@@ -83,8 +84,9 @@ export function TaskDetail({ task }) {
     (id) => id && navigate(p.task(id), { replace: true, state: { order } }),
     [navigate, p, order],
   )
-  useHotkeys('k', () => go(prevId), [go, prevId])
-  useHotkeys('j', () => go(nextId), [go, nextId])
+  useShortcutScope('task')
+  useShortcut('task.prev', () => go(prevId))
+  useShortcut('task.next', () => go(nextId))
 
   const onStatusChange = useCallback((status, flush) => setSave({ status, flush }), [])
   const toggleRail = useCallback(() => {

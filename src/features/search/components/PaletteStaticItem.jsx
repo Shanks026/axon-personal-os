@@ -1,3 +1,4 @@
+import { ShortcutKeys } from '@/components/shared/ShortcutKeys'
 import { SpaceIcon } from '@/components/shared/SpaceIcon'
 import { CommandItem } from '@/components/ui/command'
 
@@ -13,6 +14,7 @@ export function PaletteStaticItem({ item, onRun }) {
       )}
       <span className="flex-1 truncate">{item.label}</span>
       {item.hint && <span className="text-xs text-faint">{item.hint}</span>}
+      {item.shortcut && <ShortcutKeys id={item.shortcut} />}
     </CommandItem>
   )
 }

@@ -1,12 +1,13 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Keyboard, PanelRight, Pin, PinOff } from 'lucide-react'
-import { useHotkeys } from 'react-hotkeys-hook'
 import { useNavigate } from 'react-router'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { useAutosave } from '@/hooks/useAutosave'
 import { useRecordRecent } from '@/hooks/useRecordRecent'
+import { useShortcut } from '@/hooks/useShortcut'
+import { useShortcutScope } from '@/hooks/useShortcutScope'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { EditorShortcutsDialog } from '@/components/editor/EditorShortcutsDialog'
 import { noteToMarkdown } from '@/components/editor/markdown'
@@ -140,7 +141,8 @@ export function NoteEditor({ note }) {
 
   // Ctrl/Cmd+S saves now: inside the body through the editor's keymap (features.onSave), and
   // anywhere else on the page (the title included) through this hotkey. Never the browser dialog.
-  useHotkeys('mod+s', () => flush(), { enableOnFormTags: true, preventDefault: true }, [flush])
+  useShortcutScope('editor')
+  useShortcut('editor.save', () => flush())
 
   const copyMarkdown = useCallback(() => {
     const markdown = noteToMarkdown({

@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from 'react'
 import { motion } from 'motion/react'
-import { useHotkeys } from 'react-hotkeys-hook'
 import { Outlet, useLocation, useMatch } from 'react-router'
 import { GLOBAL_SLUG } from '@/lib/paths'
 import { SpaceProvider } from '@/context/SpaceContext'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { AppSidebar } from '@/components/layout/AppSidebar'
 import { GlobalDialogs } from '@/components/layout/GlobalDialogs'
+import { GlobalShortcuts } from '@/components/layout/GlobalShortcuts'
 import { PageHeader } from '@/components/layout/PageHeader'
 import { PageHeaderProvider } from '@/components/layout/PageHeaderContext'
+import { ShortcutsHelpDialog } from '@/components/layout/ShortcutsHelpDialog'
 import { pageTransition } from '@/components/motion/presets'
 import { ErrorState } from '@/components/shared/ErrorState'
 import { SidebarProvider } from '@/components/ui/sidebar'
@@ -36,8 +37,14 @@ export function AppShell() {
   const { isPending: profilePending } = useMyProfile()
   const [open, setOpen] = useLocalStorage('axon:sidebar-open', true)
   const scrollRef = useRef(null)
-  // The command palette (Feature 12): Ctrl/Cmd+K anywhere in a space, even while typing.
-  const [paletteOpen, setPaletteOpen] = useState(false)
+  // The command palette and keyboard shortcuts (Feature 12), inside a space.
+  const [palette, setPalette] = useState({ open: false, page: 'root' })
+  const [helpOpen, setHelpOpen] = useState(false)
+  // Ctrl/Cmd+K toggles; Ctrl/Cmd+Shift+S opens (or switches) straight to the space list.
+  const togglePalette = (page) =>
+    setPalette((cur) =>
+      cur.open && cur.page === page ? { ...cur, open: false } : { open: true, page },
+    )
 
   // Latch: once shown, background refetches can never swap the shell for a blank screen.
   const [shown, setShown] = useState(false)
@@ -51,19 +58,6 @@ export function AppShell() {
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: 0 })
   }, [pathname])
-
-  useHotkeys(
-    'mod+k',
-    (e) => {
-      if (!inSpace) return
-      // In the rich editor, Mod+K with text selected opens its link field (Feature 06).
-      const selection = window.getSelection()
-      if (e.target?.isContentEditable && selection && !selection.isCollapsed) return
-      setPaletteOpen((o) => !o)
-    },
-    { enableOnFormTags: true, enableOnContentEditable: true, preventDefault: true },
-    [inSpace],
-  )
 
   // The accent lives on <html> so portalled menus and dialogs pick it up; @property cross-fades it.
   useEffect(() => {
@@ -89,7 +83,12 @@ export function AppShell() {
     <SpaceProvider spaceSlug={spaceSlug} spaces={spaces ?? []}>
       <PageHeaderProvider>
         <SidebarProvider open={open} onOpenChange={setOpen} style={SIDEBAR_WIDTHS}>
-          {inSpace && <AppSidebar onOpenSearch={() => setPaletteOpen(true)} />}
+          {inSpace && (
+            <AppSidebar
+              onOpenSearch={() => setPalette({ open: true, page: 'root' })}
+              onOpenHelp={() => setHelpOpen(true)}
+            />
+          )}
           <div className="flex h-svh min-w-0 flex-1 flex-col">
             {/* Outside the scroll area, so its border spans the full width (no gutter gap). */}
             {inSpace && <PageHeader />}
@@ -110,7 +109,15 @@ export function AppShell() {
           </div>
           {inSpace && (
             <>
-              <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+              <GlobalShortcuts onPalette={togglePalette} onHelp={() => setHelpOpen(true)} />
+              <CommandPalette
+                key={palette.page}
+                open={palette.open}
+                initialPage={palette.page}
+                onOpenChange={(open) => setPalette((cur) => ({ ...cur, open }))}
+                onOpenHelp={() => setHelpOpen(true)}
+              />
+              <ShortcutsHelpDialog open={helpOpen} onOpenChange={setHelpOpen} />
               <GlobalDialogs />
             </>
           )}

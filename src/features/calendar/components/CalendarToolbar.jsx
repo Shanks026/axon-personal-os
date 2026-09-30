@@ -1,5 +1,6 @@
 import { ChevronLeft, ChevronRight, Ellipsis, Plus } from 'lucide-react'
-import { useHotkeys } from 'react-hotkeys-hook'
+import { useShortcut } from '@/hooks/useShortcut'
+import { useShortcutScope } from '@/hooks/useShortcutScope'
 import { Kbd } from '@/components/shared/Kbd'
 import { SegmentedControl } from '@/components/shared/SegmentedControl'
 import { Button } from '@/components/ui/button'
@@ -53,15 +54,17 @@ export function CalendarToolbar({
   onToggleLayer,
   hotkeysEnabled = true,
 }) {
+  // The calendar's keys (`lib/shortcuts.js`, scope 'calendar'): its `n` wins over New note.
+  useShortcutScope('calendar')
   const opts = { enabled: hotkeysEnabled }
-  useHotkeys('t', onToday, opts, [onToday])
-  useHotkeys('left', onPrev, opts, [onPrev])
-  useHotkeys('right', onNext, opts, [onNext])
-  useHotkeys('m', () => onViewChange('month'), opts, [onViewChange])
-  useHotkeys('w', () => onViewChange('week'), opts, [onViewChange])
-  useHotkeys('d', () => onViewChange('day'), opts, [onViewChange])
-  useHotkeys('a', () => onViewChange('agenda'), opts, [onViewChange])
-  useHotkeys('n', () => onCreate(), { ...opts, preventDefault: true }, [onCreate])
+  useShortcut('calendar.today', onToday, opts)
+  useShortcut('calendar.prev', onPrev, opts)
+  useShortcut('calendar.next', onNext, opts)
+  useShortcut('calendar.month', () => onViewChange('month'), opts)
+  useShortcut('calendar.week', () => onViewChange('week'), opts)
+  useShortcut('calendar.day', () => onViewChange('day'), opts)
+  useShortcut('calendar.agenda', () => onViewChange('agenda'), opts)
+  useShortcut('calendar.create', () => onCreate(), opts)
 
   return (
     <div className="flex flex-wrap items-center gap-x-4 gap-y-3">

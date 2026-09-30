@@ -1,10 +1,11 @@
 import { useCallback, useMemo, useState } from 'react'
 import { PanelRight } from 'lucide-react'
-import { useHotkeys } from 'react-hotkeys-hook'
 import { Navigate } from 'react-router'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { useRecordRecent } from '@/hooks/useRecordRecent'
+import { useShortcut } from '@/hooks/useShortcut'
+import { useShortcutScope } from '@/hooks/useShortcutScope'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { DetailRail } from '@/components/layout/DetailRail'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
@@ -69,8 +70,9 @@ export default function JournalPage() {
     else setSheetOpen(true)
   }, [setRailOpen])
 
-  useHotkeys('alt+left', goPrev, { preventDefault: true }, [goPrev])
-  useHotkeys('alt+right', goNext, { preventDefault: true }, [goNext])
+  useShortcutScope('journal')
+  useShortcut('journal.prev', goPrev)
+  useShortcut('journal.next', goNext)
 
   const headerActions = useMemo(
     () => (

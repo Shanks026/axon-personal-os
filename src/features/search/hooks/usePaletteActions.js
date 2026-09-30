@@ -3,6 +3,7 @@ import {
   CalendarPlus,
   FilePlus,
   Inbox,
+  Keyboard,
   Layers,
   ListPlus,
   Moon,
@@ -28,7 +29,7 @@ import { useSwitchSpace } from '@/features/spaces/hooks/useSwitchSpace'
  * - `navigate`: every section of the current scope, plus Trash.
  * - `spaces`: Global, then each active space (keeping the current section).
  */
-export function usePaletteActions() {
+export function usePaletteActions({ onOpenHelp } = {}) {
   const navigate = useNavigate()
   const p = useSpacePaths()
   const { activeSpaces } = useSpace()
@@ -43,6 +44,7 @@ export function usePaletteActions() {
         label: 'New task',
         icon: SquarePlus,
         keywords: 'create add',
+        shortcut: 'create.task',
         run: () => openDialog('task'),
       },
       {
@@ -50,6 +52,7 @@ export function usePaletteActions() {
         label: 'New todo',
         icon: ListPlus,
         keywords: 'create add checkbox',
+        shortcut: 'create.todo',
         run: () => openDialog('todo'),
       },
       {
@@ -57,6 +60,7 @@ export function usePaletteActions() {
         label: 'New note',
         icon: FilePlus,
         keywords: 'create add write',
+        shortcut: 'create.note',
         run: () => openDialog('note'),
       },
       {
@@ -64,6 +68,7 @@ export function usePaletteActions() {
         label: 'New event',
         icon: CalendarPlus,
         keywords: 'create add meeting calendar',
+        shortcut: 'create.event',
         run: () => openDialog('event'),
       },
       {
@@ -80,7 +85,16 @@ export function usePaletteActions() {
         label: resolvedTheme === 'dark' ? 'Switch to light theme' : 'Switch to dark theme',
         icon: resolvedTheme === 'dark' ? Sun : Moon,
         keywords: 'theme dark light mode appearance',
+        shortcut: 'theme.toggle',
         run: () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark'),
+      },
+      {
+        id: 'shortcuts',
+        label: 'Keyboard shortcuts',
+        icon: Keyboard,
+        keywords: 'keys hotkeys help',
+        shortcut: 'help.open',
+        run: () => onOpenHelp?.(),
       },
       {
         id: 'settings',
@@ -96,6 +110,7 @@ export function usePaletteActions() {
       label: item.label,
       icon: item.section === 'inbox' ? Inbox : item.icon,
       keywords: 'go open',
+      shortcut: `go.${item.section}`,
       run: () => navigate(p[item.section]()),
     }))
     sections.push({
@@ -124,5 +139,5 @@ export function usePaletteActions() {
     ]
 
     return { actions, navigate: sections, spaces }
-  }, [openDialog, navigate, p, activeSpaces, switchSpace, resolvedTheme, setTheme])
+  }, [openDialog, navigate, p, activeSpaces, switchSpace, resolvedTheme, setTheme, onOpenHelp])
 }

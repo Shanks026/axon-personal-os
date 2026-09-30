@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { rowSortingFeature, tableFeatures, useTable } from '@tanstack/react-table'
 import { ArrowDown, ArrowUp, ChevronsUpDown } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
+import { useListNavigation } from '@/hooks/useListNavigation'
 import {
   Table,
   TableBody,
@@ -60,11 +61,35 @@ export function TaskTable({
   onShowAllCompleted,
 }) {
   const { isGlobal, spaceById } = useSpace()
+  const [menuFor, setMenuFor] = useState(null) // { id, kind: 'status' | 'priority' }
   const columns = useMemo(
     () =>
-      buildTaskColumns({ isGlobal, spaceById, tagsById, progressByTask, onEdit, onOpen, actions }),
-    [isGlobal, spaceById, tagsById, progressByTask, onEdit, onOpen, actions],
+      buildTaskColumns({
+        isGlobal,
+        spaceById,
+        tagsById,
+        progressByTask,
+        onEdit,
+        onOpen,
+        actions,
+        menuFor,
+        setMenuFor,
+      }),
+    [isGlobal, spaceById, tagsById, progressByTask, onEdit, onOpen, actions, menuFor],
   )
+  // Keyboard selection (Feature 12): j/k move, Enter opens, E edits, X completes, S / P set status
+  // and priority, Backspace moves to Trash.
+  const { getRowProps } = useListNavigation({
+    items: tasks,
+    actions: {
+      'list.open': onOpen,
+      'list.edit': onEdit,
+      'list.toggle': (t) => actions.setField(t, 'status', t.status === 'done' ? 'todo' : 'done'),
+      'list.status': (t) => setMenuFor({ id: t.id, kind: 'status' }),
+      'list.priority': (t) => setMenuFor({ id: t.id, kind: 'priority' }),
+      'list.delete': (t) => actions.remove(t),
+    },
+  })
   const sorting = useMemo(() => parseSort(sort), [sort])
 
   const table = useTable({
@@ -110,7 +135,11 @@ export function TaskTable({
         </TableHeader>
         <TableBody>
           {table.getRowModel().rows.map((row) => (
-            <TableRow key={row.id} className="h-11">
+            <TableRow
+              key={row.id}
+              {...getRowProps(row.id)}
+              className="h-11 data-selected:bg-accent"
+            >
               {row.getAllCells().map((cell) => (
                 <TableCell
                   key={cell.id}

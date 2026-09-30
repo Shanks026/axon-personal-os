@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react'
 import { QueryClientProvider } from '@tanstack/react-query'
 import { MotionConfig } from 'motion/react'
+import { HotkeysProvider } from 'react-hotkeys-hook'
 import { RouterProvider } from 'react-router'
 import { queryClient } from '@/lib/queryClient'
 import { AuthProvider } from '@/context/AuthContext'
@@ -25,7 +26,10 @@ export default function App({ router = appRouter }) {
           <ProfileThemeSync />
           <MotionConfig reducedMotion="user">
             <TooltipProvider delayDuration={300}>
-              <RouterProvider router={router} />
+              {/* Keyboard shortcut scopes (Feature 12): 'global' always; pages add their own. */}
+              <HotkeysProvider initiallyActiveScopes={['global']}>
+                <RouterProvider router={router} />
+              </HotkeysProvider>
               <Toaster position="bottom-right" />
             </TooltipProvider>
           </MotionConfig>

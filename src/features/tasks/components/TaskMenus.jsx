@@ -18,11 +18,24 @@ import { linkHost } from '@/features/tasks/utils'
  * on hover, without changing its click behaviour (the dialog's property chips use this; rows and
  * cards don't, so hovering a list doesn't pop menus open unexpectedly).
  */
-export function StatusMenu({ value, onChange, children, align = 'start', hoverOpen = false }) {
+export function StatusMenu({
+  value,
+  onChange,
+  children,
+  align = 'start',
+  hoverOpen = false,
+  open: openProp,
+  onOpenChange,
+}) {
   const { open, setOpen, hoverProps } = useHoverOpen()
   // Non-modal when hover-driven: a modal menu blocks pointer events on its trigger, which fires
   // mouseleave, closes it, unblocks, fires mouseenter and reopens it: an endless flicker.
-  const controlled = hoverOpen ? { open, onOpenChange: setOpen, modal: false } : {}
+  // `open` / `onOpenChange` let a list open it from the keyboard (S and P, Feature 12).
+  const controlled = hoverOpen
+    ? { open, onOpenChange: setOpen, modal: false }
+    : openProp !== undefined
+      ? { open: openProp, onOpenChange }
+      : {}
   return (
     <DropdownMenu {...controlled}>
       <DropdownMenuTrigger asChild {...(hoverOpen ? hoverProps : {})}>
@@ -43,11 +56,24 @@ export function StatusMenu({ value, onChange, children, align = 'start', hoverOp
 }
 
 /** Pick a priority. `children` is the trigger (rendered asChild). See `StatusMenu` for `hoverOpen`. */
-export function PriorityMenu({ value, onChange, children, align = 'start', hoverOpen = false }) {
+export function PriorityMenu({
+  value,
+  onChange,
+  children,
+  align = 'start',
+  hoverOpen = false,
+  open: openProp,
+  onOpenChange,
+}) {
   const { open, setOpen, hoverProps } = useHoverOpen()
   // Non-modal when hover-driven: a modal menu blocks pointer events on its trigger, which fires
   // mouseleave, closes it, unblocks, fires mouseenter and reopens it: an endless flicker.
-  const controlled = hoverOpen ? { open, onOpenChange: setOpen, modal: false } : {}
+  // `open` / `onOpenChange` let a list open it from the keyboard (S and P, Feature 12).
+  const controlled = hoverOpen
+    ? { open, onOpenChange: setOpen, modal: false }
+    : openProp !== undefined
+      ? { open: openProp, onOpenChange }
+      : {}
   return (
     <DropdownMenu {...controlled}>
       <DropdownMenuTrigger asChild {...(hoverOpen ? hoverProps : {})}>

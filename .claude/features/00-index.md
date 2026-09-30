@@ -30,7 +30,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 10 | Dashboard (per space and Global) | [10-dashboard.md](10-dashboard.md) | 08, 09 | 🔵 Planned |
 | 11 | Quarterly Reports (fiscal year) | [11-reports.md](11-reports.md) | 10 | 🔵 Planned |
 | **Wave 5: Flow** | | | | |
-| 12 | Command Palette, Search and Shortcuts | [12-command-palette.md](12-command-palette.md) | 11 | 🟡 In progress (Phase 1 ✅ palette and search; Phase 2 shortcuts next) |
+| 12 | Command Palette, Search and Shortcuts | [12-command-palette.md](12-command-palette.md) | 11 | ✅ Complete (palette, search, keyboard shortcuts) |
 | 13 | Inbox and Quick Capture | [13-inbox-quick-capture.md](13-inbox-quick-capture.md) | 12 | 🔵 Planned |
 | 14 | Pins and Trash | [14-pins-and-trash.md](14-pins-and-trash.md) | 13 | 🔵 Planned |
 | **Wave 6: Later** (backlog; each gets a full doc through the skill when started) | | | | |
@@ -120,6 +120,20 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-30: Feature 12 Phase 2 — Keyboard shortcuts (Feature 12 complete)
+- **One registry** (`lib/shortcuts.js`) behind `useShortcut` and `useShortcutScope`, and `HotkeysProvider` in `App.jsx`. Every existing hotkey moved onto it: the calendar, journal, task page, editors and Settings.
+- **Global keys:**
+  - `⌘K` palette, `⌘⇧S` switch space, Alt+0–9 space by position, `⌘\` sidebar, `⌘⇧L` theme, `?` help.
+  - `c` New task, `⇧C` todo, `n` note, `e` event.
+  - `g` then a letter to go to a section.
+- **Lists** (`useListNavigation`: the Tasks table and Todos):
+  - `j`/`k` select, Enter opens, `e` edits, `x` completes.
+  - `s`/`p` open the status and priority menus (tasks only); Backspace moves to Trash with Undo, Esc clears.
+  - While a row is selected, list keys win over the global ones.
+- **Help dialog:** 760px, two columns; it opens from `?`, the user menu and the palette. Palette items and the space switcher show their keys.
+- **New shared:** `ShortcutKeys`, `ShortcutsHelpDialog`, `GlobalShortcuts`, `useShortcut`, `useShortcutScope`, `useListNavigation`, `lib/shortcuts.js`. `StatusMenu`/`PriorityMenu` can be controlled (`open`/`onOpenChange`).
+- **Manual steps:** none.
 
 ### 2026-09-30: Feature 12 Phase 1 — Command palette and search
 - **RPC:** `search_all(p_query, p_space_ids, p_limit, p_include_global, p_types)` over tasks, notes, journal days, todos, events and reports: full-text, title prefix and substring, and typo matching (`word_similarity >= 0.4`), plus `reports_title_trgm`. Migrations `20260930102602_create_search_all` and `20260930102719_search_all_word_similarity`.
