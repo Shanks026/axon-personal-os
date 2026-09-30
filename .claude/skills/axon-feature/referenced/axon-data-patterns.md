@@ -220,6 +220,7 @@ export function useTaskFilters() {
 | `useNow(intervalMs)` (minute-aligned clock) | `hooks/` | 08 Phase 2 |
 | `SegmentedControl` options take `disabled` / `hint`; `Kbd` renders `left` / `right` arrows | `components/shared/` | 08 Phase 1 |
 | `lib/dates.js` zone helpers (`todayISO`, `zonedInstant`, `zonedDayRange`, `zonedParts`, `formatTime(Range)`, `formatWeekdayDate`); `lib/tint.js` `eventBlockClasses` | `lib/` | 08 |
+| `lib/download.js` `downloadTextFile(name, text)`; report period helpers `quarterOptions` / `weekPeriod` / `customPeriod` / `periodRange` / `buildReportRequest` (`features/reports/utils.js`); `useGenerateReport` (the `ai` function saves the row itself) | `lib/`, `features/reports/` | 17 Phase 5 |
 | `StatTile` | `components/shared/` | 11 (moved from dashboard) |
 | `GlobalDialogs` (`?new=task\|todo\|note\|event\|capture`) + `useGlobalDialog` | `components/layout/` | 12 |
 | `ShortcutKeys` (kbd) + `lib/shortcuts.js` registry + `useShortcut` | `components/shared/`, `lib/`, `hooks/` | 12 |

@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/17-ai-and-jira.md`
-**Status**: 🟡 In progress (Phases 1–3 ✅; taken before Features 10–14, the user's decision 2026-09-28)
+**Status**: 🟡 In progress (Phases 1–3 and 5 ✅; taken before Features 10–14, the user's decision 2026-09-28)
 **Depends on**: 04, 05, 07 (tasks, checklists, task detail and links). Phase 4 also needs 15 Phase 2.
 **Last Updated**: September 2026
 
@@ -49,7 +49,7 @@ Phase 3: AI checklists                                                (about 1 s
 Phase 4: Jira attachments and video                                   (about 2 sessions; needs 15 Phase 2)
   Copy Jira attachments and inline description images into Storage; video type support and a player.
 
-Phase 5: AI reports                                                   (about 2 sessions; with Feature 11)
+Phase 5: AI reports                                                   (about 2 sessions; AI-first)
   Weekly and quarterly reports drafted from the period's tasks, status changes, Jira keys, journal
   and notes; streamed, saved, editable, copy / Markdown export.
 
@@ -379,10 +379,113 @@ No schema changes.
 - Inline description images: `renderedFields` image URLs map to attachment ids; they're rewritten to Axon image nodes with the Storage path.
 - Video: allow `video/mp4`, `video/webm`, `video/quicktime`; a video node or an attachment-list player (`<video controls>` on a signed URL). Edge Function memory and run-time limits mean streaming, never buffering whole files.
 
-## Phase 5: AI Reports (outline; built with Feature 11)
-- The client gathers the period's facts (fiscal quarter or week): tasks completed with Jira keys, versions and tags; status changes; open, blocked and carried-over work; journal entries; linked-note excerpts. It sends them as compact structured text to `ai.report` (`report_weekly` / `report_quarterly`).
-- Claude writes Summary, Highlights, work by version, In progress, Blocked or carried over, Next quarter, citing Jira keys; streamed into the page; saved as a Feature 11 report (Tiptap), editable, copy and Markdown export (PDF via print later).
-- A model picker for regeneration; each run logged in `ai_usage`.
+## Phase 5: AI Reports (AI-first; Feature 11's stats, charts and PDF come later) ✅ Complete
+
+> **Decisions (the user, 2026-09-28):** AI-first and lean, not the full Feature 11 first. The `reports` table uses Feature 11's design (plus `week` and an `ai_model` column), so Feature 11 later adds `report_stats`, tiles, charts, Draft/Final and PDF on top without redoing anything. Periods: **fiscal quarter, week, custom range**.
+
+### Goal
+At `/s/:slug/reports` the user sees their reports, newest first. **Generate report** opens a dialog: pick the period (a fiscal quarter such as "Q2 FY 2026–27", a week, or a custom range) and the model, and click Generate. The AI reads the period's work: tasks completed (with Jira keys, versions, tags and priorities), tasks moved along or still in progress, blocked or carried-over work, and journal entries. It writes a report with a Summary, Highlights, completed work grouped by area and version, In progress, Blocked or carried over, and Next focus, citing Jira keys. The report opens as an editable document that autosaves, and can be copied as Markdown, downloaded as a `.md` file, regenerated, or moved to Trash. In a space the report covers that space; in Global it covers every active space.
+
+### Before Starting: Confirm With Codebase
+1. Phase 3 is approved. The placeholder `features/reports/pages/ReportsPage.jsx` and `ReportPage.jsx`, their routes (`reports`, `reports/:reportId`), `paths.reports()` / `paths.report(id)` and the sidebar item exist.
+2. `lib/fiscal.js`: `getFiscalQuarter`, `getQuarterRange`, `listQuarters`, `formatQuarter`. `lib/dates.js`: `zonedDayRange`, `todayISO`.
+3. The embed for task tag names: `tag_list:task_tags(tag:tags(name))` (confirm with the MCP `execute_sql` or a PostgREST call). `task_activity` status rows (`kind = 'status'`, `from_value`, `to_value`).
+4. The notes editor autosave pattern (`useAutosave`, `NoteEditor`) and `docToMarkdown` for copy/export.
+
+### 5.1 Database
+Migration `create_reports` (Feature 11's table, with `week` allowed and `ai_model`):
+
+```sql
+create table public.reports (
+  id              uuid primary key default gen_random_uuid(),
+  user_id         uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  space_id        uuid,                                 -- NULL = Global report (all spaces)
+  title           text not null check (char_length(btrim(title)) between 1 and 200),
+  period_kind     text not null default 'quarter' check (period_kind in ('quarter','month','week','custom')),
+  period_start    date not null,
+  period_end      date not null,
+  fiscal_year     smallint,                             -- FY start year: FY 2026-27 → 2026
+  fiscal_quarter  smallint check (fiscal_quarter between 1 and 4),
+  content         jsonb,
+  content_text    text not null default '',
+  stats           jsonb not null default '{}'::jsonb,   -- Feature 11's report_stats() snapshot (later)
+  stats_refreshed_at timestamptz,
+  status          text not null default 'draft' check (status in ('draft','final')),
+  ai_model        text check (char_length(ai_model) <= 80),   -- model that last generated it
+  generated_at    timestamptz,
+  pinned_at       timestamptz,
+  deleted_at      timestamptz,
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now(),
+  search          tsvector generated always as (
+                    setweight(to_tsvector('english', coalesce(title, '')), 'A') ||
+                    setweight(to_tsvector('english', coalesce(content_text, '')), 'B')
+                  ) stored,
+  check (period_end >= period_start),
+  unique (id, user_id),
+  foreign key (space_id, user_id) references public.spaces(id, user_id) on delete cascade
+);
+create index reports_period_idx on public.reports (user_id, period_start desc) where deleted_at is null;
+create index reports_search_idx on public.reports using gin (search);
+create trigger reports_updated_at before update on public.reports
+  for each row execute function public.set_updated_at();
+alter table public.reports enable row level security;
+create policy "reports_owner_all" on public.reports for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+```
+
+Verify (rolled back): another user's space can't be attached (composite FK); `period_end < period_start` is rejected; an unknown `period_kind` is rejected. Advisors.
+
+### 5.2 Edge Function (`ai`, action `report`)
+- Input: `{ spaceIds, spaceId | null, period: { kind, start, end, label, fiscalYear?, fiscalQuarter? }, range: { from, to }, model?, reportId? }`. `range` is the period as UTC instants (the client computes it with `zonedDayRange` in the profile time zone). `reportId` regenerates an existing report (same period); otherwise a new one is created.
+- **Facts** (`reportFacts.js`), read **in the function with the caller's JWT** (RLS applies, nothing leaves the user's rows), capped to about 60,000 characters:
+  - Tasks **completed** in the range (`completed_at`): title, Jira key, versions, tags, priority, completion date, the first 300 characters of the description.
+  - **Status changes** in the range (`task_activity`), per task: from → to, for "moved to In review" and similar.
+  - **Still open at the end**: in progress, in review, blocked or on hold, created before the end: title, key, status, due date; overdue flagged.
+  - **Created** in the range (count, plus titles if few).
+  - **Journal entries** in the period (`notes.kind = 'journal'`): date and `content_text` (each up to 1,500 characters).
+  - Todos done in the range (count).
+- **Prompt** (`report.js`): write a work report in Markdown for the given period and audience "a manager or lead": `## Summary` (3–5 sentences), `## Highlights` (the most significant completed work), `## Completed` (grouped by area or portal tag, then version), `## In progress`, `## Blocked or carried over`, `## Next focus` (for a quarter: next quarter; for a week: next week). Cite Jira keys in brackets after items (`[MP-43512]`). Use only the facts given; never invent work, numbers or keys; say so plainly when a section is empty. Structured output `{ title, markdown }`; `title` like "Q2 FY 2026–27 report: THMP".
+- The function **inserts or updates the `reports` row itself** (with the caller's JWT), so a long generation survives the user leaving the page: `content` stays null and `content_text` holds the Markdown; the client converts it to Tiptap JSON the first time the report is opened (a report with `content` null and text present is "fresh from AI"). Returns `{ report, model, usage, costUsd }`. Job: `report_weekly` for weeks (and custom ranges up to 14 days), `report_quarterly` otherwise. Logged in `ai_usage`.
+- Errors as elsewhere; a period with no activity still produces a short report that says so.
+
+### 5.3 Client
+**`src/features/reports/`**
+- `api.js`: `reportKeys` (`all`, `lists`, `list({ spaceIds, global })`, `detail(id)`); `fetchReports({ spaceIds, global })` (in a space: that space's reports; in Global: all the user's reports, space or not), `fetchReport(id)`, `updateReport(id, patch)`, `softDeleteReport` / `restoreReport`; hooks `useReports`, `useReport`, `useUpdateReport` (autosave, not optimistic), `useDeleteReport` (Undo toast), `useGenerateReport` (calls `ai.report`; on success seeds the detail cache and invalidates lists).
+- `utils.js` (tested): `quarterOptions(today, fyStartMonth, count = 6)` (current and previous quarters as `{ value, label, start, end, fiscalYear, quarter }`), `weekPeriod(anyDate, weekStartsOn)` (`{ start, end, label: "Week of 21 Sep 2026" }`), `customPeriod(start, end)` (validated; label "1 Sep – 15 Sep 2026"), `periodRange(period, timezone)` (UTC `{ from, to }` from the first day's start to the day after the last), `reportFileName(report)` (`q2-fy-2026-27-report-thmp.md`).
+- **`ReportsPage`** (`/s/:slug/reports`): header "Reports" with **Generate report**. Reports as cards (newest period first): title, period label (mono), space badge in Global, "Generated 2d ago · Gemini 3.8 Flash", a 2-line excerpt. Loading skeleton cards; empty state "No reports yet. Generate one for this quarter." with the button.
+- **`GenerateReportDialog`**: a `SegmentedControl` (Quarter / Week / Custom), then the picker for that kind (quarter select defaulting to the current quarter; a date picker for "any day in the week"; two date pickers for custom), the space scope as read-only text ("THMP" or "All spaces"), `ModelPicker` (job default), and **Generate**. While generating: the button spinner and "Reading your work for Q2… this can take a minute on the free model". On success it navigates to the report. Errors inline.
+- **`ReportPage`** (`/s/:slug/reports/:reportId`): header with the save state, **Copy** (Markdown to the clipboard), **Download .md**, **Regenerate** (a confirm: "Replace the report with a new draft?"; it keeps the period and uses the model picker's choice), and a `…` menu with Move to Trash. The body is a 760px reading column (`max-w-190`): an editable title (`TitleTextarea`), a mono line with the period, scope, model and "Generated …", then the `RichTextEditor` (`text-base leading-7`) autosaving `content` and `content_text` through `useAutosave`. A fresh AI report (`content` null) is shown from `markdownToDoc(content_text)` and saved as JSON on the first edit. Loading and error states as on the note page; a missing or trashed report shows an empty state with "Back to Reports".
+- **Settings:** the Weekly reports and Quarterly reports job rows.
+
+### 5.4 Checklist: Before Marking Complete
+- [x] The migration is applied and mirrored; advisors clean; the rolled-back checks pass
+- [ ] A quarter, a week and a custom range each generate a report with the sections, citing Jira keys, built only from that period's facts (spot-check against the tasks)
+- [ ] The report opens editable, autosaves, and survives a reload; Copy and Download give the same Markdown
+- [ ] Regenerate replaces the content after confirming; Move to Trash has Undo
+- [x] A space's report covers only that space; a Global report covers all active spaces (in code and the function test; confirm in the browser)
+- [ ] Each generation writes an `ai_usage` row under the right job
+- [x] `utils.js` tests pass (quarter options, week and custom periods, UTC ranges, file names)
+- [x] `npm run lint`, `npm test` and `npm run build` pass; `axon-rules` audit clean; `00-index.md` updated
+
+### Implementation Notes (2026-09-29)
+- **Migration `20260929061315_create_reports`**, as planned plus `reports_space_idx` (an index for the space FK). Rolled-back checks (4/4): another user's space is refused by `reports_space_id_user_id_fkey` (tested with a throwaway auth user inside the rolled-back block), `period_end < period_start` and `period_kind = 'year'` are rejected, and a Global report (`space_id` null) inserts. Advisors: only the 3 existing warnings.
+- **`ai` v7** (MCP deploy, all 11 files). A request with the publishable key and no user gets the function's own 401, so it boots with the new files.
+  - `reportFacts.js`: `readPeriod` validates the request (kind, dates, range, at most about a year, at least one space id); `reportFacts` runs six reads in parallel with the caller's JWT, each filtered by `spaceIds` and `deleted_at`. Status changes use `task_activity` with `task:tasks!inner(...)` and filter on `task.space_id`. Dates in the facts are local dates in `profiles.timezone` (sent by the client).
+  - **"Open" work is today's status**, not rebuilt as of the period end (that reconstruction is Feature 11's `report_stats`). The facts label it "OPEN NOW", so for an old period the model sees what's open today.
+  - `report.js`: **Deviation:** the model returns only `{ markdown }`. The title is set by the function (`"Q2 FY 2026–27 report · THMP"`, or "· All spaces"), so the list reads consistently. Regenerate keeps the current title and replaces `content_text`, `ai_model` and `generated_at`, with `content` back to null.
+  - Reports use `maxTokens: 32000` and a 140s timeout (Edge Functions stop at 150s). Gemini timeouts return `504 timeout` with a readable message. `reportJob` lives in `reportFacts.js`, so the tests can import it without the Anthropic SDK.
+- **Client:**
+  - `GenerateReportDialog` keeps the mutation outside the dialog body. Closing it mid-generation is allowed: the report still saves, and a "Report ready · Open" toast appears (or an error toast). While the dialog is open, success goes straight to the report.
+  - **Deviation:** the dialog has no react-hook-form. It has no text fields, only a segmented control, a select and date pickers, and `customPeriod` does the validation.
+  - `ReportEditor`: `markdownToDoc(content_text)` for a fresh report. The first edit saves Tiptap JSON and plain `content_text`. Copy and Download use the same `noteToMarkdown({ title, content })`.
+  - `ReportPage` remounts the editor when `generated_at` changes. It redirects a report to its canonical space URL (Global reports to `/s/global/...`), and shows the archived-space and trashed states like notes.
+  - To stay under 200 lines per component, the audit split out `ReportPeriodFields`, `ReportFieldRow`, `useReportPeriod` and `RegenerateReportDialog`.
+- **Tests:** `src/tests/features/reports/utils.test.js` (21), plus `src/tests/functions/reportFacts.test.js` (4; a stubbed PostgREST builder checks the scope and deleted filters on every read, the range bounds and the facts text). Full suite: 454 passed.
+- **Not covered by tests:** the real PostgREST embeds (`tags:task_tags(tag:tags(name))` and the `!inner` activity filter) run only with a signed-in session. They're the first thing to check in the browser: a "Couldn't read your work: …" error means an embed needs fixing.
+- **Still to confirm in the browser:** a quarter, a week and a custom report (sections, Jira keys, facts only); edit, reload, Copy and Download; Regenerate; Trash and Undo; a Global report; the `ai_usage` rows (`report_weekly` / `report_quarterly`).
+
+**Stop here. Show the result and wait for approval.**
 
 ## Phase 6: Chat Over Tasks (outline)
 - **UI: the shadcn Bubble component** (the user's choice, 2026-09-28; https://ui.shadcn.com/docs/components/base/bubble, `npx shadcn@latest add bubble`): `Bubble` (`variant`, `align` start/end), `BubbleContent`, `BubbleGroup`, `BubbleReactions`. The user's messages are `align="end"` bubbles; Claude's replies use the `ghost` variant (the docs' recommendation for assistant text and Markdown), rendered as Markdown while streaming. Avatars, names, timestamps and actions (copy, regenerate, cost) go in the companion `Message` component the Bubble docs point to; check it and the style (the project uses `radix-nova`; the link is the Base UI docs) when Phase 6 starts.

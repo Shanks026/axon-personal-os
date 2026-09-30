@@ -36,7 +36,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | **Wave 6: Later** (backlog; each gets a full doc through the skill when started) | | | | |
 | 15 | Attachments and Media | [15-attachments-and-media.md](15-attachments-and-media.md) | 06 | 🟡 In progress (Phase 1 ✅ images in the editor; Phases 2–3 later) |
 | 16 | Recurring Tasks and Reminders | none | 14 | ⚪ Backlog |
-| 17 | **AI Assistant and Jira** (taken next, before 10–14) | [17-ai-and-jira.md](17-ai-and-jira.md) | 04, 05, 07 | 🟡 In progress (Phases 1–3 ✅) |
+| 17 | **AI Assistant and Jira** (taken next, before 10–14) | [17-ai-and-jira.md](17-ai-and-jira.md) | 04, 05, 07 | 🟡 In progress (Phases 1–3 and 5 ✅) |
 | 18 | Automation and Email Triggers | none | 13, 16 | ⚪ Backlog |
 | 19 | Data Export and Backup | none | 14 | ⚪ Backlog |
 | 20 | PWA and Mobile Polish | none | 14 | ⚪ Backlog |
@@ -96,7 +96,8 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `tasks.jira_key`, `tasks.jira_imported_at`; `profiles.jira_settings` | 17 | ✅ | Jira import; unique live `jira_key` per user. Migration `20260928081802` |
 | `notes.kind`, `notes.journal_date` (+ `notes_journal_unique` partial index) | 09 | ✅ | One live journal entry per space per day; existing rows became `kind = 'note'`. Migration `20260926071151` |
 | `week_start_of()`, `dashboard_summary()` | 10 | ⬜ | RPCs; they read the profile's time zone and week start |
-| `reports` + `report_stats()` | 11 | ⬜ | `space_id` NULL means a Global report; "at end" statuses are rebuilt from `task_activity` |
+| `reports` | 17 (Phase 5) | ✅ | Feature 11's table plus `week`, `ai_model`, `generated_at`; `space_id` NULL = Global report. Migration `20260929061315` |
+| `report_stats()` | 11 | ⬜ | "at end" statuses are rebuilt from `task_activity` |
 | `search_all()`, `reports_title_trgm` index | 12 | ⬜ | RPC with `p_include_global` |
 | `inbox_items` | 13 | ⬜ | `space_id` NULL means unsorted |
 | `trash_items()`, `purge_trash()`, `private.purge_all_trash()` + pg_cron job | 14 | ⬜ | 30-day auto purge, daily at 03:00 UTC |
@@ -110,7 +111,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | Supabase MCP (`supabase`) | 2026-09-23 | Local Claude config, project `ceomotoumlljqlkqboyc` |
 | Git remote | 2026-09-23 | github.com/Shanks026/axon-personal-os (`main`) |
 | Storage buckets | none yet | First one comes in Feature 15 |
-| Edge Functions | none yet | First ones come in Features 17 and 18 |
+| Edge Functions | 2026-09-28 (17) | `ai` (v7: status, draft_tasks, suggest_tags, checklist, report) and `jira` (v3); deployed with the MCP, every file, `verify_jwt` on |
 | `private` schema (not exposed to the API) and `pg_cron` | planned for 14 | Holds `purge_all_trash()`; execute revoked from every role except its owner |
 
 ---
@@ -118,6 +119,16 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-29: Feature 17 Phase 5 — AI reports
+- **Table:** `reports` (migration `20260929061315_create_reports`): Feature 11's design with `week`, `ai_model` and `generated_at`, plus a `reports_space_idx` FK index. Rolled-back checks: another user's space can't be attached (`reports_space_id_user_id_fkey`), `period_end < period_start` and an unknown `period_kind` are rejected, and a Global report (`space_id` null) inserts. Advisors: only the 3 existing warnings.
+- **`ai` v7:** the `report` action (`report.js`, `reportFacts.js`) reads the period's facts with the caller's JWT (completed tasks with Jira keys, tags, versions and priority; status changes; open work with overdue flags; tasks created; todos done; journal entries), capped at 60,000 characters. It asks the model for Markdown with fixed sections, and inserts the report (or updates it on Regenerate). Logged as `report_weekly` (weeks and ranges up to 14 days) or `report_quarterly`. The Gemini and Claude adapters take `timeoutMs` (140s for reports), reports get 32,000 output tokens, and a Gemini timeout now says so.
+- **Client:** `features/reports/` (`api.js`, `utils.js` with tests, `hooks/useReportPeriod.js`; `GenerateReportDialog`, `ReportPeriodFields`, `ReportFieldRow`, `ReportCard`, `ReportEditor`, `RegenerateReportDialog`). The Reports and Report pages replace the placeholders, and Settings → AI & integrations gains the Weekly and Quarterly reports rows. Function tests: `src/tests/functions/reportFacts.test.js` (stubbed Supabase).
+- **New shared file:** `src/lib/download.js` (`downloadTextFile`).
+- **Manual steps:** none. Browser review still to do (see the feature doc's checklist).
+
+### 2026-09-28: Feature 17 Phase 5 planned — AI reports (AI-first)
+- The user chose AI-first over building Feature 11 first. Phase 5 creates Feature 11's `reports` table (plus `week` and `ai_model` / `generated_at`), a Reports list, Generate report (fiscal quarter, week or custom range; the `ai` function reads the period's tasks, status changes, open work and journal with the caller's JWT and writes the report), an editable report page with Copy, Download .md, Regenerate and Trash. **Feature 11 keeps** `report_stats`, stat tiles, charts, Draft/Final and PDF, to add on top later.
 
 ### 2026-09-28: Feature 17 Phase 3 — AI checklists
 - **✦ Generate** in a task's checklist header (task page, and the dialog in edit mode): the AI proposes checklist items from the task, using the Jira ticket's current description and latest comments for Jira tasks, or the task's own description otherwise. Review in a popover (untick, edit, Regenerate), then **Add N items**; they're appended after the existing ones and never duplicate them. Only on click.

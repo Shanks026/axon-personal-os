@@ -17,6 +17,7 @@ export async function geminiCall({
   schema,
   effortLevel = 'low',
   maxTokens = 16000,
+  timeoutMs = TIMEOUT_MS,
 }) {
   const body = {
     systemInstruction: { parts: [{ text: system }] },
@@ -35,9 +36,16 @@ export async function geminiCall({
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
       body: JSON.stringify(body),
-      signal: AbortSignal.timeout(TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     })
-  } catch {
+  } catch (err) {
+    if (err?.name === 'TimeoutError') {
+      throw new HttpError(
+        504,
+        'timeout',
+        'The model took too long to answer. Try again, or pick a faster model.',
+      )
+    }
     throw new HttpError(502, 'unreachable', "Couldn't reach Google's AI service. Try again.")
   }
 

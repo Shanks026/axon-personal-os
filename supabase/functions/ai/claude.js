@@ -20,19 +20,23 @@ export async function anthropicCall({
   schema,
   effortLevel = 'low',
   maxTokens = 16000,
+  timeoutMs,
 }) {
   const output_config = { format: { type: 'json_schema', schema } }
   if (effort) output_config.effort = effortLevel
 
   let response
   try {
-    response = await clientFor(key).messages.create({
-      model,
-      max_tokens: maxTokens,
-      system,
-      messages: [{ role: 'user', content: user }],
-      output_config,
-    })
+    response = await clientFor(key).messages.create(
+      {
+        model,
+        max_tokens: maxTokens,
+        system,
+        messages: [{ role: 'user', content: user }],
+        output_config,
+      },
+      timeoutMs ? { timeout: timeoutMs } : undefined,
+    )
   } catch (err) {
     throw toHttpError(err)
   }

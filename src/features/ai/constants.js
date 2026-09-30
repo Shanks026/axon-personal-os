@@ -39,7 +39,7 @@ export const AI_PROVIDERS = {
   anthropic: { label: 'Anthropic Claude', secret: 'ANTHROPIC_API_KEY' },
 }
 
-/** Jobs with a default model in Settings. Later phases add checklist, reports and chat. */
+/** Jobs with a default model in Settings. Chat joins in Phase 6. */
 export const AI_JOBS = [
   {
     id: 'draft_tasks',
@@ -50,6 +50,16 @@ export const AI_JOBS = [
     id: 'checklist',
     label: 'Checklists',
     description: 'Generate a checklist from a task (and its Jira ticket and comments).',
+  },
+  {
+    id: 'report_weekly',
+    label: 'Weekly reports',
+    description: 'Reports for a week, or a custom range up to two weeks.',
+  },
+  {
+    id: 'report_quarterly',
+    label: 'Quarterly reports',
+    description: 'Reports for a fiscal quarter, or a longer custom range.',
   },
 ]
 

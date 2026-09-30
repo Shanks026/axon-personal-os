@@ -451,7 +451,9 @@ create index events_title_trgm on public.events using gin (title extensions.gin_
 -- All-day convention: starts_at = 00:00 on the first day, ends_at = 23:59:59.999 on the last, in profiles.timezone.
 ```
 
-## reports (Feature 11)
+## reports (Feature 17 Phase 5; Feature 11 builds on it)
+
+Created by Feature 17 Phase 5 (migration `20260929061315_create_reports`), with `week` allowed, `ai_model` and `generated_at`, and a `reports_space_idx` FK index. An AI report fresh from the function has `content` null and its Markdown in `content_text`; the page converts it to Tiptap JSON on the first edit.
 
 ```sql
 create table public.reports (
@@ -459,7 +461,7 @@ create table public.reports (
   user_id         uuid not null default auth.uid() references auth.users(id) on delete cascade,
   space_id        uuid,                                 -- NULL = Global report (all spaces)
   title           text not null check (char_length(btrim(title)) between 1 and 200),
-  period_kind     text not null default 'quarter' check (period_kind in ('quarter','month','custom')),
+  period_kind     text not null default 'quarter' check (period_kind in ('quarter','month','week','custom')),
   period_start    date not null,
   period_end      date not null,
   fiscal_year     smallint,                             -- FY start year: FY 2026-27 → 2026
@@ -469,6 +471,8 @@ create table public.reports (
   stats           jsonb not null default '{}'::jsonb,   -- snapshot from report_stats()
   stats_refreshed_at timestamptz,
   status          text not null default 'draft' check (status in ('draft','final')),
+  ai_model        text check (char_length(ai_model) <= 80),   -- model that last generated it
+  generated_at    timestamptz,
   pinned_at       timestamptz,
   deleted_at      timestamptz,
   created_at      timestamptz not null default now(),
@@ -482,6 +486,7 @@ create table public.reports (
   foreign key (space_id, user_id) references public.spaces(id, user_id) on delete cascade
 );
 create index reports_period_idx on public.reports (user_id, period_start desc) where deleted_at is null;
+create index reports_space_idx on public.reports (space_id);
 create index reports_search_idx on public.reports using gin (search);
 -- + updated_at trigger, RLS owner policy
 -- Feature 12 (search_all migration) adds:

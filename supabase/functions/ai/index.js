@@ -3,6 +3,8 @@
 //   draft_tasks  → { tasks, model, usage, costUsd }
 //   suggest_tags → { tags, model, usage, costUsd }   ({ title, description, context: { tags, examples } })
 //   checklist    → { items, model, usage, costUsd }  ({ title, description, comments, existing })
+//   report       → { report, model, usage, costUsd }  ({ spaceIds, spaceId, period, range, timezone, model?, reportId? });
+//                  saves the reports row itself (insert, or update with reportId)
 // Owner-only (AXON_OWNER_ID). Every model call is logged to public.ai_usage with the caller's JWT.
 import { HttpError, corsHeaders, json } from './http.js'
 import { requireOwner } from './auth.js'
@@ -10,6 +12,7 @@ import { MODELS, costOf, providerStatus, resolveModel } from './models.js'
 import { draftTasks } from './draftTasks.js'
 import { suggestTags } from './suggestTags.js'
 import { checklist } from './checklist.js'
+import { generateReport } from './report.js'
 
 async function loadAiSettings(supabase, userId) {
   const { data } = await supabase.from('profiles').select('ai_settings').eq('id', userId).single()
@@ -88,6 +91,16 @@ Deno.serve(async (req) => {
         const costUsd = costOf(model, usage)
         await logUsage(supabase, { job: 'checklist', model, usage, costUsd })
         return json(req, 200, { items, model, usage, costUsd })
+      }
+
+      case 'report': {
+        const settings = await loadAiSettings(supabase, user.id)
+        const { report, model, usage, job } = await generateReport(supabase, body, {
+          resolve: (j) => resolveModel(j, body.model, settings),
+        })
+        const costUsd = costOf(model, usage)
+        await logUsage(supabase, { job, model, usage, costUsd })
+        return json(req, 200, { report, model, usage, costUsd })
       }
 
       default:
