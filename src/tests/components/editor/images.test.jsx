@@ -3,7 +3,11 @@ import { beforeAll, describe, expect, it, vi } from 'vitest'
 import { docToMarkdown } from '@/components/editor/markdown'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { TooltipProvider } from '@/components/ui/tooltip'
-import { insertImageFiles, stripPendingImages } from '@/components/editor/extensions/ImageUpload'
+import {
+  insertImageFiles,
+  stripPendingImages,
+  takeFiles,
+} from '@/components/editor/extensions/ImageUpload'
 
 const toastError = vi.hoisted(() => vi.fn())
 vi.mock('sonner', () => ({ toast: { error: toastError } }))
@@ -167,5 +171,81 @@ describe('RichTextEditor images', () => {
     await waitFor(() =>
       expect(onChange.mock.lastCall[0].content[0].attrs).toMatchObject({ displayWidth: null }),
     )
+  })
+})
+
+describe('takeFiles (dropped or pasted files)', () => {
+  const pdf = () => new File(['%PDF'], 'spec.pdf', { type: 'application/pdf' })
+  const images = (validate = () => null) => ({
+    validate,
+    upload: vi.fn(() => new Promise(() => {})),
+    resolveUrl: vi.fn(),
+  })
+
+  function renderWith(features) {
+    render(
+      <TooltipProvider>
+        <RichTextEditor value={null} onChange={() => {}} label="Body" features={features} />
+      </TooltipProvider>,
+    )
+    return screen.getByLabelText('Body').editor
+  }
+
+  it('sends documents to features.files and keeps images in the text', () => {
+    const onFiles = vi.fn()
+    const img = images()
+    const editor = renderWith({ images: img, files: { onFiles } })
+    let taken
+    act(() => {
+      taken = takeFiles(editor, [png(), pdf()])
+    })
+    expect(taken).toBe(true)
+    expect(img.upload).toHaveBeenCalledTimes(1)
+    expect(onFiles).toHaveBeenCalledWith([expect.objectContaining({ name: 'spec.pdf' })])
+  })
+
+  it('sends an image the text refuses (e.g. too big) to features.files instead', () => {
+    const onFiles = vi.fn()
+    const img = images(() => 'Images can be up to 10 MB.')
+    const editor = renderWith({ images: img, files: { onFiles } })
+    act(() => {
+      takeFiles(editor, [png()])
+    })
+    expect(img.upload).not.toHaveBeenCalled()
+    expect(onFiles).toHaveBeenCalledWith([expect.objectContaining({ name: 'shot.png' })])
+  })
+
+  it('without features.files, takes the drop anyway and explains', () => {
+    toastError.mockClear()
+    const editor = renderWith({ images: images() })
+    let taken
+    act(() => {
+      taken = takeFiles(editor, [pdf()])
+    })
+    expect(taken).toBe(true)
+    expect(toastError).toHaveBeenCalledWith('Only images can go in the text.')
+  })
+})
+
+describe('Jira image placeholders (Feature 17 Phase 4)', () => {
+  it('keeps a jira: image from the imported HTML so it can be swapped after the copy', async () => {
+    const { htmlToDoc } = await import('@/components/editor/html')
+    const doc = htmlToDoc('<p>Before</p><img data-path="jira:10960" alt="shot.png"><p>After</p>')
+    expect(doc.content).toContainEqual(
+      expect.objectContaining({
+        type: 'image',
+        attrs: expect.objectContaining({ path: 'jira:10960', alt: 'shot.png' }),
+      }),
+    )
+  })
+
+  it('shows the "from Jira" box instead of signing a URL', async () => {
+    const images = { validate: () => null, upload: vi.fn(), resolveUrl: vi.fn() }
+    renderEditor(images, {
+      type: 'doc',
+      content: [{ type: 'image', attrs: { path: 'jira:10960', alt: '' } }],
+    })
+    expect(await screen.findByText(/Image from Jira/)).toBeInTheDocument()
+    expect(images.resolveUrl).not.toHaveBeenCalled()
   })
 })

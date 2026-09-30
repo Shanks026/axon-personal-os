@@ -4,8 +4,8 @@ import { cn } from '@/lib/utils'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 
 /**
- * Tag pill (design: tag rows and cards, board card tags). `--radius-sm`, the same square-ish
- * shape as `SpaceBadge`, so both read as "labels" distinct from the fully round status pills.
+ * Tag pill (design: tag rows and cards, board card tags). Its `rounded-md` shape and padding are
+ * what every badge shares since 2026-09-30 (Attio-style, the user's request).
  * A plain Tailwind colour-scale badge (the user's request, 2026-09-25), not the CSS-variable tint
  * recipe. `onRemove` adds a labelled ✕; otherwise it's a plain read-only chip. A long name
  * truncates inside the pill (capped at 10rem, or 15rem for `md`); hover shows the full name.
@@ -14,7 +14,7 @@ export function TagPill({ tag, size = 'sm', onRemove, className }) {
   return (
     <span
       className={cn(
-        'inline-flex min-w-0 items-center gap-1 rounded-sm px-1.75 font-medium whitespace-nowrap',
+        'inline-flex min-w-0 items-center gap-1 rounded-md px-1.75 font-medium whitespace-nowrap',
         badgeClasses(tag.color),
         size === 'sm' ? 'h-5 max-w-40 text-xs' : 'h-6.5 max-w-60 px-2 text-sm',
         className,

@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/15-attachments-and-media.md`
-**Status**: 🟡 In progress (Phase 1 ✅ 2026-09-25, pulled forward at the user's request; Phases 2–3 later)
+**Status**: 🟡 In progress (Phase 1 ✅ 2026-09-25, pulled forward at the user's request; Phase 2 ✅ 2026-09-30, for Jira attachments; Phase 3 later)
 **Depends on**: 06 (the shared editor, including compact task descriptions)
 **Last Updated**: September 2026
 
@@ -197,15 +197,174 @@ src/features/attachments/
 
 ---
 
-## Phase 2: File Attachments on Tasks
+## Phase 2: File Attachments on Tasks ✅ Complete (2026-09-30)
+
+> **Why now (the user, 2026-09-30):** Feature 17 Phase 4 copies Jira attachments into Axon and builds on this phase. **Decisions:** the project is on Supabase's **free plan** (at most 50 MB per file and 1 GB of storage in all), and **videos are skipped for now**.
 
 ### Goal
-The task dialog (and later the task detail page, 07) gets an "Attach" chip. The user uploads any file (up to 25 MB), sees the files listed with type icon, name, size and date, can download one (signed URL) or delete it (removed from Storage too). Cards show a paperclip count.
+On a task's page (and the task dialog in edit mode), an **Attachments** section lists the task's files: a type icon (or a small thumbnail for images), the name, size and date. **Attach files** (or dropping files onto the section) uploads any non-video file up to 50 MB. A file can be downloaded under its own name, or deleted after a confirm. Task cards show a paperclip count. Settings shows how much of the free plan's 1 GB the attachments use.
 
-### Outline (detailed when Phase 1 is approved)
-- `attachments` table: `id`, `user_id`, `space_id`, `task_id` (composite FK, cascade), `path`, `name`, `mime`, `size`, `created_at`, owner RLS. The bucket's MIME list and size limit widen (or a second `files` bucket is added).
-- `useTaskAttachments(taskId)`, `useUploadAttachment`, `useDeleteAttachment` (the Storage object and the row).
-- Soft-deleting a task keeps its files, and a restore brings them back. Purge (14) deletes them.
+### Before Starting: Confirm With Codebase
+1. Phase 1 is approved: `features/attachments/api.js` (`uploadImage`, `useImageUrl`, `attachmentKeys`) and `utils.js` exist.
+2. supabase-js v2 Storage: `createSignedUrl(path, ttl, { download: fileName })` (forces a download under that name), `remove([paths])`, and the upload error for a file over the bucket limit.
+3. The task detail layout (`TaskDetail.jsx`: description, checklist, linked notes, activity) and the dialog's edit mode (`TaskDialog.jsx` → `TaskForm`), for where the section goes.
+4. `tasks/api.js` `LIST_COLUMNS` (the embed for the count, like `note_count:note_task_links(count)`) and `TaskCard`'s meta row.
+5. With the MCP, the bucket's current `file_size_limit` (10 MB) and `allowed_mime_types` (images only).
+
+### 2.1 Database
+Migration `create_attachments_table`:
+
+```sql
+create table public.attachments (
+  id                 uuid primary key default gen_random_uuid(),
+  user_id            uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  space_id           uuid not null,
+  task_id            uuid not null,
+  path               text unique,                        -- Storage path; null = the file stayed at its source
+  name               text not null check (char_length(btrim(name)) between 1 and 255),
+  mime               text not null default 'application/octet-stream' check (char_length(mime) <= 150),
+  size               bigint not null default 0 check (size >= 0),
+  width              integer check (width > 0),          -- images only (thumbnails, inline images)
+  height             integer check (height > 0),
+  source             text not null default 'upload' check (source in ('upload','jira')),
+  jira_attachment_id text check (jira_attachment_id ~ '^[0-9]+$'),   -- Feature 17 Phase 4
+  external_url       text check (external_url ~* '^https://'),       -- a file left in Jira (too big, or a video)
+  created_at         timestamptz not null default now(),
+  check (path is not null or external_url is not null),
+  unique (id, user_id),
+  foreign key (space_id, user_id) references public.spaces(id, user_id) on delete cascade,
+  foreign key (task_id, user_id) references public.tasks(id, user_id) on delete cascade
+);
+create index attachments_task_idx on public.attachments (task_id, created_at);
+create index attachments_space_idx on public.attachments (space_id);
+create unique index attachments_jira_unique on public.attachments (task_id, jira_attachment_id)
+  where jira_attachment_id is not null;
+alter table public.attachments enable row level security;
+create policy "attachments_owner_all" on public.attachments for all to authenticated
+  using (user_id = (select auth.uid())) with check (user_id = (select auth.uid()));
+
+-- Any file type up to the free plan's 50 MB cap. Videos are refused in the app, not the bucket.
+update storage.buckets set file_size_limit = 52428800, allowed_mime_types = null
+  where id = 'attachments';
+```
+
+- **No `deleted_at`:** a task's files follow the task. Soft-deleting a task keeps them, and a restore brings them back. Deleting a file is permanent (a confirm). Purging a task in Feature 14 deletes its rows by cascade and its Storage objects by path.
+- **Paths:** the same `{user_id}/{space_id}/{uuid}.{ext}` as editor images (`ext` from the file name, else from the MIME type, else `bin`).
+- **Verify** (rolled back):
+  - another user's task or space can't be attached (the composite FKs);
+  - a row with neither `path` nor `external_url` is rejected;
+  - a duplicate `(task_id, jira_attachment_id)` is rejected.
+- **Then:** run the advisors, and update `data-model.md` (the table and the Storage section's new limits) and the DB registry.
+
+### 2.2 API Layer
+`src/features/attachments/api.js` (extended):
+
+```js
+attachmentKeys.task = (taskId) => [...attachmentKeys.all, 'task', taskId]
+attachmentKeys.usage = () => [...attachmentKeys.all, 'usage']
+export const MAX_FILE_BYTES = 50 * 1024 * 1024
+```
+
+| Function / hook | Details |
+|---|---|
+| `fetchTaskAttachments(taskId)` / `useTaskAttachments(taskId)` | Rows oldest first, `enabled: !!taskId` |
+| `uploadAttachment({ task, file })` | `validateAttachmentFile` (an `AttachmentUploadError`), the image size for images (`readImageSize`, split out of `uploadImage`), upload to the path, then insert the row. If the insert fails, the Storage object is removed. Returns the row |
+| `useUploadAttachments()` | Mutation over `{ task, files }`: one file at a time, collecting `{ uploaded, failed }`. Invalidates `task(taskId)`, `usage()` and `taskKeys.lists()` (the card count). One toast at the end ("Attached 3 files", or which ones failed) |
+| `deleteAttachment(row)` / `useDeleteAttachment()` | Removes the Storage object (when `path`), then the row. Optimistic removal from `task(taskId)`, rolled back on error |
+| `getDownloadUrl(row)` | `createSignedUrl(path, 60, { download: row.name })`. A row with only `external_url` opens that URL instead |
+| `fetchAttachmentUsage()` / `useAttachmentUsage()` | `sum(size)` over rows with a `path` (a select of `size`, summed on the client) |
+
+`src/features/attachments/utils.js` (tested):
+- `validateAttachmentFile(file)`: videos (`video/*`, or `.mp4`, `.mov`, `.webm`, `.mkv` and `.avi` names) get "Videos aren't supported yet". Over 50 MB gets "Files can be up to 50 MB on the free plan". Empty files are refused.
+- `attachmentPath({ userId, spaceId, id, name, mime })`.
+- `formatBytes(n)`: "820 KB", "4.2 MB".
+- `fileKind(mime, name)`: `image` · `pdf` · `sheet` · `doc` · `archive` · `code` · `other`, for the icon.
+
+### 2.3 Components
+```
+src/features/attachments/components/
+├── TaskAttachments.jsx      # the section: header (count, Attach files), drop zone, list, empty line
+├── AttachmentRow.jsx        # icon or thumbnail, name, size · date, Jira badge, download, delete
+└── AttachmentIcon.jsx       # lucide icon per fileKind (image, file-text, sheet, file-archive, file-code, file)
+```
+
+- **`TaskAttachments({ task })`:**
+  - Header: "Attachments" (`font-medium`) with a count, then a ghost **Attach files** button (`paperclip`) that opens a multi-file `<input type="file">`.
+  - Dropping files anywhere on the section uploads them. While dragging, the section shows a dashed `border-border-strong` outline.
+  - Uploading files show as rows with a spinner (in the row's icon slot) until they're done.
+  - **Empty state:** the header and one faint line, "Drop files here or attach them." It's a small section, so no `EmptyState` box.
+  - **Loading:** two 40px row skeletons. **Error:** an inline `ErrorState` with retry.
+- **`AttachmentRow`:**
+  - Layout: 40px tall, `rounded-md`, hover `bg-accent`. It shows the icon (or a 28px `rounded-sm` thumbnail for images, through `useImageUrl`), then the name (truncated, full name on hover), then mono `text-xs` "4.2 MB · 30 Sep". A `JiraKeyBadge`-style "Jira" label appears when `source = 'jira'`, and "In Jira ↗" when the file stayed there.
+  - On the right: Download (an icon button with a tooltip) and ⋮ → **Delete** (`destructive`), which opens a `ConfirmDialog`: "Delete this file? It's removed from Axon for good."
+  - The whole row downloads on click (a `<button>`, keyboard reachable).
+- **Where:**
+  - `TaskDetail`: after the description, before the checklist.
+  - `TaskDialog` in edit mode: after the checklist, collapsed to the header and the list.
+  - Create mode has no section: files need a saved task. Jira import copies its files after saving; see Feature 17 Phase 4.
+- **Count:** `LIST_COLUMNS` gains `attachment_count:attachments(count)`, flattened like `note_count`. `TaskCard`'s meta row shows a `paperclip` + n when above 0 (beside the linked-notes count).
+- **Settings:** a **Storage** line in Settings → Preferences, "Attachments use 120 MB of the free plan's 1 GB" (`useAttachmentUsage`). Editor images aren't counted; the line says "attachments".
+- **Motion:** new rows enter with `listItem`, and deleted ones leave with `AnimatePresence`.
+
+### 2.4 Routes and Integration
+- No new routes.
+- `TaskDetail.jsx` and `TaskDialog.jsx` (edit mode) mount `TaskAttachments`.
+- `TaskCard` shows the count.
+- Settings → Preferences gets the Storage line.
+
+### 2.5 Impact on Existing Features
+| Existing feature | Impact | Action |
+|---|---|---|
+| 15 Phase 1 bucket | Wider limits (50 MB, any type) | Editor images keep their own 10 MB image-only check in `validateImageFile` |
+| 04 tasks list | New count embed | `LIST_COLUMNS`, `mapRow` |
+| 07 task detail | New section | Mounted after the description |
+| 14 Trash (later) | Purging a task must remove its files | Recorded in `14-pins-and-trash.md` when that phase is planned |
+
+### 2.6 Not in This Phase
+- Video files and a player (skipped, the user's decision); previews for PDFs and other files (download only).
+- Attachments on notes or events.
+- Upload progress bars (supabase-js has no progress callback; each file shows a spinner).
+- Jira (Feature 17 Phase 4); space images (Phase 3).
+
+### 2.7 Checklist: Before Marking Complete
+- [x] `create_attachments_table` is applied and mirrored; the rolled-back checks pass; advisors are clean
+- [ ] Attach files and drag-and-drop upload several files to a task; they list with icon or thumbnail, name, size and date *(built and component-tested; confirm the real upload in the browser)*
+- [x] Videos, empty files and files over 50 MB are refused with a clear toast, and nothing is stored (`validateAttachmentFile` runs before any upload)
+- [ ] Download saves the file under its own name; Delete (after the confirm) removes the row and the Storage object *(confirm in the browser)*
+- [ ] Cards show the paperclip count; Settings shows the storage used *(confirm in the browser)*
+- [x] Soft-deleting and restoring a task keeps its files (nothing touches `attachments` on a soft delete; rows cascade only on a hard delete)
+- [x] Tests: `validateAttachmentFile`, `attachmentPath`, `formatBytes`, `fileKind`; a component test for `TaskAttachments` with a mocked API (list, empty, upload row, delete confirm)
+- [x] `npm run lint`, `npm test` and `npm run build` pass; `axon-rules` audit is clean
+- [x] `00-index.md`, `data-model.md` and `axon-data-patterns.md` §10 are updated
+
+### 2.8 Implementation Notes (2026-09-30)
+- **Migration `20260930054405_create_attachments_table`**, as planned, plus `attachments_user_idx` (an index for the `user_id` FK). It also widens the bucket to 50 MB with any MIME type.
+  - Rolled-back checks (5/5): another user can't attach to the owner's space (`attachments_space_id_user_id_fkey`); a row with neither `path` nor `external_url` is rejected; a duplicate `(task_id, jira_attachment_id)` is rejected; a second user sees 0 rows under RLS; the bucket reads `52428800` / any type.
+  - Advisors: only the 3 existing warnings.
+- **API** (`features/attachments/api.js`): the user id comes from a shared `currentUserId()`, now also used by `uploadImage`.
+  - `uploadAttachment` removes the stored object if the row insert fails.
+  - `useUploadAttachments` uploads one file at a time. Each finished row goes into the task's cache straight away, and `onFileSettled` drops that file's placeholder. There's one toast at the end, plus an error toast naming the failures.
+  - `useDeleteAttachment` is optimistic with rollback. It removes the Storage object first, then the row.
+  - Downloads use `createSignedUrl(path, 60, { download: name })`, opened through `openLink` (new in `lib/download.js`, a temporary link, so the page stays put). A file left in Jira opens in a new tab.
+- **Components:** `TaskAttachments`, `AttachmentRow` and `AttachmentIcon` in `features/attachments/components/`.
+  - Where: after the description on the task page; after the checklist in the edit dialog (`border-t px-5 py-4`, like the checklist).
+  - Dropping files on the section shows a dashed `outline-border-strong` outline. Pending uploads are rows with a spinner in the icon slot, inside the row's button.
+  - **Deviation:** the empty state is one faint line ("Drop files here or attach them."), not an `EmptyState` box. This is a small section inside the task page, as the plan said.
+- **Settings:** the Storage row lives in `features/settings/components/StorageUsageRow.jsx`, not in attachments. The audit caught a two-way component import between the features. It shows mono "120 MB of 1 GB" (`useAttachmentUsage`, which sums `size` over rows with a `path`).
+- **Tasks list:** `attachment_count:attachments(count)` in `LIST_COLUMNS`. `TaskCard`'s meta row shows `paperclip` + n.
+- **Tests:** 4 new utils tests and `src/tests/features/attachments/TaskAttachments.test.jsx` (4: empty, list with the Jira and "In Jira" labels, the uploading row, delete only after the confirm).
+- **Added the same day (the user's request): documents alongside images everywhere on a task.**
+  - **New-task dialog:** a `StagedAttachments` section holds the chosen files, with Attach files, drop, and ✕ to remove. They're uploaded right after the task is saved (`uploadFiles({ task: row, files })` in `done`), like the staged checklist. Files are checked as they're staged (`useAcceptFiles`, which toasts each refusal). Create more clears them.
+  - **Documents dropped or pasted into a description** (the dialog, create or edit, and the task page) go to the task's attachments, staged in create mode. This uses a new editor option, `features.files: { onFiles(files) }` (`setFileHandler` / `takeFiles` in `ImageUpload.js`). With a files handler, an image the text refuses (over 10 MB, or HEIC/SVG) goes to the attachments too.
+  - **Every file drop or paste into an editor is now taken.** Before, a dropped PDF fell through to the browser, which would likely have opened it in place of the app. Without a files handler (notes, the journal), the toast says "Only images can go in the text."
+  - Tests: `takeFiles` routing (3, in `images.test.jsx`) and `StagedAttachments.test.jsx` (stage, refuse a video, remove).
+- **Still to confirm in the browser:**
+  - staged files on a new task (uploaded after Create task), and a PDF dropped into a description landing in Attachments;
+  - a real upload (several files, drag and drop), the thumbnail for an image, download under the file's own name, delete;
+  - a video or a file over 50 MB being refused;
+  - the card count and the Settings storage line.
+
+**Stop here. Show the result and wait for approval.**
 
 ---
 

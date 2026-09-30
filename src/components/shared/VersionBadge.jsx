@@ -4,8 +4,8 @@ import { Badge } from '@/components/ui/badge'
 import { HoverCard, HoverCardContent, HoverCardTrigger } from '@/components/ui/hover-card'
 
 /**
- * A version a task or note is linked to ("v3.9.0"): shadcn's secondary badge with the tags' square-ish
- * `rounded-sm` (the user's request, 2026-09-25), so versions read as labels next to tags without
+ * A version a task or note is linked to ("v3.9.0"): shadcn's secondary badge with the tags'
+ * `rounded-md` (the badge shape, 2026-09-30), so versions read as labels next to tags without
  * competing with their colours. `onRemove` adds a labelled ✕ (the task dialog, the note editor).
  */
 export function VersionBadge({ version, onRemove, className }) {
@@ -13,7 +13,7 @@ export function VersionBadge({ version, onRemove, className }) {
     <Badge
       variant="secondary"
       title={version}
-      className={cn('max-w-32 rounded-sm px-1.75 tabular-nums', className)}
+      className={cn('max-w-32 rounded-md px-1.75 tabular-nums', className)}
     >
       <span className="truncate">{version}</span>
       {onRemove && (

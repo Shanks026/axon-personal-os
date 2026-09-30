@@ -4,7 +4,11 @@ import { cn } from '@/lib/utils'
 import { EditorBubbleMenu } from '@/components/editor/EditorBubbleMenu'
 import { TableBubbleMenu } from '@/components/editor/TableBubbleMenu'
 import { buildExtensions } from '@/components/editor/extensions/buildExtensions'
-import { setImageHandlers, stripPendingImages } from '@/components/editor/extensions/ImageUpload'
+import {
+  setFileHandler,
+  setImageHandlers,
+  stripPendingImages,
+} from '@/components/editor/extensions/ImageUpload'
 import { setSaveHandler } from '@/components/editor/extensions/KeyboardShortcuts'
 import '@/components/editor/editor.css'
 
@@ -21,6 +25,9 @@ const MAX_TEXT = 100_000
  * defaults `{ slash: true, codeHighlight: true }`) may add `onSave`, called on Ctrl/Cmd+S;
  * the latest `onSave` is always used. `features.images` (`{ validate, upload, resolveUrl }`)
  * turns on image paste, drop and "/ Image"; images still uploading are left out of `onChange`.
+ * `features.files` (`{ onFiles(files) }`) receives pasted or dropped files that aren't images
+ * (a task's description sends them to its attachments). File drops are always taken, so the
+ * browser never opens a dropped file.
  *
  * `variant="compact"` is the task dialog's description: `text-sm`, no minimum height, the
  * placeholder "Add description…", H2–H3 only, no H1 or Table in the `/` menu, and Mod-Enter left
@@ -84,6 +91,10 @@ export function RichTextEditor({
   useEffect(() => {
     if (editor) setImageHandlers(editor, images)
   }, [editor, images])
+  const files = features?.files
+  useEffect(() => {
+    if (editor) setFileHandler(editor, files)
+  }, [editor, files])
   useEffect(() => {
     if (editor) setSaveHandler(editor, onSave)
   }, [editor, onSave])

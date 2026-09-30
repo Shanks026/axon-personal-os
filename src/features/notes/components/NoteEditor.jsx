@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
 import { useAutosave } from '@/hooks/useAutosave'
+import { useRecordRecent } from '@/hooks/useRecordRecent'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { EditorShortcutsDialog } from '@/components/editor/EditorShortcutsDialog'
 import { noteToMarkdown } from '@/components/editor/markdown'
@@ -71,6 +72,7 @@ export function NoteEditor({ note }) {
   // Paste, drop or "/ Image" upload into the note's space (Feature 15).
   const images = useImageHandlers({ spaceId: note.space_id })
   const [title, setTitle] = useState(note.title)
+  useRecordRecent({ entity_type: 'note', id: note.id, space_id: note.space_id, title: note.title })
   const [text, setText] = useState(note.content_text)
   const [railOpen, setRailOpen] = useLocalStorage('axon:notes:rail', true)
   const [sheetOpen, setSheetOpen] = useState(false)

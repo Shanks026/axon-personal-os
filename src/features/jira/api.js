@@ -66,3 +66,10 @@ export const fetchJiraIssue = (key) => invokeJira('fetch_issue', { key })
 export function useFetchJiraIssue() {
   return useMutation({ mutationFn: (key) => invokeJira('fetch_issue', { key }) })
 }
+
+/**
+ * Copies one Jira attachment onto a task imported from `key` (Feature 17 Phase 4):
+ * `{ attachment, existing?, skipped? }`. Videos and files over 50 MB come back as links to Jira.
+ */
+export const copyJiraAttachment = ({ key, attachmentId, taskId }) =>
+  invokeJira('copy_attachment', { key, attachmentId, taskId })

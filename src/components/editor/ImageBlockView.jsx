@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { NodeViewWrapper } from '@tiptap/react'
-import { ImageOff, Loader2, RotateCw } from 'lucide-react'
+import { ImageOff, Loader2, RotateCw, Ticket } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
 import { ImageResizeHandle } from '@/components/editor/ImageResizeHandle'
@@ -90,10 +90,12 @@ export function ImageBlockView({ node, editor, selected, updateAttributes }) {
   const [liveWidth, setLiveWidth] = useState(null)
   const previews = editor.storage.imageUpload?.previews
   const preview = previews?.get(uploadId) ?? previews?.get(path) ?? null
-  const { url, failed, retry } = useResolvedUrl(editor, path, preview)
+  // An image imported from Jira (`jira:{attachmentId}`) waits for its copy (Feature 17 Phase 4).
+  const fromJira = typeof path === 'string' && path.startsWith('jira:')
+  const { url, failed, retry } = useResolvedUrl(editor, fromJira ? null : path, preview)
   const uploading = !!uploadId
   // A node with neither a stored path nor an upload in flight has nothing to show.
-  const unavailable = failed || (!path && !uploading)
+  const unavailable = !fromJira && (failed || (!path && !uploading))
   const shown = liveWidth ?? displayWidth(node.attrs)
   const box = {
     width: shown ? `${shown}px` : undefined,
@@ -110,7 +112,14 @@ export function ImageBlockView({ node, editor, selected, updateAttributes }) {
         )}
         style={box}
       >
-        {unavailable ? (
+        {fromJira ? (
+          <div className="flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border-strong bg-muted p-4 text-muted-foreground">
+            <Ticket className="size-4" aria-hidden />
+            <span className="text-xs">
+              Image from Jira · copied into Axon after the task is saved
+            </span>
+          </div>
+        ) : unavailable ? (
           <div className="flex min-h-24 w-full flex-col items-center justify-center gap-2 rounded-lg border border-dashed border-border-strong bg-muted p-4 text-muted-foreground">
             <ImageOff className="size-4" aria-hidden />
             <span className="text-xs">Image unavailable</span>
@@ -151,7 +160,7 @@ export function ImageBlockView({ node, editor, selected, updateAttributes }) {
           </span>
         )}
 
-        {selected && editor.isEditable && !uploading && !unavailable && (
+        {selected && editor.isEditable && !uploading && !unavailable && !fromJira && (
           <>
             {['left', 'right'].map((side) => (
               <ImageResizeHandle

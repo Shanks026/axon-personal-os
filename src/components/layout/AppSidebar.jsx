@@ -32,12 +32,15 @@ import { sectionFromPath } from '@/features/spaces/utils'
 
 const THEME_ICON = { light: Sun, dark: Moon, system: Monitor }
 
-// Search (12) and Quick capture (13) arrive with their features; until then the buttons explain.
+// Quick capture arrives with Feature 13; until then its button explains.
 const comingSoon = (what, feature) => () =>
   toast(`${what} arrives with Feature ${feature}`, { description: 'It’s on the roadmap.' })
 
-/** App shell sidebar (design Sidebar.dc): switcher, search, capture, nav, pinned, footer. */
-export function AppSidebar() {
+/**
+ * App shell sidebar (design Sidebar.dc): switcher, search, capture, nav, pinned, footer.
+ * `onOpenSearch` opens the command palette (the shell owns it).
+ */
+export function AppSidebar({ onOpenSearch }) {
   const p = useSpacePaths()
   const { pathname } = useLocation()
   const current = sectionFromPath(pathname)
@@ -50,7 +53,7 @@ export function AppSidebar() {
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Search"
-              onClick={comingSoon('Search', 12)}
+              onClick={onOpenSearch}
               className="border bg-card text-muted-foreground group-data-[collapsible=icon]:border-transparent group-data-[collapsible=icon]:bg-transparent"
             >
               <Search />

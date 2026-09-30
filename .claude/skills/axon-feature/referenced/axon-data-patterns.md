@@ -221,8 +221,10 @@ export function useTaskFilters() {
 | `SegmentedControl` options take `disabled` / `hint`; `Kbd` renders `left` / `right` arrows | `components/shared/` | 08 Phase 1 |
 | `lib/dates.js` zone helpers (`todayISO`, `zonedInstant`, `zonedDayRange`, `zonedParts`, `formatTime(Range)`, `formatWeekdayDate`); `lib/tint.js` `eventBlockClasses` | `lib/` | 08 |
 | `lib/download.js` `downloadTextFile(name, text)`; report period helpers `quarterOptions` / `weekPeriod` / `customPeriod` / `periodRange` / `buildReportRequest` (`features/reports/utils.js`); `useGenerateReport` (the `ai` function saves the row itself) | `lib/`, `features/reports/` | 17 Phase 5 |
+| Task files: `TaskAttachments({ task, className })` (+ `AttachmentRow`, `AttachmentIcon`), `StagedAttachments({ files, onChange })` + `useAcceptFiles` (before a task exists), editor `features.files: { onFiles }` (non-image drops/pastes), `useTaskAttachments` / `useUploadAttachments` / `useDeleteAttachment` / `getDownloadUrl` / `useAttachmentUsage`; utils `validateAttachmentFile`, `attachmentPath`, `formatBytes`, `fileKind`; `lib/download.js` `openLink` | `features/attachments/`, `lib/` | 15 Phase 2 |
+| Jira attachments: `useCopyJiraAttachments().copyAll({ task, attachments, issueUrl, rewriteDescription })`, `CopyFromJiraButton`, `replaceJiraImages`; editor `jira:{id}` image placeholders; `TaskAttachments` `actions` slot; `useTaskDialogFiles` | `features/jira/`, `features/tasks/hooks/` | 17 Phase 4 |
 | `StatTile` | `components/shared/` | 11 (moved from dashboard) |
-| `GlobalDialogs` (`?new=task\|todo\|note\|event\|capture`) + `useGlobalDialog` | `components/layout/` | 12 |
+| `GlobalDialogs` (`?new=task\|todo\|note\|event`, `&title=`; `capture` in 13) + `useGlobalDialog` (`hooks/`); `CommandPalette`, `useSearch`, `lib/entityPaths.js` `entityPath(row, { slugFor, timezone })`, `lib/recent.js` + `useRecordRecent`, `EntityIcon` | `components/layout/`, `features/search/`, `lib/`, `hooks/`, `components/shared/` | 12 Phase 1 ✅ |
 | `ShortcutKeys` (kbd) + `lib/shortcuts.js` registry + `useShortcut` | `components/shared/`, `lib/`, `hooks/` | 12 |
 | `useListNavigation` | `hooks/` | 12 |
 | `PinToggle` | `components/shared/` | 14 |

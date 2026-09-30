@@ -10,6 +10,39 @@ export function setImageHandlers(editor, handlers) {
   editor.storage.imageUpload.handlers = handlers ?? null
 }
 
+/**
+ * Points the editor at the feature's handler for files that aren't images (`features.files`:
+ * `{ onFiles(files) }`, e.g. the task's attachments), or at nothing.
+ */
+export function setFileHandler(editor, handler) {
+  editor.storage.imageUpload.files = handler ?? null
+}
+
+/**
+ * A pasted or dropped set of files: images go into the text (`insertImageFiles`), anything else
+ * to `features.files.onFiles`, or a toast when there's nowhere for it. With a files handler, an
+ * image the text can't take (too big, or a type like HEIC) goes there too. Always true when there
+ * were files, so the browser never opens a dropped file in place of the app.
+ */
+export function takeFiles(editor, files, pos) {
+  const list = [...files]
+  if (!list.length) return false
+  const { handlers, files: fileHandler } = editor.storage.imageUpload
+  const inline = []
+  const others = []
+  for (const file of list) {
+    const isImage = !!handlers && file.type.startsWith('image/')
+    if (isImage && !(fileHandler && handlers.validate?.(file))) inline.push(file)
+    else others.push(file)
+  }
+  if (inline.length) insertImageFiles(editor, inline, pos)
+  if (others.length) {
+    if (fileHandler?.onFiles) fileHandler.onFiles(others)
+    else toast.error('Only images can go in the text.')
+  }
+  return true
+}
+
 /** The node (and its position) carrying a given `uploadId`, if it's still in the doc. */
 function findUpload(state, uploadId) {
   let found = null
@@ -110,19 +143,20 @@ export function stripPendingImages(doc) {
 }
 
 /**
- * Paste and drop of image files (screenshots, files from the desktop). Pasting text or HTML is
- * untouched: a clipboard with plain text is left to the normal paste. Off without handlers.
+ * Paste and drop of files (screenshots, files from the desktop): images into the text, other files
+ * to `features.files` (the task's attachments). Pasting text or HTML is untouched: a clipboard
+ * with plain text is left to the normal paste.
  */
 export const ImageUpload = Extension.create({
   name: 'imageUpload',
 
   addOptions() {
-    return { handlers: null }
+    return { handlers: null, files: null }
   },
 
   // Seeded from the options, so image views have their handlers on the very first render.
   addStorage() {
-    return { handlers: this.options.handlers, previews: new Map() }
+    return { handlers: this.options.handlers, files: this.options.files, previews: new Map() }
   },
 
   onDestroy() {
@@ -139,12 +173,12 @@ export const ImageUpload = Extension.create({
           handlePaste: (_view, event) => {
             const data = event.clipboardData
             if (!data?.files?.length || data.getData('text/plain')) return false
-            return insertImageFiles(editor, data.files)
+            return takeFiles(editor, data.files)
           },
           handleDrop: (view, event, _slice, moved) => {
             if (moved || !event.dataTransfer?.files?.length) return false
             const pos = view.posAtCoords({ left: event.clientX, top: event.clientY })?.pos
-            const taken = insertImageFiles(editor, event.dataTransfer.files, pos)
+            const taken = takeFiles(editor, event.dataTransfer.files, pos)
             if (taken) event.preventDefault()
             return taken
           },

@@ -1,8 +1,10 @@
-// Axon's Jira endpoint (Feature 17 Phase 2). POST { action, ... } with the user's JWT. Read-only.
+// Axon's Jira endpoint (Feature 17 Phases 2–4). POST { action, ... } with the user's JWT. Read-only towards Jira.
 //   status       → { configured, site, account? }    ({ check: true } calls /myself: "Test connection")
 //   meta         → { statuses: [{ name, category }], priorities: [name], dateFields: [{ id, name }] }
 //   fetch_issue  → { issue }                         ({ key: 'MP-43512' })
 //   fetch_comments → { comments: [{ author, created, text }] }   ({ key }; latest 50, newest first)
+//   copy_attachment → { attachment, existing?, skipped? }   ({ key, attachmentId, taskId }; Feature 17
+//                     Phase 4: one Jira file into Storage + an attachments row, with the caller's JWT)
 // Owner-only (AXON_OWNER_ID). The site and start-date field come from profiles.jira_settings.
 import { HttpError, corsHeaders, json } from './http.js'
 import { requireOwner } from './auth.js'
@@ -14,6 +16,7 @@ import {
   normaliseComments,
   normaliseIssue,
 } from './jiraApi.js'
+import { copyAttachment } from './copyAttachment.js'
 
 const ISSUE_FIELDS = [
   'summary',
@@ -26,6 +29,7 @@ const ISSUE_FIELDS = [
   'duedate',
   'updated',
   'issuetype',
+  'attachment',
 ]
 
 async function loadJiraSettings(supabase, userId) {
@@ -120,6 +124,12 @@ Deno.serve(async (req) => {
           `/rest/api/3/issue/${encodeURIComponent(key)}/comment?orderBy=-created&maxResults=50`,
         )
         return json(req, 200, { comments: normaliseComments(raw) })
+      }
+
+      case 'copy_attachment': {
+        const site = requireSite(settings)
+        const result = await copyAttachment(supabase, { site, userId: user.id, body })
+        return json(req, 200, result)
       }
 
       default:

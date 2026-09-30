@@ -264,16 +264,23 @@ describe('describeActivity', () => {
 })
 
 describe('describeActivity: note links', () => {
-  const noteTitleById = new Map([['n1', 'Sprint 14 retro'], ['n2', '']])
+  const noteTitleById = new Map([
+    ['n1', 'Sprint 14 retro'],
+    ['n2', ''],
+  ])
   const text = (entry) => describeActivity(entry, { noteTitleById }).text
 
   it('names the linked or unlinked note, or says it was deleted', () => {
     expect(text({ kind: 'note_linked', to_value: 'n1' })).toBe('Linked note ‘Sprint 14 retro’')
-    expect(text({ kind: 'note_unlinked', from_value: 'n1' })).toBe('Unlinked note ‘Sprint 14 retro’')
+    expect(text({ kind: 'note_unlinked', from_value: 'n1' })).toBe(
+      'Unlinked note ‘Sprint 14 retro’',
+    )
     expect(text({ kind: 'note_linked', to_value: 'n2' })).toBe('Linked note ‘Untitled’')
     expect(text({ kind: 'note_linked', to_value: 'gone' })).toBe('Linked note a deleted note')
     // Before the titles have loaded.
-    expect(describeActivity({ kind: 'note_linked', to_value: 'n1' }).text).toBe('Linked note a note')
+    expect(describeActivity({ kind: 'note_linked', to_value: 'n1' }).text).toBe(
+      'Linked note a note',
+    )
   })
 })
 

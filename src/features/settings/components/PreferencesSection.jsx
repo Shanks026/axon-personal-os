@@ -13,6 +13,7 @@ import {
 } from '@/components/ui/select'
 import { usePreferences, useUpdateMyProfile } from '@/features/settings/api'
 import { SettingsCard, SettingsRow } from '@/features/settings/components/SettingsCard'
+import { StorageUsageRow } from '@/features/settings/components/StorageUsageRow'
 import { ThemePicker } from '@/features/settings/components/ThemePicker'
 import { TimezonePicker } from '@/features/settings/components/TimezonePicker'
 
@@ -112,6 +113,8 @@ export function PreferencesSection() {
         {/* ProfileThemeSync persists the change to the profile. */}
         <ThemePicker value={theme} onChange={setTheme} />
       </div>
+
+      <StorageUsageRow />
     </SettingsCard>
   )
 }

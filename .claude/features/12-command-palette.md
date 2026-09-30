@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/12-command-palette.md`
-**Status**: 🔵 Planned
+**Status**: 🟡 In progress (Phase 1 ✅)
 **Depends on**: 11
 **Last Updated**: September 2026
 
@@ -30,7 +30,19 @@ Phase 2: Keyboard shortcuts
 
 ---
 
-## Phase 1: Search RPC and Palette
+## Phase 1: Search RPC and Palette ✅ Complete (2026-09-30)
+
+> **Folded in before building (2026-09-30):** the design deltas, and decisions made since this plan was written.
+> - **Scope chip:** it reads **the space's name** or **"All spaces"** (in Global it's fixed on "All spaces").
+> - **Tab cycles a type filter** (All · Tasks · Notes · Journal · Todos · Events · Reports). This was a delta Adopt; the backlog had it. `search_all` gains `p_types text[] default null`, so a filtered search still returns a full page.
+> - **Result rows get a subtitle:** "edited yesterday" (`formatRelative(updated_at)`).
+> - **Size:** the palette is **640px**, with **no backdrop blur**. The later rule "no `backdrop-blur` on full-screen overlays" (frame drops) wins over the design's 2px.
+> - **No space pickers anywhere:**
+>   - `?new=note` uses `useCreateAndOpenNote` (the default space, silently).
+>   - `?new=todo` uses the existing `TodoDialog`, `?new=event` `EventDialog` and `?new=task` `TaskDialog` (all standalone, `initialValues` / `onSuccess`).
+> - **Hosting:** `AppShell` (there's no `AppLayout`) hosts the palette and `GlobalDialogs`, only inside a space. The sidebar's Search item (a "coming soon" toast today) opens it. Quick capture stays a disabled stub until Feature 13.
+> - **Already there:** the `?highlight=` (todos) and `?event=` (calendar) params, `lib/platform.js` + `Kbd` for key hints, and the trigram indexes on tasks, notes, todos and events. Only `reports_title_trgm` is new.
+> - **Recent** is recorded on the task page, the note editor, a journal day with an entry, and the report page.
 
 ### Goal
 From any page inside a space the user presses `Ctrl/Cmd+K` (or clicks "Search" in the sidebar) and gets a palette that:
@@ -252,19 +264,39 @@ src/components/layout/
 - Semantic or AI search (Feature 17)
 
 ### 1.7 Checklist: Before Marking Complete
-- [ ] Migration applied and mirrored to `supabase/migrations/`; advisors clean; the verification queries above pass
-- [ ] `mod+k` opens the palette on every in-space page, including while focus is in an input or the editor
-- [ ] Empty query shows Recent, Actions, Navigate and Switch space; typing one character filters static items only
-- [ ] Two or more characters show grouped results within ~150ms of the last keystroke, with no flicker between queries (previous data kept)
-- [ ] Title matches are highlighted; snippets render `<mark>` from markers with no raw HTML injection
-- [ ] In Global every result shows a `SpaceBadge`; the scope chip switches a space search to Global and back
-- [ ] Enter opens each entity type at the right URL (journal by date, todo highlighted, event dialog opened)
-- [ ] "New task" from the palette opens `TaskDialog` via `?new=task`; closing it removes the param; browser back doesn't reopen it
-- [ ] Recent keeps the last 8 opened entities across reloads and survives blocked `localStorage`
-- [ ] Tests pass for `parseSnippet`, `highlightTitle`, `matchesQuery`, `groupResults`, `entityPaths`, `recent`
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` status, DB registry (`search_all`) and changelog (new shared: `EntityIcon`, `GlobalDialogs`, `useGlobalDialog`, `lib/entityPaths.js`, `lib/recent.js`) are updated; `axon-data-patterns.md` §10 lists the new shared components
+- [x] Migration applied and mirrored to `supabase/migrations/`; advisors clean; the verification queries above pass
+- [x] `mod+k` opens the palette on every in-space page, including while focus is in an input or the editor (except with text selected in the editor, where Mod+K is the link field) *(confirm in the browser)*
+- [x] Empty query shows Recent, Actions, Navigate and Switch space; typing one character filters static items only
+- [x] Two or more characters show grouped results 150ms after the last keystroke, with no flicker between queries (previous data kept)
+- [x] Title matches are highlighted; snippets render `<mark>` from markers with no raw HTML injection
+- [x] Searching all spaces shows a `SpaceBadge` per result; the scope chip switches a space search to all spaces and back
+- [ ] Enter opens each entity type at the right URL (journal by date, todo highlighted, event dialog opened) *(URLs unit-tested; confirm in the browser)*
+- [ ] "New task" from the palette opens `TaskDialog` via `?new=task`; closing it removes the param; browser back doesn't reopen it *(browser)*
+- [x] Recent keeps the last 8 opened entities across reloads and survives blocked `localStorage`
+- [x] Tests pass for `parseSnippet`, `highlightTitle`, `matchesQuery`, `groupResults`, `entityPaths`, `recent`
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` status, DB registry (`search_all`) and changelog (new shared: `EntityIcon`, `GlobalDialogs`, `useGlobalDialog`, `lib/entityPaths.js`, `lib/recent.js`) are updated; `axon-data-patterns.md` §10 lists the new shared components
+
+### Implementation Notes (2026-09-30)
+- **Migrations:** `20260930102602_create_search_all` (as planned, plus `p_types text[]` and `execute` for `authenticated` only) and `20260930102719_search_all_word_similarity`.
+  - **Why the second:** the plan's whole-title `similarity` / `%` found nothing for "polcy setings", since Jira titles are long. Titles now match typos through `extensions.word_similarity(q, title) >= 0.4`. The `<%` operator's 0.6 threshold misses one-letter slips, and a stable function can't change it; it's an unindexed comparison, cheap at this size.
+  - **Verified** as the owner (RLS on):
+    - a prefix ("Issue 14") ranks first; "policy" gives 9 and the typo 3;
+    - one character gives 0, another space gives 0, nonsense gives 0;
+    - `p_limit` and `p_types` are honoured, and snippets carry the U+E000 markers.
+  - Advisors: only the 3 existing warnings.
+- **Palette** (`features/search/components/`):
+  - **Files:** `CommandPalette` (the dialog plus `PaletteBody`, mounted per open so the query, scope and filter reset), `PaletteFilterBar`, `PaletteResults`, `PaletteResultItem`, `PaletteStaticItem` and `HighlightedText`.
+  - **Behaviour:** Tab and Shift+Tab cycle the type filter (`nextTypeFilter`). Backspace on an empty query leaves the Spaces page. It's cmdk with `shouldFilter={false}` and `loop`, 640px, with no blur.
+  - **States:** skeleton rows on the first search, an inline "Search failed · Retry" row, and "No results for "q". Create task "q"", which opens `?new=task&title=q`.
+- **Rows:** the type icon (`EntityIcon`), the title with the query marked (a journal day falls back to "Journal · Tue 29 Sep"), then the snippet or "edited 2d ago". The status word is a task's status, "Done" or "Final". The space badge appears when searching all spaces.
+- **`mod+k`** is bound in `AppShell` (form fields and the editor included). It steps aside when text is selected in the editor, where the Feature 06 keymap opens the link field. The sidebar's Search item opens the palette.
+- **`GlobalDialogs`** (in `AppShell`, inside a space) renders `TaskDialog`, `TodoDialog` and `EventDialog` from `?new=`. `?new=note` creates a note in the default space and opens it. Unknown kinds are dropped.
+- **Recent** (`lib/recent.js`): recorded on the task page, the note editor (with the saved title, so not per keystroke), a journal day with an entry, and the report page. `EntityLink` now builds its URL with `entityPath`.
+- **`Kbd`** gained the up and down arrows for the footer hints.
+- **Tests:** `search/utils.test.js` (8), `lib/entityPaths.test.js` (3; an event opens on its local day), `lib/recent.test.js` (3; the cap, dedupe, blocked storage) and `CommandPalette.test.jsx` (4: the empty state, search then open with the URL and Recent, Tab filter and scope chip, create-task fallback). Full suite: 501/501.
+- **Still to confirm in the browser:** ⌘K in inputs and the editor; opening each type (a journal day, a todo flash, an event's dialog); New task / todo / note / event from the palette; closing clears `?new=`.
 
 **Stop here. Show the result and wait for approval.**
 

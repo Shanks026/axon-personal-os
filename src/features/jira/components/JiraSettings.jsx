@@ -78,7 +78,7 @@ export function JiraSettings() {
         <SettingsRow
           label="Site"
           htmlFor="jira-site"
-          description="Your Jira Cloud address. Import is read-only."
+          description="Your Jira Cloud address. Import is read-only. A ticket's attachments are copied into Axon after the task is saved (they count toward the free plan's 1 GB); videos and files over 50 MB stay in Jira as links."
         >
           <div className="flex w-72 flex-col items-end gap-1">
             <Input

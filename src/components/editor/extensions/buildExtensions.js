@@ -45,7 +45,7 @@ export function buildExtensions({ placeholder, features = {} }) {
     TableCell,
     ImageBlock,
     TaskMention.configure({ config: features.taskMentions ?? null }),
-    ImageUpload.configure({ handlers: features.images ?? null }),
+    ImageUpload.configure({ handlers: features.images ?? null, files: features.files ?? null }),
     // Mod-s save (via editor storage), Mod-k link, and Mod-Enter for dialogs.
     KeyboardShortcuts.configure({ swallowModEnter: !!features.compact }),
   ]

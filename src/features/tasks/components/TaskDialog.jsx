@@ -34,6 +34,10 @@ import { textClasses } from '@/lib/tint'
 import { AiTaskPanel } from '@/features/ai/components/AiTaskPanel'
 import { AiDraftNotice } from '@/features/ai/components/AiDraftNotice'
 import { useImageHandlers } from '@/features/attachments/api'
+import { keepOpenForLightbox } from '@/features/attachments/constants'
+import { StagedAttachments } from '@/features/attachments/components/StagedAttachments'
+import { TaskAttachments } from '@/features/attachments/components/TaskAttachments'
+import { CopyFromJiraButton } from '@/features/jira/components/CopyFromJiraButton'
 import { JiraImportNotice } from '@/features/jira/components/JiraImportNotice'
 import { JiraImportPanel } from '@/features/jira/components/JiraImportPanel'
 import { usePreferences } from '@/features/settings/api'
@@ -57,6 +61,7 @@ import {
 import { PriorityMenu, StatusMenu } from '@/features/tasks/components/TaskMenus'
 import { VersionsChip } from '@/features/tasks/components/VersionsChip'
 import { TASK_PRIORITY_MAP, TASK_STATUS_MAP } from '@/features/tasks/constants'
+import { useTaskDialogFiles } from '@/features/tasks/hooks/useTaskDialogFiles'
 import { taskSchema } from '@/features/tasks/schemas'
 import { textToDoc } from '@/features/tasks/utils'
 import { useCreateChecklistItems } from '@/features/todos/api'
@@ -87,6 +92,9 @@ export function TaskDialog({
       <DialogContent
         showCloseButton={false}
         className="flex max-h-dialog flex-col gap-0 overflow-hidden p-0 sm:max-w-160"
+        // An attachment preview (lightbox) opens over the dialog: clicks and Esc there are its own.
+        onInteractOutside={keepOpenForLightbox}
+        onEscapeKeyDown={keepOpenForLightbox}
       >
         <TaskDialogBody
           task={task}
@@ -195,6 +203,11 @@ function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess
   const createChecklist = useCreateChecklistItems()
   // Images in the description upload to the task's (fixed) space, so they work before it exists.
   const images = useImageHandlers({ spaceId: defaultSpace })
+  // Files: staged for a new task, description drops, and a Jira import's attachments.
+  const { stagedFiles, setStagedFiles, files, afterCreate } = useTaskDialogFiles({
+    task,
+    jiraAttachments: initialValues?.jira_attachments,
+  })
 
   const blank = {
     title: '',
@@ -269,6 +282,7 @@ function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess
       if (!isEdit && checklist.length) {
         createChecklist.mutate({ taskId: row.id, spaceId: row.space_id, titles: checklist })
       }
+      if (!isEdit) afterCreate(row)
       onSuccess?.(row)
       if (!isEdit && createMore) {
         toast.success('Task created', { description: row.title })
@@ -286,6 +300,7 @@ function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess
         setNewTags([])
         setLinks([])
         setChecklist([])
+        setStagedFiles([])
         return
       }
       if (!isEdit) toast.success('Task created')
@@ -380,7 +395,7 @@ function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess
               <RichTextEditor
                 key={`${task?.id ?? 'new'}-${editorKey}`}
                 variant="compact"
-                features={{ images }}
+                features={{ images, files }}
                 value={initialDescription}
                 label="Description"
                 onChange={(json, text) => {
@@ -461,6 +476,19 @@ function TaskForm({ task, initialValues, notice, headerExtra, onClose, onSuccess
           <ChecklistSection taskId={task.id} spaceId={task.space_id} task={task} />
         ) : (
           <ChecklistSection staged={{ items: checklist, onChange: setChecklist }} />
+        )}
+        {isEdit ? (
+          <TaskAttachments
+            task={task}
+            actions={<CopyFromJiraButton task={task} />}
+            className="border-t px-5 py-4"
+          />
+        ) : (
+          <StagedAttachments
+            files={stagedFiles}
+            onChange={setStagedFiles}
+            className="border-t px-5 py-4"
+          />
         )}
       </div>
 

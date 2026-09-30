@@ -540,7 +540,7 @@ create index inbox_processed_idx on public.inbox_items (user_id, processed_at de
 | `week_start_of(p_date, p_week_starts_on)` | 10 | Immutable helper: the start of the week containing `p_date`; shared by the two RPCs below |
 | `dashboard_summary(p_space_ids, p_today, p_quarter_start, p_quarter_end, p_prev_start, p_prev_end)` | 10 | Open, overdue, due-today, in-progress and blocked counts; completed this and previous quarter; `completed_by_week`; `per_space`. Full SQL in `10-dashboard.md` Phase 2 |
 | `report_stats(p_space_ids, p_start, p_end)` | 11 | Stats snapshot for reports |
-| `search_all(p_query, p_space_ids, p_limit, p_include_global)` | 12 | Unified search across tasks, notes, todos, events and reports (`p_include_global` adds Global reports) |
+| `search_all(p_query, p_space_ids, p_limit, p_include_global, p_types)` | 12 (✅ `20260930102602`, `20260930102719`) | Unified search across tasks, notes (and journal days), todos, events and reports. `p_include_global` adds Global reports; `p_types` limits the kinds (the palette's Tab filter). Full-text on the `search` columns, title prefix and substring, and typos through `word_similarity >= 0.4`. Security invoker; execute for `authenticated` only |
 | `trash_items(p_space_ids, p_include_global)` / `purge_trash(p_older_than, p_space_ids)` | 14 | Trash listing and caller purge (`p_space_ids` null = all the caller's rows) |
 | `private.purge_all_trash()` | 14 | Security definer, not exposed via PostgREST; daily `pg_cron` job `axon-purge-trash` at 03:00 UTC purges rows deleted over 30 days ago |
 
@@ -557,6 +557,40 @@ values ('attachments', 'attachments', false, 10485760,
 
 - **Paths:** `{user_id}/{space_id}/{uuid}.{ext}`. Files are only ever read through signed URLs (1 hour).
 - **Docs reference images by path:** the Tiptap `image` node stores `{ path, alt, width, height }` in `notes.content` / `tasks.description`. There's no table in Phase 1; Phase 2 adds `attachments` for task files.
+- **Phase 2 (✅ applied, migration `20260930054405_create_attachments_table`):** the bucket widens to 50 MB (the free plan's per-file cap) and any MIME type (`allowed_mime_types = null`). The app refuses videos; editor images keep their own 10 MB image-only check.
+
+### attachments (Feature 15 Phase 2, applied; Feature 17 Phase 4 uses the Jira columns)
+
+```sql
+create table public.attachments (
+  id                 uuid primary key default gen_random_uuid(),
+  user_id            uuid not null default auth.uid() references auth.users(id) on delete cascade,
+  space_id           uuid not null,
+  task_id            uuid not null,
+  path               text unique,                        -- Storage path; null = the file stayed at its source
+  name               text not null check (char_length(btrim(name)) between 1 and 255),
+  mime               text not null default 'application/octet-stream' check (char_length(mime) <= 150),
+  size               bigint not null default 0 check (size >= 0),
+  width              integer check (width > 0),
+  height             integer check (height > 0),
+  source             text not null default 'upload' check (source in ('upload','jira')),
+  jira_attachment_id text check (jira_attachment_id ~ '^[0-9]+$'),
+  external_url       text check (external_url ~* '^https://'),   -- a Jira file left in Jira (video or over 50 MB)
+  created_at         timestamptz not null default now(),
+  check (path is not null or external_url is not null),
+  unique (id, user_id),
+  foreign key (space_id, user_id) references public.spaces(id, user_id) on delete cascade,
+  foreign key (task_id, user_id) references public.tasks(id, user_id) on delete cascade
+);
+create index attachments_task_idx on public.attachments (task_id, created_at);
+create index attachments_space_idx on public.attachments (space_id);
+create index attachments_user_idx on public.attachments (user_id);
+create unique index attachments_jira_unique on public.attachments (task_id, jira_attachment_id)
+  where jira_attachment_id is not null;
+-- owner RLS policy (for all, user_id = (select auth.uid()))
+```
+
+- No `deleted_at`: files follow their task (kept through a soft delete, removed by Feature 14's purge, cascade plus Storage by path).
 
 ## Feature 17: AI Assistant and Jira (Phase 1 applied; full SQL in `.claude/features/17-ai-and-jira.md`)
 

@@ -2,6 +2,7 @@ import { Archive, FileQuestion } from 'lucide-react'
 import { Link, Navigate, useLocation, useParams } from 'react-router'
 import { paths } from '@/lib/paths'
 import { useSpace } from '@/context/SpaceContext'
+import { useRecordRecent } from '@/hooks/useRecordRecent'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
 import { EmptyState } from '@/components/shared/EmptyState'
 import { ErrorState } from '@/components/shared/ErrorState'
@@ -26,6 +27,17 @@ export default function TaskDetailPage() {
   const p = useSpacePaths()
   const { data: task, isLoading, error, refetch } = useTask(taskId)
   const taskSpace = task ? activeSpaces.find((s) => s.id === task.space_id) : null
+  useRecordRecent(
+    task && !task.deleted_at
+      ? {
+          entity_type: 'task',
+          id: task.id,
+          space_id: task.space_id,
+          title: task.title,
+          status: task.status,
+        }
+      : null,
+  )
 
   if (isLoading) {
     return (

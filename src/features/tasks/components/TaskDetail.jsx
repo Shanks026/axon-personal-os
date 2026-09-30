@@ -23,6 +23,8 @@ import {
   SheetTitle,
 } from '@/components/ui/sheet'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
+import { TaskAttachments } from '@/features/attachments/components/TaskAttachments'
+import { CopyFromJiraButton } from '@/features/jira/components/CopyFromJiraButton'
 import { JiraKeyBadge } from '@/features/jira/components/JiraKeyBadge'
 import { LinkedNotesPanel } from '@/features/links/components/LinkedNotesPanel'
 import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
@@ -163,6 +165,7 @@ export function TaskDetail({ task }) {
             <TaskTitleInput task={task} />
             <TaskDescription task={task} onStatusChange={onStatusChange} />
           </div>
+          <TaskAttachments task={task} actions={<CopyFromJiraButton task={task} />} />
           <ChecklistSection
             taskId={task.id}
             spaceId={task.space_id}

@@ -24,19 +24,21 @@ export const taskKeys = {
 }
 
 const LIST_COLUMNS =
-  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, versions, position, pinned_at, jira_key, created_at, updated_at, tag_ids:task_tags(tag_id), links:task_links(id, url, label, position), note_count:note_task_links(count)'
+  'id, space_id, title, description_text, status, priority, start_date, due_date, completed_at, versions, position, pinned_at, jira_key, created_at, updated_at, tag_ids:task_tags(tag_id), links:task_links(id, url, label, position), note_count:note_task_links(count), attachment_count:attachments(count)'
 
 const escapeLike = (s) => s.replace(/[\\%_]/g, (c) => `\\${c}`)
 
 /**
  * Flattens the embedded `task_tags(tag_id)` rows into a plain `tag_ids: string[]`, orders
  * `links` by position (PostgREST doesn't order a nested embed for us), and turns the linked-notes
- * embed count into `note_count` (it counts links to notes in Trash too).
+ * embed count into `note_count` (it counts links to notes in Trash too), and the files embed into
+ * `attachment_count` (Feature 15 Phase 2).
  */
 function mapRow(row) {
   return {
     ...row,
     note_count: row.note_count?.[0]?.count ?? 0,
+    attachment_count: row.attachment_count?.[0]?.count ?? 0,
     tag_ids: row.tag_ids?.map((t) => t.tag_id) ?? [],
     links: [...(row.links ?? [])].sort((a, b) => a.position - b.position),
   }

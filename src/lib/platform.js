@@ -26,7 +26,7 @@ export function shortcutLabel(shortcut, mac = isMac()) {
   const words = mac
     ? { mod: 'Command', ctrl: 'Control', shift: 'Shift', alt: 'Option', enter: 'Enter' }
     : { mod: 'Control', ctrl: 'Control', shift: 'Shift', alt: 'Alt', enter: 'Enter' }
-  const arrows = { left: 'Left arrow', right: 'Right arrow' }
+  const arrows = { left: 'Left arrow', right: 'Right arrow', up: 'Up arrow', down: 'Down arrow' }
   return shortcut
     .toLowerCase()
     .split('+')

@@ -1,6 +1,6 @@
 import { FileText, SquareCheckBig } from 'lucide-react'
 import { Link } from 'react-router'
-import { paths } from '@/lib/paths'
+import { entityPath } from '@/lib/entityPaths'
 import { MENTION_CLASSES, MENTION_LABEL_CLASSES, textClasses } from '@/lib/tint'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
@@ -62,7 +62,7 @@ export function EntityLink({
     )
   }
 
-  const to = kind === 'task' ? paths.space(space.slug).task(id) : paths.space(space.slug).note(id)
+  const to = entityPath({ entity_type: kind, id, space_id: spaceId }, { slugFor: () => space.slug })
   const link = (
     <Link
       to={to}

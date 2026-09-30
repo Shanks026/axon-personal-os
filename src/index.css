@@ -56,6 +56,7 @@
   --color-space-soft: var(--space-soft);
 
   /* Radius */
+  --radius-xs: 3px; /* badge swatches (a rounded square at 8px), calendar todo markers */
   --radius-sm: 5px;
   --radius-md: 7px;
   --radius-lg: 10px;

@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/17-ai-and-jira.md`
-**Status**: 🟡 In progress (Phases 1–3 and 5 ✅; taken before Features 10–14, the user's decision 2026-09-28)
+**Status**: 🟡 In progress (Phases 1–5 ✅; Phase 6 and Jira sync on hold; taken before Features 10–14, the user's decision 2026-09-28)
 **Depends on**: 04, 05, 07 (tasks, checklists, task detail and links). Phase 4 also needs 15 Phase 2.
 **Last Updated**: September 2026
 
@@ -46,8 +46,9 @@ Phase 3: AI checklists                                                (about 1 s
   "Generate checklist" (manual only) from the ticket's description and comments, or the task's own
   description; items are reviewed before they're added.
 
-Phase 4: Jira attachments and video                                   (about 2 sessions; needs 15 Phase 2)
-  Copy Jira attachments and inline description images into Storage; video type support and a player.
+Phase 4: Jira attachments                                             (about 1–2 sessions; needs 15 Phase 2)
+  Copy Jira attachments and inline description images into Storage on import; videos and files
+  over 50 MB stay in Jira as links (free plan; videos skipped for now).
 
 Phase 5: AI reports                                                   (about 2 sessions; AI-first)
   Weekly and quarterly reports drafted from the period's tasks, status changes, Jira keys, journal
@@ -373,11 +374,96 @@ No schema changes.
 
 ---
 
-## Phase 4: Jira Attachments and Video (outline)
-- Needs Feature 15 Phase 2 (task file attachments, the `attachments` table, a wider bucket).
-- On import: the `jira` function streams each attachment (`fields.attachment[].content`, auth required) into Storage under the task, recording `attachments` rows; files over a size cutoff (default 50 MB, the Supabase free-plan upload limit) are listed as links to Jira instead.
-- Inline description images: `renderedFields` image URLs map to attachment ids; they're rewritten to Axon image nodes with the Storage path.
-- Video: allow `video/mp4`, `video/webm`, `video/quicktime`; a video node or an attachment-list player (`<video controls>` on a signed URL). Edge Function memory and run-time limits mean streaming, never buffering whole files.
+## Phase 4: Jira Attachments ✅ Complete (2026-09-30; awaiting browser review)
+
+> **Decisions (the user, 2026-09-30):** attachments are copied **automatically on import**. The project is on Supabase's **free plan**: at most 50 MB per file, 1 GB in all. **Videos are skipped for now**; they're listed as links to Jira. Needs **Feature 15 Phase 2** (the `attachments` table and the task's Attachments section), built first.
+
+### Goal
+Importing a Jira ticket copies its attachments into the new task once it's saved. A toast shows the progress ("Copying 3 attachments from Jira…"), and the files appear in the task's Attachments section, marked "Jira". Images embedded in the Jira description become real images in the task description, in place of today's "[Image in Jira]" links. Videos and files over 50 MB stay in Jira and are listed as "In Jira ↗" links. Copying never doubles a file. A task imported earlier gets **Copy from Jira** in its Attachments header, which copies whatever it's missing.
+
+### Before Starting: Confirm With Codebase
+1. Feature 15 Phase 2 is approved, and `attachments` (with `source`, `jira_attachment_id`, `external_url`, `width`, `height`) exists.
+2. **A real ticket's attachment data** (the user's `MP-…` with a screenshot; through the `jira` function or a one-off log):
+   - `fields.attachment[]`: `id`, `filename`, `mimeType`, `size`, `created`, `content`.
+   - How `renderedFields.description` references an embedded image: `/rest/api/3/attachment/content/{id}`, `/secure/attachment/{id}/{name}`, or only a file name in `alt`. The mapping below handles all three; confirm which one Jira uses here.
+3. `GET /rest/api/3/attachment/content/{id}?redirect=false` returns the bytes directly (200) with basic auth. Without `redirect=false`, Jira sends a 303 to a media URL.
+4. The `jira` function's `requireOwner` client carries the caller's JWT, so Storage uploads and `attachments` inserts go through RLS. The Storage path's first folder is the user id.
+5. `ImageBlockView`'s states (preview, ready, "Image unavailable"), for the new "from Jira" placeholder.
+
+### 4.1 Database
+No schema changes: Feature 15 Phase 2's `attachments` has the Jira columns and the `(task_id, jira_attachment_id)` unique index.
+
+### 4.2 Edge Function (`jira`, v4)
+- **`fetch_issue`:**
+  - `ISSUE_FIELDS` gains `attachment`, and the issue gains `attachments: [{ id, filename, mimeType, size, created }]`.
+  - `cleanDescriptionHtml` turns an image that maps to an attachment into `<img data-path="jira:{id}" alt="{filename}">`. The mapping tries, in order: the id in the `src` (`/attachment/content/{id}`, `/secure/attachment/{id}/`, `/attachment/thumbnail/{id}`), then the image's `alt` or `data-attachment-name` against the attachment file names. An image that maps to nothing keeps today's "[Image in Jira]" link.
+- **`copy_attachment`** (new): input `{ key, attachmentId, taskId }`, one file per request so each stays inside the 150s limit.
+  1. **Check the task.** It must be the caller's, and its `jira_key` must equal `key` (read with the caller's JWT). This stops a request from copying one ticket's files onto another task.
+  2. **Check the attachment.** Re-fetch the issue's `attachment` field and find the id; an id that isn't on that issue is refused.
+  3. **Already copied?** An existing `attachments` row for `(task_id, jira_attachment_id)` is returned as is (`{ attachment, existing: true }`).
+  4. **Videos** (`video/*`) and files over 50 MB aren't downloaded. The function inserts a row with `external_url` = `{site}/secure/attachment/{id}/{filename}` (it opens in a browser signed in to Jira) and returns it with `skipped: 'video' | 'too_large'`.
+  5. **Download** with `GET /rest/api/3/attachment/content/{id}?redirect=false` into memory. That's fine at up to 50 MB against 256 MB. A download that comes back bigger than 50 MB is treated as `too_large`.
+  6. **Store.** Upload to `{user_id}/{space_id}/{uuid}.{ext}` in the `attachments` bucket, then insert the row (`source: 'jira'`, name, mime, size, `width`/`height` for images). If the insert fails, the object is removed. A unique-index conflict (a parallel copy) returns the existing row.
+- **`jiraApi.js` additions (tested from `src/tests/functions/jiraApi.test.js`):**
+  - `imageSize(bytes, mime)`: width and height from the PNG, JPEG, GIF and WebP headers (null otherwise).
+  - `mapDescriptionImages(html, attachments)`.
+  - `attachmentExtension(name, mime)`.
+- **Errors:**
+  - Jira 403/404 → "That file isn't available in Jira any more".
+  - Storage errors → "Couldn't save the file to Axon".
+  - A 504 timeout → "Jira took too long to send the file".
+
+### 4.3 Client
+- **`src/features/jira/api.js`:** `copyJiraAttachment({ key, attachmentId, taskId })` → `invokeJira('copy_attachment', …)`.
+- **`src/features/jira/hooks/useCopyJiraAttachments.js`:** returns `copyAll({ task, attachments })`. It works outside a dialog's lifetime: a plain async loop on the query client, so closing the dialog doesn't stop it, like `useCreateDraftTasks`.
+  - Copies one file at a time, then invalidates `attachmentKeys.task(task.id)`, `attachmentKeys.usage()` and `taskKeys.lists()` (the paperclip count).
+  - A `toast.loading` "Copying 2 of 5 attachments from Jira…" updates in place. It ends as "Copied 5 attachments from Jira", or a warning listing the failures with a **Retry** action (which copies only the missing ones).
+  - Videos and big files count as done, noted as "2 left in Jira (video or over 50 MB)".
+  - **Then the description:** if it has `jira:{id}` images, `replaceJiraImages(doc, copied)` (`jira/utils.js`, tested) swaps each for the copied file's `path`, `width` and `height`. Images that weren't copied become a link to the Jira file. The task is then patched through `updateTask` (`description` only; `description_text` has no images).
+- **Import flow:**
+  - `issueToTaskValues` passes `issue.attachments` through as `jira_attachments`. `TaskForm` keeps it out of the insert payload.
+  - After a create with `jira_attachments.length > 0`, `done(row)` calls `copyAll({ task: row, attachments })` and then closes as usual.
+  - `JiraImportNotice` gains a line: "3 attachments will be copied after you save (1 video stays in Jira)".
+- **Existing Jira tasks:** `TaskAttachments` shows **Copy from Jira** (the `Ticket` icon) in its header when `task.jira_key` is set. It fetches the issue and runs `copyAll` for the attachments the task doesn't have yet (the button spins meanwhile). It doesn't rewrite that task's description: the description may have been edited since the import.
+- **Editor placeholder:** `ImageBlockView` shows a node whose `path` starts with `jira:` as a muted box, "Image from Jira · copied when you save" (not "Image unavailable"). `resolveUrl` isn't called for it.
+- **Settings → AI & integrations → Jira:** a line saying attachments are copied into Axon on import, count toward the 1 GB free-plan storage, and videos stay in Jira.
+
+### 4.4 Checklist: Before Marking Complete
+- [ ] Importing a ticket with files copies them after save; the toast counts through them and they appear in Attachments marked "Jira" *(needs a real import in the browser)*
+- [ ] An image in the Jira description shows as a real image in the task description after the copy (and as the "from Jira" box before it) *(browser; the matching is tested against every URL form it handles, so a miss shows in the function log)*
+- [ ] A video and a file over 50 MB are listed as "In Jira ↗" and not downloaded *(browser)*
+- [ ] Copy from Jira on an older Jira task copies only what's missing; running it twice adds nothing *(browser; covered by the existing-row check and the unique index)*
+- [x] `copy_attachment` refuses a task whose `jira_key` doesn't match, and an attachment id that isn't on the issue (in code; exercised only with a signed-in session)
+- [x] Tests: `imageSize`, `mapDescriptionImages`, `attachmentExtension`, `replaceJiraImages`, `issueToTaskValues` passing `jira_attachments`
+- [x] `npm run lint`, `npm test` and `npm run build` pass; `axon-rules` audit clean; `00-index.md` updated
+
+### Implementation Notes (2026-09-30)
+- **Built straight after Feature 15 Phase 2,** at the user's request (twice, with screenshots of "[Image in Jira]"). F15 P2 is still unreviewed, and both are uncommitted.
+- **`jira` v4** (MCP deploy, all 5 files; the first attempt returned a platform "internal error", the retry went through). A request without a user gets the function's own 401, so it boots.
+  - `fetch_issue` now requests `attachment` and returns `issue.attachments`.
+  - The description images are mapped by `mapDescriptionImages`, in this order:
+    - the id in the `src` (`/rest/api/N/attachment/content|thumbnail/{id}`, `/secure/attachment/{id}/…`, `/secure/thumbnail/{id}/…`);
+    - a file name in `data-attachment-name`, `alt` or `imagetext` (before any `|`);
+    - by position against the ADF description's `media` names (`adfMediaNames`). Newer Jira often renders embedded media as a "noimage" placeholder with no id.
+  - **An image that maps to nothing is logged** ("jira: description images not matched to attachments", with the tag). Read the function logs after the first import to adjust the mapping.
+  - `copy_attachment` (`copyAttachment.js`): checks the task (the caller's, and `jira_key === key`), reuses an existing row, re-reads the issue's `attachment` field to confirm the id belongs to it, then records a link for videos and files over 50 MB.
+    - Otherwise it downloads with `?redirect=false` (120s timeout; refused by Content-Length first), uploads to the bucket with the caller's JWT and inserts the row (`width`/`height` from `imageSize`).
+    - A failed insert removes the object. A unique-index race returns the winner's row and removes the duplicate object.
+    - The link for a file left in Jira is `{site}/secure/attachment/{id}/{name}`, which opens in a browser signed in to Jira.
+- **Client:**
+  - `issueToTaskValues` adds `jira_attachments`. The zod schema strips it, so it's never inserted.
+  - After a create, `useTaskDialogFiles.afterCreate` (a new hook, which also holds the Feature 15 staged files) calls `useCopyJiraAttachments().copyAll` with `rewriteDescription`. It's a plain async loop with one toast updated in place ("Copying 2 of 5…"), then success, or an error listing failures with **Retry** for only those.
+  - After copying, it re-reads the task and `replaceJiraImages` swaps each `jira:{id}` image for the copy. Files left in Jira become "[Image in Jira]" links to them. **Failed copies stay as placeholders**, so Retry can still finish them.
+  - `JiraImportNotice` adds "3 attachments will be copied after you save · 1 stays in Jira (video or over 50 MB)".
+  - `ImageBlockView` shows a `jira:` path as a dashed box, "Image from Jira · copied into Axon after the task is saved", with no signed URL and no resize.
+  - **Copy from Jira** (`CopyFromJiraButton`): in the Attachments header on the task page and in the edit dialog, through `TaskAttachments`' new `actions` slot, so attachments doesn't import Jira. It copies only what's missing and doesn't rewrite the description.
+  - Settings → Jira → Site describes the copying and the 1 GB.
+- **Known limits:**
+  - Tasks imported before today keep their "[Image in Jira]" links. Their images arrive in Attachments through Copy from Jira, but the description isn't rewritten.
+  - If the task page is already open while a copy runs, its (uncontrolled) description editor shows the placeholders until it's reopened.
+- **Tests:** 9 function tests (`jiraApi.test.js`), 5 utils tests (`jira/utils.test.js`), and 2 editor tests (`htmlToDoc` keeps a `jira:` image; the "from Jira" box without a signed URL). Full suite 483/483.
+
+**Stop here. Show the result and wait for approval.**
 
 ## Phase 5: AI Reports (AI-first; Feature 11's stats, charts and PDF come later) ✅ Complete
 
@@ -487,7 +573,10 @@ Verify (rolled back): another user's space can't be attached (composite FK); `pe
 
 **Stop here. Show the result and wait for approval.**
 
-## Phase 6: Chat Over Tasks (outline)
+## Phase 6: Chat Over Tasks (outline) ⏸ On hold
+
+> **On hold (the user, 2026-09-30),** along with Jira sync. Phase 4 (Jira attachments) comes next.
+
 - **UI: the shadcn Bubble component** (the user's choice, 2026-09-28; https://ui.shadcn.com/docs/components/base/bubble, `npx shadcn@latest add bubble`): `Bubble` (`variant`, `align` start/end), `BubbleContent`, `BubbleGroup`, `BubbleReactions`. The user's messages are `align="end"` bubbles; Claude's replies use the `ghost` variant (the docs' recommendation for assistant text and Markdown), rendered as Markdown while streaming. Avatars, names, timestamps and actions (copy, regenerate, cost) go in the companion `Message` component the Bubble docs point to; check it and the style (the project uses `radix-nova`; the link is the Base UI docs) when Phase 6 starts.
 - A chat page (sidebar item "Ask") with a model picker (switching mid-chat is allowed; it re-reads the conversation at full price, since the cache is per model).
 - Claude uses read-only tools run by the `ai` function with the caller's JWT (RLS applies): search tasks, get a task, period summary, journal for a range. It can propose tasks as Phase 1 draft cards; nothing is created without the user's click.
@@ -495,7 +584,7 @@ Verify (rolled back): another user's space can't be attached (composite FK); `pe
 
 ---
 
-## Deferred: Jira sync (needs its own planning)
+## Deferred: Jira sync (needs its own planning) ⏸ On hold (the user, 2026-09-30)
 - Wanted: a **Sync Jira** button on the Tasks page (and per task) that re-fetches Jira-linked tasks and updates them.
 - Questions for that plan: which fields Jira may overwrite and when (a three-way rule against a stored snapshot was proposed), how conflicts show, Jira labels vs tags the user added, issues deleted or moved in Jira, bulk search (`POST /rest/api/3/search/jql`), and whether sync logs to the task's activity.
 - It gets its own phase (or feature) once planned; Phase 2 stores only `jira_key` and `jira_imported_at`.

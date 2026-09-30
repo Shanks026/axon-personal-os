@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import {
+  attachmentNotice,
   inferTags,
   issueToTaskValues,
   jiraIssueUrl,
@@ -7,6 +8,8 @@ import {
   mapStatus,
   mentions,
   parseJiraRef,
+  replaceJiraImages,
+  staysInJira,
   tagKeywords,
 } from '@/features/jira/utils'
 
@@ -170,5 +173,83 @@ describe('tagKeywords', () => {
     ])
     expect(tagKeywords({ id: 'b', name: 'Improvement' }, {})).toContain('suggestion')
     expect(tagKeywords({ id: 'c', name: 'Admin' }, undefined)).toEqual(['Admin'])
+  })
+})
+
+// ── Feature 17 Phase 4: attachments ─────────────────────────────────────────────────────────
+describe('issueToTaskValues attachments', () => {
+  it('passes the issue attachments through as jira_attachments', () => {
+    const files = [{ id: '1', filename: 'a.png', mimeType: 'image/png', size: 10 }]
+    const v = issueToTaskValues(
+      { key: 'MP-1', summary: 'S', attachments: files },
+      { tags: [], htmlToDoc: () => null, jiraSettings: {} },
+    )
+    expect(v.jira_attachments).toEqual(files)
+    expect(
+      issueToTaskValues({ key: 'MP-2', summary: 'S' }, { htmlToDoc: () => null }).jira_attachments,
+    ).toEqual([])
+  })
+})
+
+describe('staysInJira and attachmentNotice', () => {
+  const png = { id: '1', filename: 'a.png', mimeType: 'image/png', size: 10 }
+  const video = { id: '2', filename: 'demo.mov', mimeType: 'application/octet-stream', size: 10 }
+  const big = { id: '3', filename: 'dump.zip', mimeType: 'application/zip', size: 60 * 1024 * 1024 }
+
+  it('keeps videos (by type or name) and files over 50 MB in Jira', () => {
+    expect(staysInJira(png)).toBe(false)
+    expect(staysInJira(video)).toBe(true)
+    expect(staysInJira({ ...png, mimeType: 'video/mp4' })).toBe(true)
+    expect(staysInJira(big)).toBe(true)
+  })
+
+  it('says what will be copied and what stays', () => {
+    expect(attachmentNotice([])).toBe('')
+    expect(attachmentNotice([png])).toBe('1 attachment will be copied after you save')
+    expect(attachmentNotice([png, png, video, big])).toBe(
+      '2 attachments will be copied after you save · 2 stay in Jira (video or over 50 MB)',
+    )
+  })
+})
+
+describe('replaceJiraImages', () => {
+  const jiraImage = (id) => ({ type: 'image', attrs: { path: `jira:${id}`, alt: '' } })
+  const doc = (...content) => ({ type: 'doc', content })
+  const url = 'https://thbs.atlassian.net/browse/MP-1'
+
+  it('swaps copied images for their stored path and size', () => {
+    const copied = new Map([['7', { path: 'u/s/x.png', width: 800, height: 600, name: 'x.png' }]])
+    const { doc: out, changed } = replaceJiraImages(doc(jiraImage('7')), copied, url)
+    expect(changed).toBe(true)
+    expect(out.content[0].attrs).toEqual({
+      path: 'u/s/x.png',
+      alt: 'x.png',
+      width: 800,
+      height: 600,
+    })
+  })
+
+  it('turns images left in Jira (or not copied) into links, and keeps failed ones for a retry', () => {
+    const copied = new Map([
+      ['8', { path: null, external_url: 'https://thbs.atlassian.net/secure/attachment/8/v.mp4' }],
+    ])
+    const { doc: out } = replaceJiraImages(
+      doc({ type: 'blockquote', content: [jiraImage('8')] }, jiraImage('9'), jiraImage('10')),
+      copied,
+      url,
+      new Set(['10']),
+    )
+    const link = (node) => node.content[0].marks[0].attrs.href
+    expect(link(out.content[0].content[0])).toBe(
+      'https://thbs.atlassian.net/secure/attachment/8/v.mp4',
+    )
+    expect(link(out.content[1])).toBe(url)
+    expect(out.content[2]).toEqual(jiraImage('10'))
+  })
+
+  it('leaves a doc without Jira images alone', () => {
+    const plain = doc({ type: 'image', attrs: { path: 'u/s/y.png' } })
+    expect(replaceJiraImages(plain, new Map(), url)).toEqual({ doc: plain, changed: false })
+    expect(replaceJiraImages(null, new Map(), url).changed).toBe(false)
   })
 })

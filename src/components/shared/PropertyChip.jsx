@@ -6,16 +6,7 @@ import { cn } from '@/lib/utils'
  * `empty` renders the label in faint text (e.g. "Due date" before one is picked).
  */
 export const PropertyChip = forwardRef(function PropertyChip(
-  {
-    icon: Icon,
-    iconStyle,
-    iconClassName,
-    iconProps,
-    children,
-    empty = false,
-    className,
-    ...props
-  },
+  { icon: Icon, iconStyle, iconClassName, iconProps, children, empty = false, className, ...props },
   ref,
 ) {
   return (

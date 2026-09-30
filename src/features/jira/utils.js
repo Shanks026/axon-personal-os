@@ -154,10 +154,85 @@ export function issueToTaskValues(issue, { tags = [], htmlToDoc, jiraSettings, n
     links: [{ url: issue.url, label: issue.key }],
     jira_key: issue.key,
     jira_imported_at: now.toISOString(),
+    // Copied into Axon after the task is saved (Feature 17 Phase 4); never sent with the insert.
+    jira_attachments: issue.attachments ?? [],
   }
 }
 
 /** `https://site/browse/KEY`, or null without a site. */
 export function jiraIssueUrl(site, key) {
   return site && key ? `${String(site).replace(/\/+$/, '')}/browse/${key}` : null
+}
+
+const VIDEO_NAME = /\.(mp4|mov|webm|mkv|avi|m4v|wmv)$/i
+const MAX_COPY_BYTES = 50 * 1024 * 1024
+
+/** Whether a Jira attachment stays in Jira (a video, or over the free plan's 50 MB). */
+export function staysInJira(attachment) {
+  return (
+    String(attachment?.mimeType ?? '').startsWith('video/') ||
+    VIDEO_NAME.test(attachment?.filename ?? '') ||
+    Number(attachment?.size) > MAX_COPY_BYTES
+  )
+}
+
+/** "3 attachments will be copied after you save (1 stays in Jira: a video or over 50 MB)." */
+export function attachmentNotice(attachments) {
+  const list = attachments ?? []
+  if (!list.length) return ''
+  const kept = list.filter(staysInJira).length
+  const copied = list.length - kept
+  const files = (n) => `${n} ${n === 1 ? 'attachment' : 'attachments'}`
+  const parts = []
+  if (copied) parts.push(`${files(copied)} will be copied after you save`)
+  if (kept) parts.push(`${kept} ${kept === 1 ? 'stays' : 'stay'} in Jira (video or over 50 MB)`)
+  return parts.join(' · ')
+}
+
+/**
+ * The description with each `jira:{id}` image swapped for its copy (`copied`: Map of Jira
+ * attachment id → the attachments row). An image that wasn't copied (or stayed in Jira) becomes
+ * a "[Image in Jira]" link to `issueUrl`, except ids in `keep` (failed copies a Retry may still
+ * finish), which stay as they are. Returns `{ doc, changed }`.
+ */
+export function replaceJiraImages(doc, copied, issueUrl, keep = new Set()) {
+  let changed = false
+  const walk = (node) => {
+    if (node?.type === 'image' && String(node.attrs?.path ?? '').startsWith('jira:')) {
+      const id = node.attrs.path.slice(5)
+      if (keep.has(id)) return node
+      changed = true
+      const row = copied.get(id)
+      if (row?.path) {
+        return {
+          ...node,
+          attrs: {
+            ...node.attrs,
+            path: row.path,
+            width: row.width ?? null,
+            height: row.height ?? null,
+            alt: node.attrs.alt || row.name,
+          },
+        }
+      }
+      return {
+        type: 'paragraph',
+        content: [
+          {
+            type: 'text',
+            text: '[Image in Jira]',
+            marks: [{ type: 'link', attrs: { href: row?.external_url ?? issueUrl } }],
+          },
+        ],
+      }
+    }
+    return node?.content ? { ...node, content: node.content.map(walk) } : node
+  }
+  const out = doc ? walk(doc) : doc
+  return { doc: out, changed }
+}
+
+/** Whether a description still has `jira:{id}` image placeholders (a copy in progress). */
+export function hasJiraImages(doc) {
+  return !!doc && JSON.stringify(doc).includes('"path":"jira:')
 }

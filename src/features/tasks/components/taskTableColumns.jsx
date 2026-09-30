@@ -101,7 +101,7 @@ export function buildTaskColumns({
       meta: { className: fit },
       cell: ({ row }) => {
         const tags = row.original.tag_ids?.map((id) => tagsById.get(id)).filter(Boolean)
-        return tags?.length ? <TagPillGroup tags={tags} max={3} /> : <EmptyCell />
+        return tags?.length ? <TagPillGroup tags={tags} max={2} /> : <EmptyCell />
       },
     },
     {

@@ -30,13 +30,13 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 10 | Dashboard (per space and Global) | [10-dashboard.md](10-dashboard.md) | 08, 09 | 🔵 Planned |
 | 11 | Quarterly Reports (fiscal year) | [11-reports.md](11-reports.md) | 10 | 🔵 Planned |
 | **Wave 5: Flow** | | | | |
-| 12 | Command Palette, Search and Shortcuts | [12-command-palette.md](12-command-palette.md) | 11 | 🔵 Planned |
+| 12 | Command Palette, Search and Shortcuts | [12-command-palette.md](12-command-palette.md) | 11 | 🟡 In progress (Phase 1 ✅ palette and search; Phase 2 shortcuts next) |
 | 13 | Inbox and Quick Capture | [13-inbox-quick-capture.md](13-inbox-quick-capture.md) | 12 | 🔵 Planned |
 | 14 | Pins and Trash | [14-pins-and-trash.md](14-pins-and-trash.md) | 13 | 🔵 Planned |
 | **Wave 6: Later** (backlog; each gets a full doc through the skill when started) | | | | |
-| 15 | Attachments and Media | [15-attachments-and-media.md](15-attachments-and-media.md) | 06 | 🟡 In progress (Phase 1 ✅ images in the editor; Phases 2–3 later) |
+| 15 | Attachments and Media | [15-attachments-and-media.md](15-attachments-and-media.md) | 06 | 🟡 In progress (Phases 1–2 ✅: editor images, task file attachments; Phase 3 later) |
 | 16 | Recurring Tasks and Reminders | none | 14 | ⚪ Backlog |
-| 17 | **AI Assistant and Jira** (taken next, before 10–14) | [17-ai-and-jira.md](17-ai-and-jira.md) | 04, 05, 07 | 🟡 In progress (Phases 1–3 and 5 ✅) |
+| 17 | **AI Assistant and Jira** (taken next, before 10–14) | [17-ai-and-jira.md](17-ai-and-jira.md) | 04, 05, 07 | 🟡 In progress (Phases 1–5 ✅; chat and Jira sync on hold) |
 | 18 | Automation and Email Triggers | none | 13, 16 | ⚪ Backlog |
 | 19 | Data Export and Backup | none | 14 | ⚪ Backlog |
 | 20 | PWA and Mobile Polish | none | 14 | ⚪ Backlog |
@@ -90,6 +90,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | Storage bucket `attachments` + owner-only `storage.objects` policies | 15 | ✅ | Private; `{user_id}/{space_id}/{uuid}.{ext}`; images only (10 MB) in Phase 1. Migration `20260925123002` |
 | `task_activity` (+ log trigger) | 07 | ✅ | Auto history plus manual work-log comments. Migration `20260925130331` (15 backfilled `created` rows) |
 | `note_task_links` (+ activity log trigger) | 07 | ✅ | Sources: manual or mention. Migration `20260925180253` |
+| `attachments` (+ bucket widened to 50 MB, any type) | 15 (Phase 2) | ✅ | Task files; Jira columns for 17 Phase 4. Migration `20260930054405` |
 | `sync_note_mentions()` | 07 | ✅ | RPC, security invoker; migration `20260925184644` |
 | `events` | 08 | ✅ | Optional `task_id` / `note_id`. Migration `20260925201716` |
 | `profiles.ai_settings`, `ai_usage` | 17 | ✅ | AI model defaults per job; one usage row per model call (tokens, cost). Migration `20260928061804` |
@@ -98,7 +99,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `week_start_of()`, `dashboard_summary()` | 10 | ⬜ | RPCs; they read the profile's time zone and week start |
 | `reports` | 17 (Phase 5) | ✅ | Feature 11's table plus `week`, `ai_model`, `generated_at`; `space_id` NULL = Global report. Migration `20260929061315` |
 | `report_stats()` | 11 | ⬜ | "at end" statuses are rebuilt from `task_activity` |
-| `search_all()`, `reports_title_trgm` index | 12 | ⬜ | RPC with `p_include_global` |
+| `search_all()`, `reports_title_trgm` index | 12 | ✅ | RPC with `p_include_global` and `p_types`; typos via word similarity. Migrations `20260930102602`, `20260930102719` |
 | `inbox_items` | 13 | ⬜ | `space_id` NULL means unsorted |
 | `trash_items()`, `purge_trash()`, `private.purge_all_trash()` + pg_cron job | 14 | ⬜ | 30-day auto purge, daily at 03:00 UTC |
 
@@ -111,7 +112,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | Supabase MCP (`supabase`) | 2026-09-23 | Local Claude config, project `ceomotoumlljqlkqboyc` |
 | Git remote | 2026-09-23 | github.com/Shanks026/axon-personal-os (`main`) |
 | Storage buckets | none yet | First one comes in Feature 15 |
-| Edge Functions | 2026-09-28 (17) | `ai` (v7: status, draft_tasks, suggest_tags, checklist, report) and `jira` (v3); deployed with the MCP, every file, `verify_jwt` on |
+| Edge Functions | 2026-09-28 (17) | `ai` (v7: status, draft_tasks, suggest_tags, checklist, report) and `jira` (v4: + copy_attachment); deployed with the MCP, every file, `verify_jwt` on |
 | `private` schema (not exposed to the API) and `pg_cron` | planned for 14 | Holds `purge_all_trash()`; execute revoked from every role except its owner |
 
 ---
@@ -119,6 +120,56 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-09-30: Feature 12 Phase 1 — Command palette and search
+- **RPC:** `search_all(p_query, p_space_ids, p_limit, p_include_global, p_types)` over tasks, notes, journal days, todos, events and reports: full-text, title prefix and substring, and typo matching (`word_similarity >= 0.4`), plus `reports_title_trgm`. Migrations `20260930102602_create_search_all` and `20260930102719_search_all_word_similarity`.
+- **Palette (`⌘K`, or the sidebar's Search):**
+  - With an empty query: Recent, Actions (New task / todo / note / event, theme, settings), Navigate and Switch space.
+  - From two characters: grouped results with the matches highlighted and snippets. Tab filters by type, and a scope chip switches between the space and "All spaces".
+  - Nothing found offers "Create task".
+- **`?new=task|todo|note|event`** opens the matching create dialog from any page (`GlobalDialogs`, `useGlobalDialog`).
+- **New shared:** `EntityIcon`, `GlobalDialogs`, `useGlobalDialog`, `useRecordRecent`, `lib/entityPaths.js`, `lib/recent.js`; `Kbd` up and down arrows. `EntityLink` uses `entityPath`.
+- **Manual steps:** none.
+
+### 2026-09-30: One badge style everywhere (Attio-style), and 2 tags in the task table
+- **Badges:** status, priority, tag, version and space badges now share the tag pill's shape.
+  - **Shape and size:** `rounded-md` (7px), `h-5 px-1.75` and `text-xs font-medium`. The user tried `rounded-lg` (too round) and `rounded-sm` first.
+  - **Colour marker:** a rounded-square swatch (`size-2 rounded-xs`, with `--radius-xs` raised to 3px in `index.css`). The priority `Dot` is a rounded square too.
+  - **Board card:** it no longer forces its priority pill to `h-5.5`.
+- **Task table:** its Tags column shows 2 tags, then "+n" (it was 3).
+- Recorded in `rules/design-system.md`.
+
+### 2026-09-30: Attachments as cards, with a preview lightbox (the user's browser review)
+- **Cards:** a task's attachments are cards, two to a row (`AttachmentCard` replaces `AttachmentRow`). Each has a large image preview or file icon, then the name, size and date, Download and ⋯.
+- **Preview:** images and PDFs open in **yet-another-react-lightbox** (new dependency `yet-another-react-lightbox@3.32.2`; Captions, Counter, Download and Zoom plugins, and PDFs in an iframe slide) (`AttachmentLightbox`, `useSignedUrls`). The task dialog stays open under it (`keepOpenForLightbox` in `features/attachments/constants.js`).
+- **Fix:** after a Jira import, the task page showed the "from Jira" placeholders even though the saved description had the copied images; its editor reads its value once. `TaskDescription` now remounts the editor when the placeholders are gone (`hasJiraImages`).
+- Recorded in `rules/design-system.md` (Task attachments).
+
+### 2026-09-30: Feature 17 Phase 4 — Jira attachments
+- **`jira` v4:**
+  - `fetch_issue` returns the issue's attachments, and maps description images to them (by id in the URL, then file name, then ADF media order). Unmatched images are logged.
+  - New `copy_attachment` copies one file into Storage plus an `attachments` row, with the caller's JWT. It checks that the task's `jira_key` matches and that the file is on the issue. Videos and files over 50 MB are recorded as links to Jira.
+- **Client:**
+  - After saving an imported task, its attachments are copied with one progress toast (Retry for failures), and `jira:` images in the description are swapped for the copies. The editor shows a "from Jira" placeholder until then.
+  - The import notice says how many files will be copied.
+  - **Copy from Jira** in the Attachments header copies what a Jira task is missing.
+- **New files:** `supabase/functions/jira/copyAttachment.js`, `features/jira/hooks/useCopyJiraAttachments.js`, `features/jira/components/CopyFromJiraButton.jsx`, `features/tasks/hooks/useTaskDialogFiles.js`.
+- **Manual steps:** none. Browser review to do: import a ticket with a screenshot in its description and a few files.
+
+### 2026-09-30: Feature 15 Phase 2 — File attachments on tasks
+- **Table:** `attachments` (migration `20260930054405_create_attachments_table`): owner RLS, composite FKs to the space and task (cascade), a nullable `path` with `external_url` for files kept in Jira, the Jira columns for Feature 17 Phase 4, and a unique `(task_id, jira_attachment_id)`. The `attachments` bucket is widened to **50 MB and any type** (the free-plan cap); the app refuses videos. Rolled-back checks 5/5; advisors show only the 3 existing warnings.
+- **UI:** an **Attachments** section on the task page (after the description) and in the edit dialog (after the checklist). It has Attach files and drag-and-drop, upload rows with spinners, icons or image thumbnails, name, size and date, download under the file's own name, and delete after a confirm. Task cards show a paperclip count. **Settings → Preferences** shows the storage used against the 1 GB.
+- **Same day, the user's request (documents alongside images):**
+  - The new-task dialog stages files (`StagedAttachments`) and uploads them after save.
+  - Documents dropped or pasted into a task description go to its attachments, through a new editor option `features.files` (`takeFiles` in `ImageUpload.js`).
+  - Every file drop into an editor is now taken, so the browser never opens the file.
+- **New files:** `features/attachments/components/` (`TaskAttachments`, `AttachmentRow`, `AttachmentIcon`, `StagedAttachments`), `features/attachments/hooks/useAcceptFiles.js`, `features/settings/components/StorageUsageRow.jsx`; `lib/download.js` gains `openLink`.
+- **Manual steps:** none. Browser review to do (see the doc's Implementation Notes).
+
+### 2026-09-30: Feature 17 — chat and Jira sync on hold; Jira attachments planned
+- The user put Phase 6 (chat) and Jira sync on hold, and wants Phase 4 (Jira file attachments) next.
+- **Plans written:** Feature 15 Phase 2 (task file attachments: the `attachments` table, the bucket widened to 50 MB and any type, an Attachments section on the task page and the edit dialog, a paperclip count, storage used in Settings), then Feature 17 Phase 4 (the `jira` function's `copy_attachment`, one file per request; automatic copy after an import; description images become real images; **Copy from Jira** for older tasks).
+- **The user's decisions:** the Supabase **free plan** (50 MB per file, 1 GB in all); **videos skipped** (listed as links to Jira, like files over 50 MB); copy **automatically on import**.
 
 ### 2026-09-29: Feature 17 Phase 5 — AI reports
 - **Table:** `reports` (migration `20260929061315_create_reports`): Feature 11's design with `week`, `ai_model` and `generated_at`, plus a `reports_space_idx` FK index. Rolled-back checks: another user's space can't be attached (`reports_space_id_user_id_fkey`), `period_end < period_start` and an unknown `period_kind` are rejected, and a Global report (`space_id` null) inserts. Advisors: only the 3 existing warnings.

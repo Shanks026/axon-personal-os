@@ -7,6 +7,7 @@ import { downloadTextFile } from '@/lib/download'
 import { formatRelative } from '@/lib/dates'
 import { useSpace } from '@/context/SpaceContext'
 import { useAutosave } from '@/hooks/useAutosave'
+import { useRecordRecent } from '@/hooks/useRecordRecent'
 import { markdownToDoc, noteToMarkdown } from '@/components/editor/markdown'
 import { RichTextEditor } from '@/components/editor/RichTextEditor'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
@@ -40,6 +41,13 @@ export function ReportEditor({ report }) {
   const update = useUpdateReport()
   const del = useDeleteReport()
   const [title, setTitle] = useState(report.title)
+  useRecordRecent({
+    entity_type: 'report',
+    id: report.id,
+    space_id: report.space_id,
+    title: report.title,
+    status: report.status,
+  })
   const [initialContent] = useState(() => report.content ?? markdownToDoc(report.content_text))
   const [confirmOpen, setConfirmOpen] = useState(false)
   const editorRef = useRef(null)

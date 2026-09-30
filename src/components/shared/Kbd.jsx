@@ -1,4 +1,13 @@
-import { ArrowBigUp, ArrowLeft, ArrowRight, Command, CornerDownLeft, Option } from 'lucide-react'
+import {
+  ArrowBigUp,
+  ArrowDown,
+  ArrowLeft,
+  ArrowRight,
+  ArrowUp,
+  Command,
+  CornerDownLeft,
+  Option,
+} from 'lucide-react'
 import { shortcutLabel } from '@/lib/platform'
 import { cn } from '@/lib/utils'
 
@@ -12,6 +21,8 @@ const ICONS = {
   enter: CornerDownLeft,
   left: ArrowLeft,
   right: ArrowRight,
+  up: ArrowUp,
+  down: ArrowDown,
 }
 
 /**

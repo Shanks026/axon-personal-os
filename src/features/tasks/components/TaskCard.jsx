@@ -1,4 +1,4 @@
-import { FileText } from 'lucide-react'
+import { FileText, Paperclip } from 'lucide-react'
 import { formatRelative } from '@/lib/dates'
 import { cn } from '@/lib/utils'
 import { DueLabel } from '@/components/shared/DueLabel'
@@ -93,8 +93,8 @@ export function TaskCard({
           {task.description_text}
         </p>
       )}
-      {/* Meta row: checklist progress and the linked-notes count, only when there's something. */}
-      {(progress?.total > 0 || task.note_count > 0) && (
+      {/* Meta row: checklist progress, linked notes and files, only when there's something. */}
+      {(progress?.total > 0 || task.note_count > 0 || task.attachment_count > 0) && (
         <div className="pointer-events-none relative mt-2.5 flex items-center gap-3">
           {progress?.total > 0 && <ChecklistProgressBadge progress={progress} />}
           {task.note_count > 0 && (
@@ -104,6 +104,15 @@ export function TaskCard({
             >
               <FileText className="size-3.25" aria-hidden />
               {task.note_count}
+            </span>
+          )}
+          {task.attachment_count > 0 && (
+            <span
+              className="flex items-center gap-1 text-xs text-muted-foreground tabular-nums"
+              aria-label={`${task.attachment_count} ${task.attachment_count === 1 ? 'file' : 'files'}`}
+            >
+              <Paperclip className="size-3.25" aria-hidden />
+              {task.attachment_count}
             </span>
           )}
         </div>

@@ -43,7 +43,7 @@ export function BoardCard({
     >
       {hasTop && (
         <div className="flex h-5.5 items-center gap-1.5">
-          <TaskPriorityPill priority={task.priority} className="h-5.5" />
+          <TaskPriorityPill priority={task.priority} />
           <div className="flex-1" />
           <VersionBadgeGroup versions={task.versions} />
           <TaskLinksButton

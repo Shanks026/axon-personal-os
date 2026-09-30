@@ -4,6 +4,7 @@ import { useHotkeys } from 'react-hotkeys-hook'
 import { Navigate } from 'react-router'
 import { cn } from '@/lib/utils'
 import { useSpace } from '@/context/SpaceContext'
+import { useRecordRecent } from '@/hooks/useRecordRecent'
 import { useLocalStorage } from '@/hooks/useLocalStorage'
 import { DetailRail } from '@/components/layout/DetailRail'
 import { usePageHeader } from '@/components/layout/PageHeaderContext'
@@ -45,6 +46,17 @@ export default function JournalPage() {
   const { onEditorReady, insert } = useInsertIntoToday()
 
   const { data: entry } = useJournalEntry({ spaceId: isGlobal ? null : space?.id, date })
+  useRecordRecent(
+    entry
+      ? {
+          entity_type: 'journal',
+          id: entry.id,
+          space_id: entry.space_id,
+          title: entry.title,
+          status: date,
+        }
+      : null,
+  )
   const clear = useClearJournalEntry({ onReset: () => setResetKey((k) => k + 1) })
   const { flush } = save
   const clearEntry = useCallback(async () => {
