@@ -1,13 +1,14 @@
 import { Monitor, Moon, Search, Settings, SquarePen, Sun, Trash2 } from 'lucide-react'
 import { NavLink, useLocation } from 'react-router'
-import { toast } from 'sonner'
 import { paths } from '@/lib/paths'
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/context/AuthContext'
+import { useGlobalDialog } from '@/hooks/useGlobalDialog'
 import { NAV_ITEMS } from '@/components/layout/navItems'
 import { SpaceSwitcher } from '@/components/layout/SpaceSwitcher'
 import { UserMenu } from '@/components/layout/UserMenu'
 import { Kbd } from '@/components/shared/Kbd'
+import { ShortcutKeys } from '@/components/shared/ShortcutKeys'
 import { useTheme } from '@/components/theme/useTheme'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { DropdownMenuTrigger } from '@/components/ui/dropdown-menu'
@@ -20,27 +21,29 @@ import {
   SidebarGroupLabel,
   SidebarHeader,
   SidebarMenu,
+  SidebarMenuBadge,
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarRail,
   SidebarSeparator,
 } from '@/components/ui/sidebar'
 import { useMyProfile } from '@/features/auth/api'
+import { useInboxCount } from '@/features/inbox/api'
+import { useInboxScope } from '@/features/inbox/hooks/useInboxScope'
 import { initials } from '@/features/settings/utils'
 import { useSpacePaths } from '@/features/spaces/hooks/useSpacePaths'
 import { sectionFromPath } from '@/features/spaces/utils'
 
 const THEME_ICON = { light: Sun, dark: Moon, system: Monitor }
 
-// Quick capture arrives with Feature 13; until then its button explains.
-const comingSoon = (what, feature) => () =>
-  toast(`${what} arrives with Feature ${feature}`, { description: 'It’s on the roadmap.' })
-
 /**
  * App shell sidebar (design Sidebar.dc): switcher, search, capture, nav, pinned, footer.
  * `onOpenSearch` opens the command palette and `onOpenHelp` the shortcuts (the shell owns both).
  */
 export function AppSidebar({ onOpenSearch, onOpenHelp }) {
+  const { open: openDialog } = useGlobalDialog()
+  // Open inbox items in this scope (Feature 13); optimistic on process, discard and move.
+  const { data: inboxCount = 0 } = useInboxCount(useInboxScope())
   const p = useSpacePaths()
   const { pathname } = useLocation()
   const current = sectionFromPath(pathname)
@@ -64,12 +67,12 @@ export function AppSidebar({ onOpenSearch, onOpenHelp }) {
           <SidebarMenuItem>
             <SidebarMenuButton
               tooltip="Quick capture"
-              onClick={comingSoon('Quick capture', 13)}
+              onClick={() => openDialog('capture')}
               className="text-muted-foreground"
             >
               <SquarePen />
               <span className="flex-1">Quick capture</span>
-              <Kbd shortcut="mod+j" />
+              <ShortcutKeys id="capture.open" />
             </SidebarMenuButton>
           </SidebarMenuItem>
         </SidebarMenu>
@@ -89,6 +92,11 @@ export function AppSidebar({ onOpenSearch, onOpenHelp }) {
                         <span>{label}</span>
                       </NavLink>
                     </SidebarMenuButton>
+                    {section === 'inbox' && inboxCount > 0 && (
+                      <SidebarMenuBadge className="text-muted-foreground tabular-nums">
+                        {inboxCount > 99 ? '99+' : inboxCount}
+                      </SidebarMenuBadge>
+                    )}
                   </SidebarMenuItem>
                 )
               })}

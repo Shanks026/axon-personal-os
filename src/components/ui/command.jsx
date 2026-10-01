@@ -81,6 +81,11 @@ function CommandInput({
   )
 }
 
+// Axon edit: a picker popover opened from inside a dialog is portalled outside it, where the
+// dialog's scroll lock (react-remove-scroll, listening on document) would swallow the wheel.
+// Stopping wheel/touchmove here keeps the list scrollable everywhere.
+const stopScrollLock = (e) => e.stopPropagation()
+
 function CommandList({
   className,
   ...props
@@ -92,6 +97,8 @@ function CommandList({
         "no-scrollbar max-h-72 scroll-py-1 overflow-x-hidden overflow-y-auto outline-none",
         className
       )}
+      onWheel={stopScrollLock}
+      onTouchMove={stopScrollLock}
       {...props}
     />
   )

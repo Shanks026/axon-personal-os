@@ -24,8 +24,8 @@ import { useSwitchSpace } from '@/features/spaces/hooks/useSwitchSpace'
 
 /**
  * The palette's static items, each `{ id, label, icon, keywords?, emoji?, disabled?, hint?, run }`:
- * - `actions`: New task, todo, note or event (through `?new=`), Quick capture (Feature 13, a
- *   disabled stub), toggle theme, settings.
+ * - `actions`: New task, todo, note or event and Quick capture (through `?new=`), toggle theme,
+ *   keyboard shortcuts, settings.
  * - `navigate`: every section of the current scope, plus Trash.
  * - `spaces`: Global, then each active space (keeping the current section).
  */
@@ -75,10 +75,9 @@ export function usePaletteActions({ onOpenHelp } = {}) {
         id: 'quick-capture',
         label: 'Quick capture',
         icon: SquarePen,
-        keywords: 'inbox',
-        disabled: true,
-        hint: 'Coming with Feature 13',
-        run: () => {},
+        keywords: 'inbox capture thought',
+        shortcut: 'capture.open',
+        run: () => openDialog('capture'),
       },
       {
         id: 'toggle-theme',

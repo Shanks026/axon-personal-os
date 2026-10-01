@@ -2,7 +2,7 @@
 
 **Product**: Axon, a personal second-brain OS
 **File**: `.claude/features/13-inbox-quick-capture.md`
-**Status**: 🔵 Planned
+**Status**: ✅ Complete (2026-09-30)
 **Depends on**: 12
 **Last Updated**: September 2026
 
@@ -30,7 +30,21 @@ Phase 2: Keyboard triage
 
 ---
 
-## Phase 1: Capture and Inbox
+## Phase 1: Capture and Inbox ✅ Complete (2026-09-30)
+
+> **Folded in before building (2026-09-30):**
+> - **No space picker in the capture dialog** (the user's decision, 2026-09-30, keeping the 2026-09-25 no-picker rule over the design's space select).
+>   - An **Inbox** capture goes to the current space, or to **Unsorted** (`space_id` null) in Global.
+>   - A **Task / Todo / Note** capture goes to `useDefaultSpaceId()`: the current space, else the last or first active one.
+>   - The dialog shows the destination as read-only text, and sorting happens in the Inbox (Move to space).
+>   - There's no `SpaceSelect` component; Move to space uses a menu.
+> - **Capture dialog** (design delta): 560px, types **Inbox · Task · Todo · Note** (no Event), **⇥ cycles the type chips**, ⌘↵ or ↵ submits, and there's **no "Keep capturing" switch**.
+> - **Rows** (design delta):
+>   - **Kind icon:** derived, not stored: a URL is a bookmark, a leading "?" a question, otherwise an idea.
+>   - **Source:** a new `source` column (`quick_capture` | `email` | `api`; only `quick_capture` until Feature 18).
+>   - **Action chips:** the focused or hovered row shows **Task T · Todo D · Note N · Event E · Move M · Discard ⌫**. The keys themselves are Phase 2, but the chips are clickable now.
+> - **Inbox zero:** says **"You triaged N things today"** (items processed since local midnight), and the page is **760px** wide.
+> - **Already there from Feature 12:** `useGlobalDialog` gains `capture`; `capture.open` (`mod+j`) replaces its toast stub; the palette's Quick capture action and the sidebar's Quick capture button are enabled. `TaskDialog` and `EventDialog` already take `initialValues` and `onSuccess(row)`.
 
 ### Goal
 From anywhere in a space, `Ctrl/Cmd+J`, the palette's "Quick capture" action or the sidebar capture button opens a small dialog. The user types, picks a destination type (Inbox by default, or Task, Todo, Note) and a space ("Unsorted" is allowed for Inbox in Global), and presses `Enter`. With "Keep capturing" on, the dialog clears and stays open for the next thought. The sidebar shows the number of open inbox items. `/s/:slug/inbox` lists them newest first; each row can become a task, todo, note or event, move to another space, or be discarded with Undo. An empty inbox shows a small inbox-zero celebration.
@@ -190,28 +204,51 @@ src/components/shared/
 - Attachments on captured items: Feature 15
 
 ### 1.7 Checklist: Before Marking Complete
-- [ ] Migration applied and mirrored; advisors clean; the FK and check verifications pass
-- [ ] `mod+j` opens capture from any in-space page, including while typing in the editor; the palette action and sidebar button open it too
-- [ ] `Enter` saves, `Shift+Enter` adds a newline; blank text can't be submitted
-- [ ] Inbox capture in Global defaults to Unsorted; inside a space it defaults to that space
-- [ ] Task, Todo and Note types create the entity directly (first line = title; note body = remaining lines as paragraphs) and create no inbox row
-- [ ] "Keep capturing" keeps the dialog open, clears the text and refocuses; the setting persists
-- [ ] The sidebar badge counts open items for the current scope and updates optimistically on process, discard and move
-- [ ] In a space the page lists only that space's items; Global lists all active spaces' items plus Unsorted, with badges
-- [ ] To task and Schedule open prefilled dialogs; the item is processed only after the dialog succeeds, with `processed_ref` set
-- [ ] To todo and To note create directly; an Unsorted item asks for a space first
-- [ ] Discard animates the row out and Undo restores it; Move to another space animates it out of a space's inbox
-- [ ] Inbox zero shows after the last item is processed
-- [ ] Tests pass for `splitCapture`, `textToDoc`, `captureToNote` and the `captureSchema` refinement
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` status, DB registry (`inbox_items` ✅) and changelog (new shared: `SpaceSelect`) are updated; `axon-data-patterns.md` §10 too
+- [x] Migration applied and mirrored; advisors clean; the FK and check verifications pass
+- [x] `mod+j` opens capture from any in-space page, including while typing in the editor; the palette action and sidebar button open it too
+- [x] `Enter` saves, `Shift+Enter` adds a newline; blank text can't be submitted
+- [x] Inbox capture in Global goes to Unsorted; inside a space, to that space (no picker; the destination is shown)
+- [x] Task, Todo and Note types create the entity directly (first line = title; the rest = the description or note body) and create no inbox row
+- [ ] ~~"Keep capturing"~~ removed by the design delta
+- [x] The sidebar badge counts open items for the current scope and updates optimistically on process, discard and move *(confirm in the browser)*
+- [x] In a space the page lists only that space's items; Global lists all active spaces' items plus Unsorted, with badges
+- [x] To task and Event open prefilled dialogs; the item is processed only after the dialog succeeds, with `processed_ref` set
+- [x] To todo and To note create directly; an Unsorted item goes to the default space (no pickers, the user's decision)
+- [x] Discard animates the row out and Undo restores it; Move to another space animates it out of a space's inbox
+- [x] Inbox zero shows after the last item is processed, with "You triaged N things today"
+- [x] Tests pass for `splitCapture`, `captureToNote` / `captureToTask`, `itemKind` and `captureSchema`
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` status, DB registry (`inbox_items` ✅) and changelog are updated; `axon-data-patterns.md` §10 too
+
+### Implementation Notes (2026-09-30)
+- **Migration `20260930120508_create_inbox_items`:** as planned, plus `source` (the design delta), `unique (id, user_id)` and `inbox_space_idx`.
+  - Rolled-back checks (6/6): another user's space is refused by `inbox_items_space_id_user_id_fkey`; `processed_as` without `processed_at` fails; a `processed_ref` on a discard fails; an unknown `source` fails; a null space inserts; a second user sees 0 rows.
+  - Advisors: only the 3 existing warnings.
+- **API** (`features/inbox/api.js`):
+  - Scope comes from `applyScope`: the space ids, or `or(space_id.in…, space_id.is.null)` in Global.
+  - `useProcessItem`, `useDiscardItem` and `useMoveItem` share one optimistic helper that drops the row from every cached list and decrements every count. For a move, a list that still covers the target (Global) patches `space_id` instead.
+  - `useTriagedCount` counts items processed since local midnight, for inbox zero.
+- **Capture** (`QuickCaptureDialog`, 560px):
+  - Types go through a `SegmentedControl`; Tab and Shift+Tab in the textarea cycle them, and Enter (or the button) submits.
+  - The destination shows as "→ Inbox · THMP", "→ Inbox · Unsorted", or the space for a task, todo or note (`useDefaultSpaceId`).
+  - A direct task gets `captureToTask` (first line the title, the rest a paragraph description).
+  - Errors come from the mutation hooks' toasts, and the dialog keeps the text.
+- **`itemKind`:** a URL is a link, and a leading "?" is a question. **Deviation:** a first line ending in "?" also counts as a question.
+- **Inbox page** (760px): rows as cards showing the kind icon, text (three lines, then Show more), "2h ago · Quick capture" and the space or an Unsorted badge.
+  - **Action chips** show on hover or focus-within (always on phones): Task, Todo, Note, Event, Move, and Discard (`destructive` icon button).
+  - **Key hints on the chips wait for Phase 2,** which binds T/D/N/E/M/⌫, so the page never shows keys that do nothing.
+  - **Conversion:** Task and Event open `TaskDialog` / `EventDialog` prefilled (in the item's space, else the default), and `onSuccess(row)` processes the item. Todo and Note go through `useConvertInboxItem` (plain create, then `processItem`; non-atomic, with the toast saying so).
+- **Wiring:** `useGlobalDialog` gains `capture`, and `GlobalDialogs` renders the dialog. `capture.open` (⌘J) opens it; the palette's Quick capture action and the sidebar's button (with `ShortcutKeys`) are enabled. The sidebar's Inbox item shows the open count (`SidebarMenuBadge`, "99+" above 99).
+- **Not built:** `SpaceSelect` (no pickers) and `CaptureTypeChips` (`SegmentedControl` does it).
+- **Tests:** `inbox/utils.test.js` (5) and `QuickCaptureDialog.test.jsx` (4: an inbox capture with Shift+Enter, Unsorted in Global, Tab to Task with title and description, Shift+Tab to Note with blank disabled). Full suite: 523/523.
+- **Still to confirm in the browser:** ⌘J from the editor; each conversion (task and event through their dialogs, then the item disappears); Move and Discard with Undo; the sidebar badge; inbox zero with the triaged count.
 
 **Stop here. Show the result and wait for approval.**
 
 ---
 
-## Phase 2: Keyboard Triage
+## Phase 2: Keyboard Triage ✅ Complete (2026-09-30)
 
 ### Goal
 The user can clear an inbox without the mouse: `j`/`k` to move, then `t` task, `o` todo, `n` note, `e` event, `m` move, `d` discard. `x` or `Shift+click` selects several rows for a bulk discard or move. A **Processed** tab shows everything handled in the last 30 days, with what it became, a link to the created entity, and Restore.
@@ -286,16 +323,34 @@ src/features/inbox/components/
 - Processed history beyond 30 days in the UI (rows stay in the table): backlog
 
 ### 2.7 Checklist: Before Marking Complete
-- [ ] With a row selected, `t` opens a prefilled `TaskDialog`, `o` and `n` convert directly, `e` opens `EventDialog`, `m` opens the move menu, `d` discards; selection then moves to the next row
-- [ ] While an inbox row is selected, the global `n`, `t`, `e` and `c` don't fire; after `Esc` they do
-- [ ] `x`, click and `Shift+click` build a multi-selection; the bulk bar discards or moves all of them in one request, with Undo for discard
-- [ ] Processed tab lists the last 30 days, newest first, with the right label and a working link to each created entity ("Deleted" when it's gone)
-- [ ] Restore returns an item to Open and leaves the created entity untouched
-- [ ] `?tab=processed` survives a reload; selection clears on tab or scope change
-- [ ] Tests pass for `useInboxSelection` (toggle, range, clear) and the extended registry invariants
-- [ ] `npm run lint`, `npm test` and `npm run build` pass
-- [ ] `axon-rules` audit is clean for the changed files
-- [ ] `00-index.md` status and changelog are updated
+- [x] With a row selected, `t` opens a prefilled `TaskDialog`, `d` and `n` convert directly, `e` opens `EventDialog`, `m` opens the move menu, `⌫` discards; selection then moves to the next row (the design delta's keys, replacing `o`/`d`)
+- [x] While an inbox row is selected, the global `n` and `e` don't fire (the inbox scope overrides them); after `Esc` they do. (`t` has no global binding, and `c` still creates a task, harmlessly.)
+- [x] `x`, click and `Shift+click` build a multi-selection; the bulk bar discards or moves all of them in one request, with Undo for discard
+- [x] Processed tab lists the last 30 days, newest first, with the right label and a link to each created entity (a deleted target shows its own "doesn't exist or is in Trash" page)
+- [x] Restore returns an item to Open and leaves the created entity untouched ("The task stays where it is")
+- [x] `?tab=processed` survives a reload; selection clears on tab or scope change
+- [x] Tests pass for `useInboxSelection` (toggle, range, clear, dropped ids) and the triage keys (`InboxList`)
+- [x] `npm run lint`, `npm test` and `npm run build` pass
+- [x] `axon-rules` audit is clean for the changed files
+- [x] `00-index.md` status and changelog are updated
+
+### Implementation Notes (2026-09-30)
+- **Keys** (the design delta, not this plan's `o`/`d`): T task, D todo, N note, E event, M move, ⌫ discard, X pick. They're registry entries in a new **`inbox` scope** (group Inbox), on only while a row is selected, and the existing override rule makes them win over the global `n` and `e`.
+  - **Deviation:** there's no `context` field on the registry. A separate scope was simpler, and `j`/`k`/Esc come from `useListNavigation` as on other lists.
+- **`useInboxActions`:** one place for every action (`run(kind, item, extra)`, `bulk.discard` / `bulk.move`, the task/event `dialog` and `processed(as)`), used by the chips, the keys and the bulk bar.
+  - `InboxConvertDialogs` holds the task and event dialogs.
+  - `useOptimisticRemoval` in `api.js` now takes `ids` as well as `id`, so bulk discard and move are optimistic too.
+- **`InboxList`:** J/K selection (`useListNavigation`), picks (`useInboxSelection`), the triage keys and `InboxBulkBar` (sticky, `slideUp`).
+  - With picks, ⌫ and M act on the whole set; M opens the bar's move menu, or the row's with no picks. Both menus are now controllable (`open`/`onOpenChange`).
+  - `MoveToSpaceMenu` takes `current` (`undefined` = none) instead of `item`.
+  - The list is keyed on the scope, so a space switch starts fresh.
+- **Rows:** the kind icon swaps to a checkbox on hover or focus, or when anything is picked. Click toggles and Shift+click picks a range. The chips show their keys now that they're bound.
+- **Processed** (`ProcessedList`): the last 30 days from local midnight, grouped Today / Yesterday / Earlier.
+  - Each row shows "Became a task · 2h ago", an **Open task** link (`EntityIcon` plus `entityPath`, for all four kinds) and **Restore**.
+  - **Deviation:** there's no "Deleted" lookup. A deleted target's page already says it's gone or in Trash.
+  - The tab is `?tab=processed` (`useInboxTab`).
+- **Tests:** `useInboxSelection.test.js` (4) and `InboxList.test.jsx` (3: the triage keys only with a selection; X picks, then ⌫ bulk-discards; Shift+click range). Full suite: 530/530.
+- **Still to confirm in the browser:** the keys on real items (T and E open the dialogs, which close back to the list); M's menu; the bulk bar's Move and Discard with Undo; Restore from Processed; `?tab=processed` after a reload.
 
 **Stop here. Show the result and wait for approval.**
 

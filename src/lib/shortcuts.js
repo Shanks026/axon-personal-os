@@ -15,6 +15,7 @@ export const SHORTCUT_GROUPS = [
   'Create',
   'Navigate',
   'Lists',
+  'Inbox',
   'Calendar',
   'Journal',
   'Task page',
@@ -143,6 +144,22 @@ export const SHORTCUTS = [
     group: 'Lists',
     scope: 'list',
   },
+
+  // Inbox triage (Feature 13 Phase 2; the design delta's keys), while an item is selected
+  { id: 'inbox.toTask', keys: 't', label: 'Make a task', group: 'Inbox', scope: 'inbox' },
+  { id: 'inbox.toTodo', keys: 'd', label: 'Make a todo', group: 'Inbox', scope: 'inbox' },
+  { id: 'inbox.toNote', keys: 'n', label: 'Make a note', group: 'Inbox', scope: 'inbox' },
+  { id: 'inbox.toEvent', keys: 'e', label: 'Make an event', group: 'Inbox', scope: 'inbox' },
+  { id: 'inbox.move', keys: 'm', label: 'Move to space', group: 'Inbox', scope: 'inbox' },
+  {
+    id: 'inbox.discard',
+    keys: 'backspace, delete',
+    display: 'backspace',
+    label: 'Discard',
+    group: 'Inbox',
+    scope: 'inbox',
+  },
+  { id: 'inbox.select', keys: 'x', label: 'Select for bulk', group: 'Inbox', scope: 'inbox' },
 
   // Calendar
   { id: 'calendar.today', keys: 't', label: 'Today', group: 'Calendar', scope: 'calendar' },

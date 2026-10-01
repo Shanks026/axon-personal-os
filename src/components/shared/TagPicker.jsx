@@ -83,10 +83,16 @@ export function TagPicker({
         <PopoverTrigger asChild>
           {trigger ?? <DefaultTrigger count={value.length} />}
         </PopoverTrigger>
-        <PopoverContent align={align} className="w-64 p-0" {...contentProps}>
-          <Command>
+        {/* Capped (the user's request, 2026-10-01): the list scrolls in at most 15rem, and the whole
+            popover never outgrows the room Radix reports, so it can't run off the screen. */}
+        <PopoverContent
+          align={align}
+          className="max-h-(--radix-popover-content-available-height) w-64 p-0"
+          {...contentProps}
+        >
+          <Command className="min-h-0">
             <CommandInput placeholder="Search tags…" value={query} onValueChange={setQuery} />
-            <CommandList>
+            <CommandList className="max-h-60 min-h-0 flex-1">
               <CommandEmpty>No tags found.</CommandEmpty>
               <CommandGroup>
                 {tags.map((tag) => (

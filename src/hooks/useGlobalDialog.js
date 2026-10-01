@@ -1,7 +1,7 @@
 import { useCallback } from 'react'
 import { useSearchParams } from 'react-router'
 
-export const GLOBAL_DIALOG_KINDS = ['task', 'todo', 'note', 'event']
+export const GLOBAL_DIALOG_KINDS = ['task', 'todo', 'note', 'event', 'capture']
 
 /**
  * The app-wide create dialogs, driven by `?new=<kind>` (Feature 12), so the palette (and later

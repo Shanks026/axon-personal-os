@@ -31,7 +31,7 @@ Features are built in order. The phases inside each feature doc are gated: stop 
 | 11 | Quarterly Reports (fiscal year) | [11-reports.md](11-reports.md) | 10 | 🔵 Planned |
 | **Wave 5: Flow** | | | | |
 | 12 | Command Palette, Search and Shortcuts | [12-command-palette.md](12-command-palette.md) | 11 | ✅ Complete (palette, search, keyboard shortcuts) |
-| 13 | Inbox and Quick Capture | [13-inbox-quick-capture.md](13-inbox-quick-capture.md) | 12 | 🔵 Planned |
+| 13 | Inbox and Quick Capture | [13-inbox-quick-capture.md](13-inbox-quick-capture.md) | 12 | ✅ Complete (capture, inbox, keyboard triage, Processed) |
 | 14 | Pins and Trash | [14-pins-and-trash.md](14-pins-and-trash.md) | 13 | 🔵 Planned |
 | **Wave 6: Later** (backlog; each gets a full doc through the skill when started) | | | | |
 | 15 | Attachments and Media | [15-attachments-and-media.md](15-attachments-and-media.md) | 06 | 🟡 In progress (Phases 1–2 ✅: editor images, task file attachments; Phase 3 later) |
@@ -100,7 +100,7 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 | `reports` | 17 (Phase 5) | ✅ | Feature 11's table plus `week`, `ai_model`, `generated_at`; `space_id` NULL = Global report. Migration `20260929061315` |
 | `report_stats()` | 11 | ⬜ | "at end" statuses are rebuilt from `task_activity` |
 | `search_all()`, `reports_title_trgm` index | 12 | ✅ | RPC with `p_include_global` and `p_types`; typos via word similarity. Migrations `20260930102602`, `20260930102719` |
-| `inbox_items` | 13 | ⬜ | `space_id` NULL means unsorted |
+| `inbox_items` | 13 | ✅ | `space_id` NULL means unsorted; `source` (quick_capture until 18). Migration `20260930120508` |
 | `trash_items()`, `purge_trash()`, `private.purge_all_trash()` + pg_cron job | 14 | ⬜ | 30-day auto purge, daily at 03:00 UTC |
 
 ---
@@ -120,6 +120,27 @@ A ✅ means the migration has been applied to Supabase project `ceomotoumlljqlkq
 ## Changelog
 
 Newest first. One entry per landed phase or planning change.
+
+### 2026-10-01: Fix — tag picker didn't scroll inside the task dialog
+- **Cause:** pickers portal their popover outside the dialog, where the dialog's scroll lock (`react-remove-scroll`, a bubble-phase `wheel` / `touchmove` listener on `document`) cancelled the wheel. A modal popover isn't an option, because the dialog's chips open on hover (the flicker rule).
+- **Fix (a local shadcn edit):** `components/ui/command.jsx` `CommandList` stops `wheel` and `touchmove` propagation, so every Command list in a dialog scrolls (tags, versions).
+- **Then (the user's request):** the tag picker is capped. Its list is `max-h-60` (15rem) and shrinks first, and the popover is `max-h-(--radix-popover-content-available-height)`, so it never runs off the screen.
+
+### 2026-09-30: Feature 13 Phase 2 — Keyboard triage and Processed (Feature 13 complete)
+- **Triage keys** on a selected inbox item (J/K to select): T task, D todo, N note, E event, M move, ⌫ discard, X pick. They're a new `inbox` shortcut scope, whose keys win over the global ones while an item is selected. The chips show their keys.
+- **Bulk:** X, click or Shift+click picks items; a sticky bulk bar moves or discards them in one request (Undo for discard). ⌫ and M act on the set.
+- **Processed tab** (`?tab=processed`): the last 30 days under Today / Yesterday / Earlier, each with what it became, a link to it, and Restore (what it became stays).
+- **New:** `useInboxActions`, `useInboxSelection`, `useInboxTab`, `InboxList`, `InboxBulkBar`, `InboxConvertDialogs`, `ProcessedList`; bulk `discardItems` / `moveItems` / `restoreItems`.
+
+### 2026-09-30: Feature 13 Phase 1 — Quick capture and inbox
+- **Table:** `inbox_items` (migration `20260930120508_create_inbox_items`, with `source` from the design delta).
+- **Quick capture** (⌘J, the palette or the sidebar; 560px): Enter saves and Tab cycles Inbox / Task / Todo / Note.
+  - **No space picker** (the user's decision, 2026-09-30): the inbox gets the current space, or Unsorted in Global; a task, todo or note goes to the default space.
+- **Inbox page** (760px):
+  - **Rows:** a kind icon (link, question or idea) and the source.
+  - **Chips on hover:** Task and Event open prefilled dialogs; Todo and Note create directly; Move to space; Discard with Undo.
+  - **Inbox zero** says "You triaged N things today". The sidebar's Inbox item shows the open count.
+- **Manual steps:** none.
 
 ### 2026-09-30: Feature 12 Phase 2 — Keyboard shortcuts (Feature 12 complete)
 - **One registry** (`lib/shortcuts.js`) behind `useShortcut` and `useShortcutScope`, and `HotkeysProvider` in `App.jsx`. Every existing hotkey moved onto it: the calendar, journal, task page, editors and Settings.

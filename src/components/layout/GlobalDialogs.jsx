@@ -2,6 +2,7 @@ import { useEffect, useRef } from 'react'
 import { useSearchParams } from 'react-router'
 import { useGlobalDialog } from '@/hooks/useGlobalDialog'
 import { EventDialog } from '@/features/calendar/components/EventDialog'
+import { QuickCaptureDialog } from '@/features/inbox/components/QuickCaptureDialog'
 import { useCreateAndOpenNote } from '@/features/notes/hooks/useCreateAndOpenNote'
 import { TaskDialog } from '@/features/tasks/components/TaskDialog'
 import { TodoDialog } from '@/features/todos/components/TodoDialog'
@@ -10,7 +11,8 @@ import { TodoDialog } from '@/features/todos/components/TodoDialog'
  * The create dialogs any page can open through `?new=<kind>` (the palette, later shortcuts),
  * mounted once in the app shell. Spaces are never picked (the dialogs use the default space):
  * `task` → `TaskDialog` (`&title=` prefills it), `todo` → `TodoDialog`, `event` → `EventDialog`,
- * `note` → a new note in the default space, opened in the editor. An unknown kind is dropped.
+ * `note` → a new note in the default space, opened in the editor; `capture` → quick capture
+ * (Feature 13). An unknown kind is dropped.
  */
 export function GlobalDialogs() {
   const { kind, raw, title, close } = useGlobalDialog()
@@ -64,6 +66,7 @@ export function GlobalDialogs() {
         onOpenChange={onOpenChange}
         initialValues={title ? { title } : undefined}
       />
+      <QuickCaptureDialog open={kind === 'capture'} onOpenChange={onOpenChange} />
     </>
   )
 }

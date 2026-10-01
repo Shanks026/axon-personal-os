@@ -508,7 +508,7 @@ create index reports_title_trgm on public.reports using gin (title extensions.gi
 }
 ```
 
-## inbox_items (Feature 13)
+## inbox_items (Feature 13, ✅ applied: migration `20260930120508_create_inbox_items`)
 
 ```sql
 create table public.inbox_items (
@@ -525,10 +525,12 @@ create table public.inbox_items (
   updated_at    timestamptz not null default now(),
   check ((processed_at is null) = (processed_as is null)),
   check (processed_ref is null or processed_as in ('task','todo','note','event')),
+  unique (id, user_id),
   foreign key (space_id, user_id) references public.spaces(id, user_id) on delete cascade
 );
 create index inbox_open_idx      on public.inbox_items (user_id, created_at desc) where processed_at is null;
 create index inbox_processed_idx on public.inbox_items (user_id, processed_at desc) where processed_at is not null;
+create index inbox_space_idx     on public.inbox_items (space_id);
 -- + updated_at trigger, RLS owner policy
 ```
 

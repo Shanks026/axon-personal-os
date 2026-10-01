@@ -1,5 +1,4 @@
 import { useNavigate } from 'react-router'
-import { toast } from 'sonner'
 import { GLOBAL_SLUG } from '@/lib/paths'
 import { useSpace } from '@/context/SpaceContext'
 import { useGlobalDialog } from '@/hooks/useGlobalDialog'
@@ -38,9 +37,7 @@ export function GlobalShortcuts({ onPalette, onHelp }) {
   })
   useShortcut('sidebar.toggle', toggleSidebar)
   useShortcut('theme.toggle', () => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark'))
-  useShortcut('capture.open', () =>
-    toast('Quick capture arrives with Feature 13', { description: 'It’s on the roadmap.' }),
-  )
+  useShortcut('capture.open', () => openDialog('capture'))
   useShortcut('help.open', onHelp)
 
   useShortcut('create.task', () => openDialog('task'))
